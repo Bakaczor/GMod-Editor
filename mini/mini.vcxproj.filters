@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Pliki źródłowe">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Pliki zasobów">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\utils">
+      <UniqueIdentifier>{a1641abd-28de-4594-a3fa-86a8cc2de0fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\win32">
+      <UniqueIdentifier>{c4623fa7-0fe0-486a-ba1e-f590aae454f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\d3dx">
+      <UniqueIdentifier>{b0b52e89-3106-4c78-9bf7-dcf054dbb30b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\utils">
+      <UniqueIdentifier>{d3f57a1d-4924-455c-b811-eb50ffbe6c2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\win32">
+      <UniqueIdentifier>{0e8f981a-7d18-4a76-8fda-c654b0203b2a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="dxptr.h">
+      <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
+    <ClInclude Include="exceptions.h">
+      <Filter>Pliki nagłówkowe\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="window.h">
+      <Filter>Pliki nagłówkowe\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="windowApplication.h">
+      <Filter>Pliki nagłówkowe\win32</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="exceptions.cpp">
+      <Filter>Pliki źródłowe\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="windowApplication.cpp">
+      <Filter>Pliki źródłowe\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="window.cpp">
+      <Filter>Pliki źródłowe\win32</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+#pragma once
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define ROTATION_COMBINATION 1
+#define ROTATION_SWITCH 1
