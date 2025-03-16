@@ -245,6 +245,22 @@ namespace gmod {
             );
         }
 
+        static matrix4 rotation(T pitch, T yaw, T roll) {
+            const T cp = std::cos(pitch);
+            const T sp = std::sin(pitch);
+            const T cy = std::cos(yaw);
+            const T sy = std::sin(yaw);
+            const T cr = std::cos(roll);
+            const T sr = std::sin(roll);
+
+            return matrix4(
+                 cy * cr, -cp * sr + sp * sy * cr,  sp * sr + cp * sy * cr, 0,
+                 cy * sr,  cp * cr + sp * sy * sr, -sp * cr + cp * sy * sr, 0,
+                -sy,       sp * cy,                 cp * cy,                0,
+                 0,        0,                       0,                      1
+            );
+        }
+
         static matrix4 rotationX(T rad) {
             const T cos = std::cos(rad);
             const T sin = std::sin(rad);

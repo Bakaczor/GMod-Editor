@@ -173,8 +173,8 @@ namespace gmod {
             m_A[6] = X.z();  m_A[7] = Y.z();  m_A[8] = Z.z();
         }
 
-        matrix4 orthonormalized() const {
-            matrix4 result(*this);
+        matrix3 orthonormalized() const {
+            matrix3 result(*this);
             result.orthonormalize();
             return result;
         }

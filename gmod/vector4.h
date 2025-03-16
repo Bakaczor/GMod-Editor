@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "vector3.h"
 #include "matrix4.h"
 
 namespace gmod {
@@ -10,6 +11,7 @@ namespace gmod {
     struct vector4 {
     public:
         vector4(T x = 0, T y = 0, T z = 0, T w = 1) : m_x(x), m_y(y), m_z(z), m_w(w) {}
+        vector4(const vector3<T>& v, T w = 1) : m_x(v.x), m_y(v.y), m_z(v.z), m_w(w) {}
 
         T& x() { return m_x; }
 
@@ -101,6 +103,9 @@ namespace gmod {
 
         void normalize() {
             const T len = this->length();
+            if (len == 0) {
+                throw std::logic_error("Length was equal to zero for vector4");
+            }
             m_x /= len;
             m_y /= len;
             m_z /= len;

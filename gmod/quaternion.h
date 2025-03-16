@@ -3,6 +3,9 @@
 #include "vector3.h"
 
 namespace gmod {
+    template<floating_point T>
+    struct vector3;
+
     template <floating_point T>
     struct quaternion {
     public:
@@ -20,18 +23,18 @@ namespace gmod {
             const T half_yaw = yaw / 2;
             const T half_roll = roll / 2;
 
-            const T cos_pitch = std::cos(half_pitch);
-            const T sin_pitch = std::sin(half_pitch);
-            const T cos_yaw = std::cos(half_yaw);
-            const T sin_yaw = std::sin(half_yaw);
-            const T cos_roll = std::cos(half_roll);
-            const T sin_roll = std::sin(half_roll);
+            const T cp = std::cos(half_pitch);
+            const T sp = std::sin(half_pitch);
+            const T cy = std::cos(half_yaw);
+            const T sy = std::sin(half_yaw);
+            const T cr = std::cos(half_roll);
+            const T sr = std::sin(half_roll);
 
             return quaternion(
-                cos_pitch * cos_yaw * cos_roll + sin_pitch * sin_yaw * sin_roll,
-                sin_pitch * cos_yaw * cos_roll - cos_pitch * sin_yaw * sin_roll,
-                cos_pitch * sin_yaw * cos_roll + sin_pitch * cos_yaw * sin_roll,
-                cos_pitch * cos_yaw * sin_roll - sin_pitch * sin_yaw * cos_roll
+                cp * cy * cr + sp * sy * sr,
+                sp * cy * cr - cp * sy * sr,
+                cp * sy * cr + sp * cy * sr,
+                cp * cy * sr - sp * sy * cr
             );
         }
 
@@ -101,6 +104,9 @@ namespace gmod {
 
         void normalize() {
             const T mag = this->magnitude();
+            if (mag == 0) {
+                throw std::logic_error("Magnitude was equal to zero for quaternion");
+            }
             m_w /= mag;
             m_x /= mag;
             m_y /= mag;
@@ -125,6 +131,9 @@ namespace gmod {
         void invert() {
             this->conjugate();
             const T mag_2 = m_w * m_w + m_x * m_x + m_y * m_y + m_z * m_z;
+            if (mag_2 == 0) {
+                throw std::logic_error("Magnitude was equal to zero for quaternion");
+            }
             m_w /= mag_2;
             m_x /= mag_2;
             m_y /= mag_2;
@@ -133,6 +142,9 @@ namespace gmod {
 
         quaternion inverted() const {
             const T mag_2 = m_w * m_w + m_x * m_x + m_y * m_y + m_z * m_z;
+            if (mag_2 == 0) {
+                throw std::logic_error("Magnitude was equal to zero for quaternion");
+            }
             return this->conjugated() * (1 / mag_2);
         }
 
