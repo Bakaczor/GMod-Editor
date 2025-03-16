@@ -141,10 +141,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="compressed_pair.h" />
     <ClInclude Include="dxptr.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ptr_vector.h" />
     <ClInclude Include="window.h" />
     <ClInclude Include="windowApplication.h" />
   </ItemGroup>

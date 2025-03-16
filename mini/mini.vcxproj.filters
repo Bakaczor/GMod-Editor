@@ -48,6 +48,12 @@
     <ClInclude Include="windowApplication.h">
       <Filter>Pliki nagłówkowe\win32</Filter>
     </ClInclude>
+    <ClInclude Include="compressed_pair.h">
+      <Filter>Pliki nagłówkowe\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ptr_vector.h">
+      <Filter>Pliki nagłówkowe\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

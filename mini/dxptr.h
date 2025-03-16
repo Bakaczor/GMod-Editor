@@ -1,6 +1,5 @@
 #pragma once
-#include <memory>
-#include <type_traits>
+#include "ptr_vector.h"
 
 #define DX_ASSERT_IS_COM_TYPE(T) static_assert(std::is_base_of<IUnknown, T>::value, "T must be a COM Object!")
 
@@ -58,4 +57,24 @@ namespace mini {
 		if (p) reinterpret_cast<IUnknown&>(*p).AddRef();
 		return dx_ptr<T>{ p.get() };
 	}
+
+	/**********************************************************************//*!
+	 * @brief Vector of COM object pointers
+	 *
+	 * Vector owning COM resources indicated by contained pointers. It makes
+	 * sure the resources are released correctly based on RAII principle.
+	 *
+	 * Certain D3D APIs require arrays of raw pointers as input. Since
+	 * dx_ptr cannot guaratnee the pointer is it's only member, an array of
+	 * dx_ptr-s will not be able to interop with such apis, requiring creation
+	 * of temporary arrays. To avoid that, only one DxDeleter is stored in the
+	 * vector and used to release all contained resources.
+	 *
+	 * @tparam T COM object type that derives from IUnknown.
+	 * @remark This smart pointer is designed to be used with DirectX
+	 * resources. It can however work with any COM objects, since that is what
+	 * all DirectX resources are.
+	 *************************************************************************/
+	template<typename T>
+	using dx_ptr_vector = ptr_vector<T, DxDeleter<T>>;
 }
