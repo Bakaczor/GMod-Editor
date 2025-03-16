@@ -19,11 +19,23 @@
     <Filter Include="Pliki nagłówkowe\object">
       <UniqueIdentifier>{1da4ca9e-2c73-44a0-a176-e92ff656a997}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki źródłowe\d3dx">
+      <UniqueIdentifier>{28adab54-c217-43d8-a010-b0ebbe9f05d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\input">
+      <UniqueIdentifier>{d6ad5f2d-2ef9-488d-a13e-4d85a572156d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\input">
+      <UniqueIdentifier>{796ededb-8da0-49ef-8b3b-2e919c16c24b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\object">
+      <UniqueIdentifier>{6b5c14a1-a876-44cf-b5a7-c66558273df0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\app">
+      <UniqueIdentifier>{97bfe556-81ff-4694-830d-53c0cb9d4578}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
@@ -33,7 +45,7 @@
     <ClInclude Include="Device.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
     </ClInclude>
-    <ClInclude Include="Structures.h">
+    <ClInclude Include="Descriptions.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
     </ClInclude>
     <ClInclude Include="Object.h">
@@ -42,12 +54,30 @@
     <ClInclude Include="Torus.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Data.h">
+      <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Pliki nagłówkowe\input</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Pliki nagłówkowe\input</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Pliki nagłówkowe\input</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="Device.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -56,8 +86,26 @@
     <ClCompile Include="pch.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="Structures.cpp">
-      <Filter>Pliki źródłowe</Filter>
+    <ClCompile Include="Device.cpp">
+      <Filter>Pliki źródłowe\d3dx</Filter>
+    </ClCompile>
+    <ClCompile Include="Descriptions.cpp">
+      <Filter>Pliki źródłowe\d3dx</Filter>
+    </ClCompile>
+    <ClCompile Include="Data.cpp">
+      <Filter>Pliki źródłowe\d3dx</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Pliki źródłowe\d3dx</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Pliki źródłowe\input</Filter>
+    </ClCompile>
+    <ClCompile Include="Torus.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

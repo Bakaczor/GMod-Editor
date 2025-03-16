@@ -1,7 +1,6 @@
 #include "Device.h"
 #include "../mini/exceptions.h"
 #include "../mini/window.h"
-#include "Structures.h"
 #include <fstream>
 
 Device::Device(const mini::Window& window) {
@@ -14,7 +13,7 @@ Device::Device(const mini::Window& window) {
 	auto hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
 		featureLevels, 2, D3D11_SDK_VERSION, &desc, &swapChain, &device, nullptr, &context);
 	if (FAILED(hr)) {
-		THROW_WINAPI;
+		THROW_DX(hr);
 	}
 
 	m_device.reset(device);
@@ -22,13 +21,94 @@ Device::Device(const mini::Window& window) {
 	m_deviceContext.reset(context);
 }
 
+mini::dx_ptr<ID3D11Texture2D> Device::CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const {
+	ID3D11Texture2D* temp;
+	auto hr = m_device->CreateTexture2D(&desc, nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11Texture2D> result(temp);
+	return result;
+}
+
+#pragma region VIEWS
 mini::dx_ptr<ID3D11RenderTargetView> Device::CreateRenderTargetView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
 	ID3D11RenderTargetView* temp;
 	auto hr = m_device->CreateRenderTargetView(texture.get(), nullptr, &temp);
 	if (FAILED(hr)) {
-		THROW_WINAPI;
+		THROW_DX(hr);
 	}
 	mini::dx_ptr<ID3D11RenderTargetView> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11DepthStencilView> Device::CreateDepthStencilView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
+	ID3D11DepthStencilView* temp;
+	auto hr = m_device->CreateDepthStencilView(texture.get(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11DepthStencilView> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11DepthStencilView> Device::CreateDepthStencilView(SIZE size) const {
+	auto desc = Texture2DDescription::DepthStencilDescription(size.cx, size.cy);
+	mini::dx_ptr<ID3D11Texture2D> texture = CreateTexture(desc);
+	return CreateDepthStencilView(texture);
+}
+
+mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
+	ID3D11ShaderResourceView* temp;
+	auto hr = m_device->CreateShaderResourceView(texture.get(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11ShaderResourceView> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(SIZE size) const {
+	auto desc = Texture2DDescription::DynamicTextureDescription(size.cx, size.cy);
+	mini::dx_ptr<ID3D11Texture2D> texture = CreateTexture(desc);
+	return CreateShaderResourceView(texture);
+}
+#pragma endregion
+
+#pragma region BUFFERS
+mini::dx_ptr<ID3D11Buffer> Device::CreateBuffer(const void* data, const D3D11_BUFFER_DESC& desc) const {
+	D3D11_SUBRESOURCE_DATA sdata;
+	ZeroMemory(&sdata, sizeof sdata);
+	sdata.pSysMem = data;
+
+	ID3D11Buffer* temp;
+	auto hr = m_device->CreateBuffer(&desc, data ? &sdata : nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11Buffer> result(temp);
+	return result;
+}
+#pragma endregion
+
+#pragma region SHADERS
+mini::dx_ptr<ID3D11VertexShader> Device::CreateVertexShader(std::vector<BYTE> vsCode) const {
+	ID3D11VertexShader* temp;
+	auto hr = m_device->CreateVertexShader(reinterpret_cast<const void*>(vsCode.data()), vsCode.size(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11VertexShader> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11PixelShader> Device::CreatePixelShader(std::vector<BYTE> psCode) const {
+	ID3D11PixelShader* temp;
+	auto hr = m_device->CreatePixelShader(reinterpret_cast<const void*>(psCode.data()), psCode.size(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11PixelShader> result(temp);
 	return result;
 }
 
@@ -47,91 +127,17 @@ std::vector<BYTE> Device::LoadByteCode(const std::wstring& filename) {
 	sIn.close();
 	return byteCode;
 }
+#pragma endregion
 
-mini::dx_ptr<ID3D11Texture2D> Device::CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const {
-	ID3D11Texture2D* temp;
-	auto hr = m_device->CreateTexture2D(&desc, nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11Texture2D> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11DepthStencilView> Device::CreateDepthStencilView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
-	ID3D11DepthStencilView* temp;
-	auto hr = m_device->CreateDepthStencilView(texture.get(), nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11DepthStencilView> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11DepthStencilView> Device::CreateDepthStencilView(SIZE size) const {
-	auto desc = Texture2DDescription::DepthStencilDescription(size.cx, size.cy);
-	mini::dx_ptr<ID3D11Texture2D> texture = CreateTexture(desc);
-	return CreateDepthStencilView(texture);
-}
-
-mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
-	ID3D11ShaderResourceView* temp;
-	auto hr = m_device->CreateShaderResourceView(texture.get(), nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11ShaderResourceView> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(SIZE size) const {
-	auto desc = Texture2DDescription::DynamicTextureDescription(size.cx, size.cy);
-	mini::dx_ptr<ID3D11Texture2D> texture = CreateTexture(desc);
-	return CreateShaderResourceView(texture);
-}
-
-mini::dx_ptr<ID3D11Buffer> Device::CreateBuffer(const void* data, const D3D11_BUFFER_DESC& desc) const {
-	D3D11_SUBRESOURCE_DATA sdata;
-	ZeroMemory(&sdata, sizeof sdata);
-	sdata.pSysMem = data;
-
-	ID3D11Buffer* temp;
-	auto hr = m_device->CreateBuffer(&desc, data ? &sdata : nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11Buffer> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11VertexShader> Device::CreateVertexShader(std::vector<BYTE> vsCode) const {
-	ID3D11VertexShader* temp;
-	auto hr = m_device->CreateVertexShader(reinterpret_cast<const void*>(vsCode.data()), vsCode.size(), nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11VertexShader> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11PixelShader> Device::CreatePixelShader(std::vector<BYTE> psCode) const {
-	ID3D11PixelShader* temp;
-	auto hr = m_device->CreatePixelShader(reinterpret_cast<const void*>(psCode.data()), psCode.size(), nullptr, &temp);
-	if (FAILED(hr)) {
-		THROW_WINAPI;
-	}
-	mini::dx_ptr<ID3D11PixelShader> result(temp);
-	return result;
-}
-
-mini::dx_ptr<ID3D11InputLayout> Device::CreateInputLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC> elements, std::vector<BYTE> vsCode) const {
+#pragma region LAYOUTS
+mini::dx_ptr<ID3D11InputLayout> Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elements, UINT count, const std::vector<BYTE>& vsCode) const {
 	ID3D11InputLayout* temp;
-	auto hr = m_device->CreateInputLayout(elements.data(), static_cast<UINT>(elements.size()),
+	auto hr = m_device->CreateInputLayout(elements, count,
 		reinterpret_cast<const void*>(vsCode.data()), vsCode.size(), &temp);
 	if (FAILED(hr)) {
-		THROW_WINAPI;
+		THROW_DX(hr);
 	}
 	mini::dx_ptr<ID3D11InputLayout> result(temp);
 	return result;
 }
-
+#pragma endregion

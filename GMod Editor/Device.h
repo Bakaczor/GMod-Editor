@@ -1,6 +1,6 @@
 #pragma once
 #include "../mini/dxptr.h"
-#include "Structures.h"
+#include "Descriptions.h"
 #include <vector>
 #include <string>
 
@@ -20,9 +20,8 @@ public:
 
 	ID3D11Device* operator->() const { return m_device.get(); }
 
+#pragma region VIEWS
 	mini::dx_ptr<ID3D11RenderTargetView> CreateRenderTargetView(const mini::dx_ptr<ID3D11Texture2D>& texture) const;
-
-	mini::dx_ptr<ID3D11Texture2D> CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const;
 
 	mini::dx_ptr<ID3D11DepthStencilView> CreateDepthStencilView(const mini::dx_ptr<ID3D11Texture2D>& texture) const;
 
@@ -31,10 +30,10 @@ public:
 	mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(const mini::dx_ptr<ID3D11Texture2D>& texture) const;
 
 	mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(SIZE size) const;
+#pragma endregion
 
+#pragma region BUFFERS
 	mini::dx_ptr<ID3D11Buffer> CreateBuffer(const void* data, const D3D11_BUFFER_DESC& desc) const;
-
-	static std::vector<BYTE> LoadByteCode(const std::wstring& filename);
 
 	template<class T>
 	mini::dx_ptr<ID3D11Buffer> CreateVertexBuffer(const std::vector<T>& vertices) const {
@@ -48,17 +47,40 @@ public:
 		return CreateBuffer(reinterpret_cast<const void*>(indices.data()), desc);
 	}
 
-	template<typename T>
+	template<typename T, size_t N = 1>
 	mini::dx_ptr<ID3D11Buffer> CreateConstantBuffer() const {
-		auto desc = BufferDescription::ConstantBufferDescription(sizeof(T));
+		auto desc = BufferDescription::ConstantBufferDescription(N * sizeof(T));
 		return CreateBuffer(nullptr, desc);
 	}
+#pragma endregion
 
+#pragma region SHADERS
 	mini::dx_ptr<ID3D11VertexShader> CreateVertexShader(std::vector<BYTE> vsCode) const;
 
 	mini::dx_ptr<ID3D11PixelShader> CreatePixelShader(std::vector<BYTE> psCode) const;
 	
-	mini::dx_ptr<ID3D11InputLayout> CreateInputLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC> elements, std::vector<BYTE> vsCode) const;
+	static std::vector<BYTE> LoadByteCode(const std::wstring& filename);
+#pragma endregion
+
+#pragma region LAYOUTS
+	mini::dx_ptr<ID3D11InputLayout> CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elements, UINT count, const std::vector<BYTE>& vsCode) const;
+
+	mini::dx_ptr<ID3D11InputLayout> CreateInputLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements, const std::vector<BYTE>& vsCode) const {
+		return CreateInputLayout(elements.data(), elements.size(), vsCode);
+	}
+
+	template<UINT N>
+	mini::dx_ptr<ID3D11InputLayout> CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC(&elements)[N], const std::vector<BYTE>& vsCode) const {
+		return CreateInputLayout(elements, N, vsCode);
+	}
+
+	template<typename Vertex>
+	mini::dx_ptr<ID3D11InputLayout> CreateInputLayout(const std::vector<BYTE>& vsCode) const {
+		return CreateInputLayout(Vertex::layout, vsCode);
+	}
+#pragma endregion
+
+	mini::dx_ptr<ID3D11Texture2D> CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const;
 
 private:
 	mini::dx_ptr<ID3D11Device> m_device;
