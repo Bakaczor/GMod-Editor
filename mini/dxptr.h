@@ -1,5 +1,6 @@
 #pragma once
 #include "ptr_vector.h"
+#include <d3d11.h>
 
 #define DX_ASSERT_IS_COM_TYPE(T) static_assert(std::is_base_of<IUnknown, T>::value, "T must be a COM Object!")
 

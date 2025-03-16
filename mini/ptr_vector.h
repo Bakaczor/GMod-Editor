@@ -1,5 +1,4 @@
 #pragma once
-
 #include "compressed_pair.h"
 #include <stdexcept>
 #include <memory>
