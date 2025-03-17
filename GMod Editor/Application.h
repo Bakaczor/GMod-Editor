@@ -30,7 +30,6 @@ private:
 
 	void SetShaders();
 	void RenderUI();
-	bool UpdateCamera();
 	void Update();
 	void Render();
 	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count);
