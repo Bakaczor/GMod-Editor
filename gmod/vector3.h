@@ -6,6 +6,9 @@
 
 namespace gmod {
     template<floating_point T>
+    struct vector4;
+
+    template<floating_point T>
     struct quaternion;
 
     template<floating_point T>
@@ -16,7 +19,7 @@ namespace gmod {
     public:
         vector3(T x = 0, T y = 0, T z = 0) : m_x(x), m_y(y), m_z(z) {}
 
-        vector3(const vector4<T>& v) : m_x(v.x), m_y(v.y), m_z(v.z) {}
+        vector3(const vector4<T>& v) : m_x(v.x()), m_y(v.y()), m_z(v.z()) {}
 
         T& x() { return m_x; }
 

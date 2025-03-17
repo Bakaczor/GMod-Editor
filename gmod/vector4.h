@@ -5,13 +5,16 @@
 
 namespace gmod {
     template<floating_point T>
+    struct vector3;
+
+    template<floating_point T>
     struct matrix4;
 
     template<floating_point T>
     struct vector4 {
     public:
         vector4(T x = 0, T y = 0, T z = 0, T w = 1) : m_x(x), m_y(y), m_z(z), m_w(w) {}
-        vector4(const vector3<T>& v, T w = 1) : m_x(v.x), m_y(v.y), m_z(v.z), m_w(w) {}
+        vector4(const vector3<T>& v, T w = 1) : m_x(v.x()), m_y(v.y()), m_z(v.z()), m_w(w) {}
 
         T& x() { return m_x; }
 
