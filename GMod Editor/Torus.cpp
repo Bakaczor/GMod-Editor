@@ -29,7 +29,7 @@ void Torus::UpdateMesh(const Device& device) {
 			static_cast<float>(vertex.pos.x()),
 			static_cast<float>(vertex.pos.y()),
 			static_cast<float>(vertex.pos.z()));
-		v.color = DirectX::XMFLOAT3(color[0], color[1], color[2]);
+		v.color = DirectX::XMFLOAT3(color.r, color.g, color.b);
 		verts.push_back(v);
 	}
 

@@ -34,6 +34,9 @@
     <Filter Include="Pliki nagłówkowe\app">
       <UniqueIdentifier>{97bfe556-81ff-4694-830d-53c0cb9d4578}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki źródłowe\app">
+      <UniqueIdentifier>{9b11bd43-5b20-4ae5-9702-b9064d2cdbc1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -77,9 +80,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
@@ -106,6 +106,18 @@
     </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>Pliki źródłowe\input</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Pliki źródłowe\input</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
