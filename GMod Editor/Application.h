@@ -1,15 +1,15 @@
 #pragma once
-#include "pch.h"
-#include "../mini/windowApplication.h"
-#include "Device.h"
-#include "../gmod/vector3.h"
 #include "../gmod/matrix4.h"
 #include "../gmod/quaternion.h"
-#include "Mouse.h"
-#include "Keyboard.h"
-#include "UI.h"
-#include "Torus.h"
+#include "../gmod/vector3.h"
+#include "../mini/windowApplication.h"
 #include "Camera.h"
+#include "Device.h"
+#include "Keyboard.h"
+#include "Mouse.h"
+#include "pch.h"
+#include "Torus.h"
+#include "UI.h"
 
 class Application : public mini::WindowApplication {
 public:
@@ -28,7 +28,9 @@ private:
 	UI m_UI;
 	Torus m_torus;
 
-	void SetShaders();
+	void SetShadersAndLayout();
+	void HandleCameraOnMouseMove(LPARAM lParam);
+	void HandleCameraOnMouseWheel(WPARAM wParam);
 	void RenderUI();
 	void Update();
 	void Render();
@@ -43,11 +45,17 @@ private:
 	const static float traSensitivity;
 	const static float rotSensitivity;
 	const static float scaSensitivity;
+	const static std::array<float, 4> m_clearColor;
 	const static std::wstring m_appName;
 	static int m_winWidth;
 	static int m_winHeight;
+#pragma endregion
+
+#pragma region STATE
+	bool m_useMMB = true;
 	bool m_firstPass = true;
 	bool m_wndSizeChanged = false;
+	unsigned short m_currObjId = -1;
 #pragma endregion
 
 #pragma region PROJECTION

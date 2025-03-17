@@ -5,11 +5,15 @@ struct Mouse {
 	bool isLMBDown_flag = false;
 	bool isMMBDown_flag = false;
 	bool isRMBDown_flag = false;
-	bool positionChanged = false;
-	bool distanceChanged = false;
+	bool isCtrlDown_flag = false;
+	bool isShiftDown_flag = false;
 
 	POINT prevCursorPos = { 0, 0 };
 	LONG wheelDistance = 0;
+
+	void UpdatePos(LPARAM lParam);
+	void UpdateDist(WPARAM wParam);
+	void UpdateFlags(WPARAM wParam);
 
 	static LONG GetXPos(LPARAM lParam);
 	static LONG GetYPos(LPARAM lParam);

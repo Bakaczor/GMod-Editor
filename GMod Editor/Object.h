@@ -1,11 +1,11 @@
 #pragma once
-#include <string>
-#include <vector>
-#include <array>
-#include <sstream>
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
 #include "Mesh.h"
+#include <array>
+#include <sstream>
+#include <string>
+#include <vector>
 
 class Object {
 public:

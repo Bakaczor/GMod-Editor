@@ -1,9 +1,9 @@
 #define NOMINMAX
-#include "Torus.h"
 #include "Data.h"
+#include "Torus.h"
 #include <algorithm>
-#include <numbers>
 #include <cmath>
+#include <numbers>
 
 unsigned short Torus::m_globalTorusNum = 1;
 

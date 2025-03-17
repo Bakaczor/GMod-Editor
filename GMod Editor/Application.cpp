@@ -7,6 +7,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.01f;
 const float Application::scaSensitivity = 0.01f;
+const std::array<float, 4> m_clearColor = { 0.5f, 0.5f, 1.0f, 1.0f };
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 970;
 int Application::m_winHeight = 720;
@@ -14,7 +15,8 @@ const float Application::m_near = 10.0f;
 const float Application::m_far = 100.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV4;
 
-Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName), m_device(m_window), m_torus(2.0f, 1.0f, 8, 8),
+Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
+	m_device(m_window), m_torus(2.0f, 1.0f, 8, 8),
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>())
@@ -58,9 +60,9 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	};
 	m_layout = m_device.CreateInputLayout(elements, vsBytes);
 
-	SetShaders();
+	SetShadersAndLayout();
 
-	// BUFFERS
+	// CONSTANT BUFFERS
 	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
 	m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
 	// ID3D11Buffer* psb[] = { nullptr };
@@ -102,12 +104,14 @@ int Application::MainLoop() {
 
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 			m_device.swapChain()->Present(1, 0);
+
+			if (m_firstPass) { m_firstPass = false; }
 		}
 	} while (msg.message != WM_QUIT);
 	return static_cast<int>(msg.wParam);
 }
 
-void Application::SetShaders() {
+void Application::SetShadersAndLayout() {
 	m_device.deviceContext()->VSSetShader(m_vertexShader.get(), nullptr, 0);
 	m_device.deviceContext()->PSSetShader(m_pixelShader.get(), nullptr, 0);
 	m_device.deviceContext()->IASetInputLayout(m_layout.get());
@@ -116,26 +120,26 @@ void Application::SetShaders() {
 
 void Application::Update() {
 	if (m_wndSizeChanged || m_firstPass) {
+		m_wndSizeChanged = false;
 		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
 		UpdateBuffer(m_constBuffProj, projMtx);
 	}
 
 	if (m_camera.cameraChanged || m_firstPass) {
-		cameraChanged = false;
-		//XMFLOAT4X4 cameraMtx;
-		//DirectX::XMStoreFloat4x4(&cameraMtx, m_camera.getViewMatrix());
-		//XMMATRIX mtx = XMLoadFloat4x4(&cameraMtx);
-		/*XMVECTOR det;
-		auto invvmtx = XMMatrixInverse(&det, mtx);
-		XMFLOAT4X4 view[2] = { cameraMtx };
-		XMStoreFloat4x4(view + 1, invvmtx);
-		UpdateBuffer(m_cbView, view);*/
+		m_camera.cameraChanged = false;
+		DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
+		UpdateBuffer(m_constBuffView, viewMtx);
 	}
 
-	if (m_firstPass) {
-		m_firstPass = false;
+	if (m_torus.tranformChanged || m_firstPass) {
+		m_torus.tranformChanged = false;
+		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix());
+		UpdateBuffer(m_constBuffModel, modelMtx);
 	}
-	m_UI.uiChanged = false;
+
+	if (m_torus.geometryChanged || m_firstPass) {
+		m_torus.UpdateMesh(m_device);
+	}
 }
 
 float Application::aspect() const {
@@ -156,8 +160,7 @@ gmod::matrix4<float> Application::projMatrix() const {
 }
 
 void Application::RenderUI() {
-	const float clearColor[] = { 0.5f, 0.5f, 1.0f, 1.0f };
-	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), clearColor);
+	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), m_clearColor.data());
 	m_device.deviceContext()->ClearDepthStencilView(m_depthBuffer.get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ImGui_ImplDX11_NewFrame();
@@ -188,11 +191,7 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
-	if (false) {
-		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix());
-		UpdateBuffer(m_constBuffModel, modelMtx);
-		m_torus.RenderMesh(m_device.deviceContext());
-	}
+	m_torus.RenderMesh(m_device.deviceContext());
 }
 
 void Application::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count) {
@@ -205,6 +204,42 @@ void Application::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const v
 	m_device.deviceContext()->Unmap(buffer.get(), 0);
 }
 
+void Application::HandleCameraOnMouseMove(LPARAM lParam) {
+	if (!m_mouse.isMMBDown_flag && !m_mouse.isRMBDown_flag) { return; }
+
+	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
+	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
+
+	bool MMB = m_useMMB && m_mouse.isMMBDown_flag;
+	bool RMB = !m_useMMB && m_mouse.isRMBDown_flag;
+	if (MMB) {
+		if (m_mouse.isShiftDown_flag) {
+			m_camera.Move(dx, dy);
+		} else {
+			m_camera.Rotate(dx, dy);
+		}
+		m_camera.cameraChanged = true;
+	} else if (RMB) {
+		if (m_mouse.isShiftDown_flag) {
+			if (m_mouse.isCtrlDown_flag) {
+				m_camera.Zoom(std::sqrt(dx * dx + dy * dy));
+			} else {
+				m_camera.Move(dx, dy);
+			}
+		} else {
+			m_camera.Rotate(dx, dy);
+		}
+		m_camera.cameraChanged = true;
+	}
+}
+
+void Application::HandleCameraOnMouseWheel(WPARAM wParam) {
+	if (!m_useMMB) { return; }
+	float dd = static_cast<float>(m_mouse.GetWheelDelta(wParam));
+	m_camera.Zoom(dd);
+	m_camera.cameraChanged = true;
+}
+
 bool Application::ProcessMessage(mini::WindowMessage& msg) {
 	msg.result = 0;
 	if (ImGui_ImplWin32_WndProcHandler(m_window.getHandle(), msg.message, msg.wParam, msg.lParam)) {
@@ -213,77 +248,49 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 
 	switch (msg.message) {
 		case WM_LBUTTONDOWN: {
-			//m_isLeftButtonDown = true;
-			//m_prevMousePos.x = LOWORD(msg.lParam);
-			//m_prevMousePos.y = HIWORD(msg.lParam);
+			m_mouse.isLMBDown_flag = true;
+			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
 		case WM_LBUTTONUP: {
-			//m_isLeftButtonDown = false;
+			m_mouse.isLMBDown_flag = false;
+			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
 		case WM_RBUTTONDOWN: {
-			//m_isRightButtonDown = true;
-			//m_prevMousePos.x = LOWORD(msg.lParam);
-			//m_prevMousePos.y = HIWORD(msg.lParam);
+			m_mouse.isRMBDown_flag = true;
+			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
 		case WM_RBUTTONUP: {
-			//m_isRightButtonDown = false;
+			m_mouse.isRMBDown_flag = false;
+			m_mouse.UpdatePos(msg.lParam);
+			break;
+		}
+		case WM_MBUTTONDOWN: {
+			m_mouse.isMMBDown_flag = true;
+			m_mouse.UpdatePos(msg.lParam);
+			break;
+		}
+		case WM_MBUTTONUP: {
+			m_mouse.isMMBDown_flag = false;
+			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
 		case WM_MOUSEMOVE: {
-			//if (m_mouse.positionChanged) {
-			//	//m_camera.Rotate(d.y * ROTATION_SPEED, d.x * ROTATION_SPEED);
-			//} else if (m_mouse.distanceChanged) {
-			//	m_camera.Zoom(d.y * ZOOM_SPEED);
-			//} else {
-			//	return false;
-			//}
-			//return true;
-			int currentX = LOWORD(msg.lParam);
-			int currentY = HIWORD(msg.lParam);
-			//int deltaX = currentX - m_prevMousePos.x;
-			//int deltaY = currentY - m_prevMousePos.y;
-
-			/*if (!m_uiChanged && m_isLeftButtonDown) {
-#if ROTATION_COMBINATION	
-			m_rotate = true;
-	#if ROTATION_SWITCH
-			if (m_rotation == 0) {
-				m_pitch = deltaY * m_angleMult;
-				m_yaw = 0.0f;
-			} else if (m_rotation == 1) {
-				m_pitch = 0.0f;
-				m_yaw = -deltaX * m_angleMult;
+			m_mouse.UpdateFlags(msg.wParam);
+			if (m_currObjId == -1) {
+				HandleCameraOnMouseMove(msg.lParam);
+			} else {
+				// handle object
 			}
-	#else
-			m_pitch = deltaY * m_angleMult;
-			m_yaw = -deltaX * m_angleMult;
-	#endif		
-#else
-	#if ROTATION_SWITCH
-			if (m_rotation == 0) {
-				m_pitch += deltaY * m_angleMult;
-			} else if (m_rotation == 1) {
-				m_yaw += -deltaX * m_angleMult;
-			}
-	#else
-			m_pitch += deltaY * m_angleMult;
-			m_yaw += -deltaX * m_angleMult;
-	#endif
-#endif
-				m_stateChanged = true;
-			}
-			if (!m_uiChanged && m_isRightButtonDown) {
-				m_translation.x += deltaX * m_vecMult;
-				m_translation.y += deltaY * m_vecMult;
-				m_stateChanged = true;
-			}
-
-			m_prevMousePos.x = currentX;
-			m_prevMousePos.y = currentY;
-			m_mouseMoved = true;*/
+			m_mouse.UpdatePos(msg.lParam);
+			break;
+		}
+		case WM_MOUSEWHEEL: {
+			m_mouse.UpdateFlags(msg.wParam);
+			HandleCameraOnMouseWheel(msg.wParam);
+			m_mouse.UpdateDist(msg.wParam);
 			break;
 		}
 		case WM_DESTROY: {

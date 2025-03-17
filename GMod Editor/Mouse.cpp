@@ -1,6 +1,25 @@
 #include "Mouse.h"
 #include <windowsx.h>
 
+void Mouse::UpdatePos(LPARAM lParam) {
+	prevCursorPos = {
+		GetXPos(lParam),
+		GetYPos(lParam)
+	};
+}
+
+void Mouse::UpdateDist(WPARAM wParam) {
+	wheelDistance += GetWheelDelta(wParam);
+}
+
+void Mouse::UpdateFlags(WPARAM wParam) {
+	isLMBDown_flag = isLMBDown(wParam);
+	isMMBDown_flag = isMMBDown(wParam);
+	isRMBDown_flag = isRMBDown(wParam);
+	isCtrlDown_flag = isCtrlDown(wParam);
+	isShiftDown_flag = isShiftDown(wParam);
+}
+
 LONG Mouse::GetXPos(LPARAM lParam) {
 	return GET_X_LPARAM(lParam);
 }
