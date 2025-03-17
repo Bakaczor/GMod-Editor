@@ -1,71 +1,63 @@
 #include "Camera.h"
-using namespace DirectX;
 
-OrbitCamera::OrbitCamera(XMFLOAT3 target, float minDist, float maxDist, float dist)
-	: m_angleX(0), m_angleY(0), m_target(target.x, target.y, target.z, 1.0f), m_distance(dist) {
+Camera::Camera(gmod::Transform<float> target, float minDist, float maxDist, float dist) : m_target(target), m_dist(dist) {
 	SetDistanceRange(minDist, maxDist);
 }
 
-OrbitCamera::OrbitCamera(float minDist, float maxDist, float distance)
-	: OrbitCamera(XMFLOAT3{ 0.0f, 0.0f, 0.0f }, minDist, maxDist, distance) {}
+Camera::Camera(float minDist, float maxDist, float distance) : Camera(gmod::Transform<float>(), minDist, maxDist, distance) {}
 
-void OrbitCamera::SetDistanceRange(float minDistance, float maxDistance) {
-	if (maxDistance < minDistance)
-		maxDistance = minDistance;
-	m_minDistance = minDistance;
-	m_maxDistance = maxDistance;
+float Camera::distance() const {
+	return m_dist;
+}
+gmod::Transform<float> Camera::target() const {
+	return m_target;
+}
+
+void Camera::SetDistanceRange(float minDist, float maxDist) {
+	if (maxDist < minDist) {
+		maxDist = minDist;
+	}
+	m_minDist = minDist;
+	m_maxDist = maxDist;
 	ClampDistance();
 }
 
-void OrbitCamera::ClampDistance() {
-	if (m_distance < m_minDistance)
-		m_distance = m_minDistance;
-	else if (m_distance > m_maxDistance)
-		m_distance = m_maxDistance;
+void Camera::ClampDistance() {
+	if (m_dist < m_minDist) {
+		m_dist = m_minDist;
+	}
+	else if (m_dist > m_maxDist) {
+		m_dist = m_maxDist;
+	}
 }
 
-XMMATRIX OrbitCamera::getViewMatrix() const {
-	return XMMatrixTranslation(-m_target.x, -m_target.y, -m_target.z) * XMMatrixRotationY(-m_angleY) *
-		XMMatrixRotationX(-m_angleX) * XMMatrixTranslation(0, 0, m_distance);
+void Camera::Move(float dx, float dy) {
+	gmod::vector3<float> dt = moveSensitivity * (dx * m_target.right() + dy * m_target.up());
+	m_target.UpdateTranslation(dt.x(), dt.y(), dt.z());
 }
 
-XMVECTOR FPSCamera::getForwardDir() const {
-	auto forward = XMVectorSet(0, 0, 1, 0);
-	return XMVector3TransformNormal(forward, XMMatrixRotationY(getYAngle()));
+void Camera::Rotate(float dx, float dy) {
+	m_target.UpdateRotation(rotateSensitivity * dx, rotateSensitivity * dy, 0);
 }
 
-XMVECTOR FPSCamera::getRightDir() const {
-	auto right = XMVectorSet(1, 0, 0, 0);
-	return XMVector3TransformNormal(right, XMMatrixRotationY(getYAngle()));
-}
-
-void OrbitCamera::MoveTarget(FXMVECTOR v) {
-	auto pos = XMLoadFloat4(&m_target);
-	pos = pos + v;
-	XMStoreFloat4(&m_target, pos);
-}
-
-void OrbitCamera::Rotate(float dx, float dy) {
-	m_angleX = XMScalarModAngle(m_angleX + dx);
-	m_angleY = XMScalarModAngle(m_angleY + dy);
-}
-
-void OrbitCamera::Zoom(float dd) {
-	m_distance += dd;
+void Camera::Zoom(float dd) {
+	m_dist += zoomSensitivity * dd;
 	ClampDistance();
 }
 
-DirectX::XMFLOAT4 OrbitCamera::getCameraPosition() const {
-	if (m_distance == 0.0f)
-		return m_target;
-	XMMATRIX viewMtx = getViewMatrix();
-	XMVECTOR det;
-	viewMtx = XMMatrixInverse(&det, viewMtx);
-	//auto alt = XMMatrixTranslation(0.0f, 0.0f, -m_distance) * XMMatrixRotationY(m_angleY) * XMMatrixRotationX(-m_angleX);
-	XMFLOAT3 res(0.0f, 0.0f, 0.0f);
-	auto transl = XMVector3TransformCoord(XMLoadFloat3(&res), viewMtx);
-	XMStoreFloat3(&res, transl);
-	return XMFLOAT4(res.x, res.y, res.z, 1.0f);
-
+gmod::matrix4<float> Camera::viewMatrix() const {
+	const auto& pos = m_target.position();
+	const auto& angles = m_target.eulerAngles();
+	return gmod::matrix4<float>::translation(pos.x(), pos.y(), pos.z()) * gmod::matrix4<float>::rotationY(angles.y()) *
+		gmod::matrix4<float>::rotationX(angles.x()) * gmod::matrix4<float>::translation(0, 0, m_dist);
 }
+
+gmod::vector4<float> Camera::cameraPosition() const {
+	if (m_dist == 0.0f) {
+		return gmod::vector4<float>(m_target.position(), 1.0f);
+	}
+	gmod::vector3<float> t = -m_dist * m_target.forward();
+	return gmod::vector4<float>(m_target.position() + t, 1.0f);
+}
+
 

@@ -1,55 +1,35 @@
 #pragma once
-
-#include <DirectXMath.h>
+#include "../gmod/Transform.h"
+#include "../gmod/vector3.h"
+#include "../gmod/vector4.h"
+#include <limits>
 
 class Camera {
 public:
-	virtual ~Camera() {}
-	virtual DirectX::XMMATRIX getViewMatrix() const = 0;
-};
+	bool cameraChanged = false;
+	float moveSensitivity = 0.005f;
+	float rotateSensitivity = 0.01f;
+	float zoomSensitivity = 0.01f;
 
-class OrbitCamera : public Camera {
-public:
-	explicit OrbitCamera(DirectX::XMFLOAT3 target = DirectX::XMFLOAT3(0, 0, 0),
-		float minDistance = 0.0f, float maxDistance = FLT_MAX, float distance = 0.0f);
-	explicit OrbitCamera(float minDistance, float maxDistance = FLT_MAX, float distance = 0.0f);
+	explicit Camera(gmod::Transform<float> target = gmod::Transform<float>(),
+		float minDist = 0.0f, float maxDist = std::numeric_limits<float>::max(), float dist = 0.0f);
 
-	DirectX::XMMATRIX getViewMatrix() const override;
-	DirectX::XMFLOAT4 getCameraPosition() const;
+	explicit Camera(float minDist, float maxDist = std::numeric_limits<float>::max(), float dist = 0.0f);
 
-	void MoveTarget(DirectX::XMFLOAT3 v) { MoveTarget(XMLoadFloat3(&v)); }
-	void MoveTarget(DirectX::FXMVECTOR v);
+	gmod::matrix4<float> viewMatrix() const ;
+	gmod::vector4<float> cameraPosition() const;
+
+	void Move(float dx, float dy);
 	void Rotate(float dx, float dy);
 	void Zoom(float dd);
-	void SetDistanceRange(float minDistance, float maxDistance);
+	void SetDistanceRange(float minDist, float maxDist);
 
-	float getXAngle() const { return m_angleX; }
-	float getYAngle() const { return m_angleY; }
-	float getDistance() const { return m_distance; }
-	DirectX::XMFLOAT4 getTarget() const { return m_target; }
+	float distance() const;
+	gmod::Transform<float> target() const;
 
 private:
+	float m_dist, m_minDist, m_maxDist;
+	gmod::Transform<float> m_target;
+
 	void ClampDistance();
-
-	float m_angleX, m_angleY;
-	float m_distance, m_minDistance, m_maxDistance;
-	DirectX::XMFLOAT4 m_target;
-};
-
-class FPSCamera : public OrbitCamera {
-public:
-	explicit FPSCamera(DirectX::XMFLOAT3 target)
-		: OrbitCamera(target, 0.0f, 0.0f) {}
-
-	using OrbitCamera::MoveTarget;
-	using OrbitCamera::Rotate;
-	using OrbitCamera::getXAngle;
-	using OrbitCamera::getYAngle;
-	using OrbitCamera::getTarget;
-	using OrbitCamera::getViewMatrix;
-
-	/*Returns target's forward direction parallel to ground (XZ) plane*/
-	DirectX::XMVECTOR getForwardDir() const;
-	/*Returns target's right direction parallel to ground (XZ) plane*/
-	DirectX::XMVECTOR getRightDir() const;
 };

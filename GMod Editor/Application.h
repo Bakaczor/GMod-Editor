@@ -9,6 +9,7 @@
 #include "Keyboard.h"
 #include "UI.h"
 #include "Torus.h"
+#include "Camera.h"
 
 class Application : public mini::WindowApplication {
 public:
@@ -23,6 +24,7 @@ protected:
 private:
 	Mouse m_mouse;
 	Keyboard m_keyboard;
+	Camera m_camera;
 	UI m_UI;
 	Torus m_torus;
 
@@ -39,9 +41,9 @@ private:
 	}
 
 #pragma region APPLICATION
-	const static int translationSensitivity;
-	const static int rotationSensitivity;
-	const static int scalingSensitivity;
+	const static float traSensitivity;
+	const static float rotSensitivity;
+	const static float scaSensitivity;
 	const static std::wstring m_appName;
 	static int m_winWidth;
 	static int m_winHeight;

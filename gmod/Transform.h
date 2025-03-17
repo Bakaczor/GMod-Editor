@@ -13,9 +13,7 @@ namespace gmod {
 			m_rx(eulerAngles.x()), m_ry(eulerAngles.y()), m_rz(eulerAngles.z()),
 			m_sx(scale.x()), m_sy(scale.y()), m_sz(scale.z()) {
 			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
-			if (m_sx == 0 || m_sy == 0 || m_sz == 0) {
-				throw std::logic_error("Transform's scale cannot be equal to zero");
-			}
+			AssertScales();
 		}
 
 		vector3<T> position() const {
@@ -54,9 +52,9 @@ namespace gmod {
 		}
 
 		void SetRotation(T rx, T ry, T rz) {
-			m_rx = rx;
-			m_ry = ry;
-			m_rz = rz;
+			m_rx = ClampRotation(rx);
+			m_ry = ClampRotation(ry);
+			m_rz = ClampRotation(rz);
 			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
 		}
 
@@ -64,9 +62,7 @@ namespace gmod {
 			m_sx = sx;
 			m_sy = sy;
 			m_sz = sz;
-			if (m_sx == 0 || m_sy == 0 || m_sz == 0) {
-				throw std::logic_error("Transform's scale cannot be equal to zero");
-			}
+			AssertScales();
 		}
 
 		void UpdateTranslation(T dtx, T dty, T dtz) {
@@ -76,9 +72,9 @@ namespace gmod {
 		}
 
 		void UpdateRotation(T drx, T dry, T drz) {
-			m_rx += drx;
-			m_ry += dry;
-			m_rz += drz;
+			m_rx = ClampRotation(m_rx + drx);
+			m_ry = ClampRotation(m_ry + dry);
+			m_rz = ClampRotation(m_rz + drz);
 			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
 		}
 
@@ -86,11 +82,11 @@ namespace gmod {
 			m_sx += dsx;
 			m_sy += dsy;
 			m_sz += dsz;
-			if (m_sx == 0 || m_sy == 0 || m_sz == 0) {
-				throw std::logic_error("Transform's scale cannot be equal to zero");
-			}
+			AssertScales();
 		}
 	private:
+		const T m_minScale = 10 * std::numeric_limits<T>::epsilon();
+
 		T m_tx, m_ty, m_tz;
 		T m_rx, m_ry, m_rz;
 		T m_sx, m_sy, m_sz;
@@ -99,10 +95,31 @@ namespace gmod {
 		vector3<T> m_up;
 		vector3<T> m_forward;
 
+		void AssertScales() {
+			if (std::fabs(m_sx) < m_minScale) {
+				m_sx = std::copysign(m_minScale, m_sx);
+			}
+			if (std::fabs(m_sy) < m_minScale) {
+				m_sx = std::copysign(m_minScale, m_sy);
+			}
+			if (std::fabs(m_sz) < m_minScale) {
+				m_sx = std::copysign(m_minScale, m_sz);
+			}
+		}
+
 		void ResetAxes() {
 			m_right = vector3<T>(1, 0, 0);
 			m_up = vector3<T>(0, 1, 0);
 			m_forward = vector3<T>(0, 0, 1);
+		}
+
+		T ClampRotation(T rad) {
+			const auto PI2 = 2 * std::numbers::pi_v<T>;
+			if (rad > PI2 || rad < PI2) {
+				const int abs = static_cast<int>(rad / PI2);
+				rad -= abs * PI2;
+			}
+			return rad;
 		}
 
 		void RotateAxes(const quaternion<T>& q) {

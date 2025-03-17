@@ -4,9 +4,9 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-const int Application::translationSensitivity = 0.005f;
-const int Application::rotationSensitivity = 0.01f;
-const int Application::scalingSensitivity = 0.01f;
+const float Application::traSensitivity = 0.005f;
+const float Application::rotSensitivity = 0.01f;
+const float Application::scaSensitivity = 0.01f;
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 970;
 int Application::m_winHeight = 720;
@@ -114,24 +114,14 @@ void Application::SetShaders() {
 	m_device.deviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
-bool Application::UpdateCamera() {
-	if (m_mouse.positionChanged) {
-		//m_camera.Rotate(d.y * ROTATION_SPEED, d.x * ROTATION_SPEED);
-	} else if (m_mouse.distanceChanged) {
-		//m_camera.Zoom(d.y * ZOOM_SPEED);
-	} else {
-		return false;
-	}
-	return true;
-}
-
 void Application::Update() {
 	if (m_wndSizeChanged || m_firstPass) {
 		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
 		UpdateBuffer(m_constBuffProj, projMtx);
 	}
 
-	if (UpdateCamera() || m_firstPass) {
+	if (m_camera.cameraChanged || m_firstPass) {
+		cameraChanged = false;
 		//XMFLOAT4X4 cameraMtx;
 		//DirectX::XMStoreFloat4x4(&cameraMtx, m_camera.getViewMatrix());
 		//XMMATRIX mtx = XMLoadFloat4x4(&cameraMtx);
@@ -243,6 +233,14 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 			break;
 		}
 		case WM_MOUSEMOVE: {
+			//if (m_mouse.positionChanged) {
+			//	//m_camera.Rotate(d.y * ROTATION_SPEED, d.x * ROTATION_SPEED);
+			//} else if (m_mouse.distanceChanged) {
+			//	m_camera.Zoom(d.y * ZOOM_SPEED);
+			//} else {
+			//	return false;
+			//}
+			//return true;
 			int currentX = LOWORD(msg.lParam);
 			int currentY = HIWORD(msg.lParam);
 			//int deltaX = currentX - m_prevMousePos.x;
