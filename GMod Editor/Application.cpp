@@ -7,7 +7,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.01f;
 const float Application::scaSensitivity = 0.01f;
-const std::array<float, 4> m_clearColor = { 0.5f, 0.5f, 1.0f, 1.0f };
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 970;
 int Application::m_winHeight = 720;
@@ -160,7 +159,7 @@ gmod::matrix4<float> Application::projMatrix() const {
 }
 
 void Application::RenderUI() {
-	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), m_clearColor.data());
+	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), m_backGroundColor.data());
 	m_device.deviceContext()->ClearDepthStencilView(m_depthBuffer.get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ImGui_ImplDX11_NewFrame();

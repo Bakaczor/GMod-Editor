@@ -45,10 +45,11 @@ private:
 	const static float traSensitivity;
 	const static float rotSensitivity;
 	const static float scaSensitivity;
-	const static std::array<float, 4> m_clearColor;
 	const static std::wstring m_appName;
 	static int m_winWidth;
 	static int m_winHeight;
+
+	const std::array<float, 4> m_backGroundColor = { 0.5f, 0.5f, 0.5f, 1.0f };
 #pragma endregion
 
 #pragma region STATE
