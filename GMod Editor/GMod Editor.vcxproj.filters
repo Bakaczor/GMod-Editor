@@ -78,6 +78,9 @@
     <ClInclude Include="UI.h">
       <Filter>Pliki nagłówkowe\app</Filter>
     </ClInclude>
+    <ClInclude Include="Cube.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -118,6 +121,9 @@
     </ClCompile>
     <ClCompile Include="UI.cpp">
       <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="Cube.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

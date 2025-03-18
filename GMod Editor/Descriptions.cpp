@@ -75,3 +75,16 @@ BufferDescription BufferDescription::ConstantBufferDescription(size_t byteWidth)
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	return desc;
 }
+
+RasterizerDescription::RasterizerDescription() {
+	FillMode = D3D11_FILL_WIREFRAME;
+	CullMode = D3D11_CULL_NONE;
+	//FrontCounterClockwise = false;
+	DepthBias = 0;
+	DepthBiasClamp = 0.0f;
+	SlopeScaledDepthBias = 0.0f;
+	DepthClipEnable = false;
+	ScissorEnable = false;
+	MultisampleEnable = false;
+	AntialiasedLineEnable = true;
+}

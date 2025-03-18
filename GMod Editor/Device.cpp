@@ -31,6 +31,16 @@ mini::dx_ptr<ID3D11Texture2D> Device::CreateTexture(const D3D11_TEXTURE2D_DESC& 
 	return result;
 }
 
+mini::dx_ptr<ID3D11RasterizerState> Device::CreateRasterizerState(const D3D11_RASTERIZER_DESC& desc) const {
+	ID3D11RasterizerState* temp = nullptr;
+	auto hr = m_device->CreateRasterizerState(&desc, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11RasterizerState> result(temp);
+	return result;
+}
+
 #pragma region VIEWS
 mini::dx_ptr<ID3D11RenderTargetView> Device::CreateRenderTargetView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
 	ID3D11RenderTargetView* temp;

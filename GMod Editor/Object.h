@@ -31,12 +31,12 @@ public:
 	bool geometryChanged = false;
 
 	Object();
-
 	void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
-
-	virtual void UpdateMesh(const Device& device) = 0;
+	void UpdateMesh(const Device& device);
 protected:
 	static unsigned short m_globalObjectNum;
-	static unsigned short m_globalObjectId;
+	static int m_globalObjectId;
 	Mesh m_mesh;
+	std::vector<VERTEX> m_vertices;
+	std::vector<EDGE> m_edges;
 };

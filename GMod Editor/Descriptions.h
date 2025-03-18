@@ -30,3 +30,7 @@ struct BufferDescription : D3D11_BUFFER_DESC {
 	
 	static BufferDescription ConstantBufferDescription(size_t byteWidth);
 };
+
+struct RasterizerDescription : D3D11_RASTERIZER_DESC {
+	RasterizerDescription();
+};

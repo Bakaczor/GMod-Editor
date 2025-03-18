@@ -5,40 +5,14 @@
 #include <cmath>
 #include <numbers>
 
-unsigned short Torus::m_globalTorusNum = 1;
+unsigned short Torus::m_globalCubeNum = 1;
 
 Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R(R), m_r(r), m_uParts(uParts), m_vParts(vParts) {
 	std::ostringstream os;
-	os << "torus_" << m_globalTorusNum;
+	os << "torus_" << m_globalCubeNum;
 	name = os.str();
-	m_globalTorusNum += 1;
+	m_globalCubeNum += 1;
 	RecalculateGeometry();
-}
-
-void Torus::UpdateMesh(const Device& device) {
-	std::vector<Vertex_PoCo> verts;
-	verts.reserve(m_vertices.size());
-
-	const unsigned int idxsNum = 2 * m_edges.size();
-	std::vector<USHORT> idxs;
-	idxs.reserve(idxsNum);
-
-	for (const auto& vertex : m_vertices) {
-		Vertex_PoCo v;
-		v.position = DirectX::XMFLOAT3(
-			static_cast<float>(vertex.pos.x()),
-			static_cast<float>(vertex.pos.y()),
-			static_cast<float>(vertex.pos.z()));
-		v.color = DirectX::XMFLOAT3(color.r, color.g, color.b);
-		verts.push_back(v);
-	}
-
-	for (const auto& edge : m_edges) {
-		idxs.push_back(edge.v1);
-		idxs.push_back(edge.v2);
-	}
-
-	m_mesh.Update(device, verts, idxs);
 }
 
 void Torus::Set_R(double R) {

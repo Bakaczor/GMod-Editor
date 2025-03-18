@@ -82,6 +82,8 @@ public:
 
 	mini::dx_ptr<ID3D11Texture2D> CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const;
 
+	mini::dx_ptr<ID3D11RasterizerState> CreateRasterizerState(const D3D11_RASTERIZER_DESC& desc) const;
+
 private:
 	mini::dx_ptr<ID3D11Device> m_device;
 	mini::dx_ptr<ID3D11DeviceContext> m_deviceContext;

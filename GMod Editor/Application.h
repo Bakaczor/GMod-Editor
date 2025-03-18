@@ -4,6 +4,7 @@
 #include "../gmod/vector3.h"
 #include "../mini/windowApplication.h"
 #include "Camera.h"
+#include "Cube.h"
 #include "Device.h"
 #include "Keyboard.h"
 #include "Mouse.h"
@@ -28,12 +29,17 @@ private:
 	UI m_UI;
 	Torus m_torus;
 
+	void Initialize();
 	void SetShadersAndLayout();
-	void HandleCameraOnMouseMove(LPARAM lParam);
-	void HandleCameraOnMouseWheel(WPARAM wParam);
+
 	void RenderUI();
 	void Update();
 	void Render();
+
+	void HandleCameraOnMouseMove(LPARAM lParam);
+	void HandleCameraOnMouseWheel(WPARAM wParam);
+	void ResizeWnd(LPARAM lParam);
+
 	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count);
 
 	template<typename T>
@@ -56,7 +62,7 @@ private:
 	bool m_useMMB = true;
 	bool m_firstPass = true;
 	bool m_wndSizeChanged = false;
-	unsigned short m_currObjId = -1;
+	int m_currObjId = -1;
 #pragma endregion
 
 #pragma region PROJECTION
@@ -74,6 +80,7 @@ private:
 	mini::dx_ptr<ID3D11VertexShader> m_vertexShader;
 	mini::dx_ptr<ID3D11PixelShader> m_pixelShader;
 	mini::dx_ptr<ID3D11InputLayout> m_layout;
+	mini::dx_ptr<ID3D11RasterizerState> m_rastState;
 
 	mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 	mini::dx_ptr<ID3D11Buffer> m_constBuffView;

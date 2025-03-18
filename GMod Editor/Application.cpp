@@ -10,12 +10,12 @@ const float Application::scaSensitivity = 0.01f;
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 970;
 int Application::m_winHeight = 720;
-const float Application::m_near = 10.0f;
-const float Application::m_far = 100.0f;
-const float Application::m_FOV = DirectX::XM_PIDIV4;
+const float Application::m_near = 0.01f;
+const float Application::m_far = 1000.0f;
+const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_torus(2.0f, 1.0f, 8, 8),
+	m_device(m_window), m_torus(1.0f, 0.5f, 16, 16), m_camera(0.0f),
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>())
@@ -25,6 +25,36 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		static_cast<LONG>(m_winHeight)
 	};
 
+	Initialize();
+
+	// SHADERS
+	const auto vsBytes = Device::LoadByteCode(L"vs.cso");
+	const auto psBytes = Device::LoadByteCode(L"ps.cso");
+	m_vertexShader = m_device.CreateVertexShader(vsBytes);
+	m_pixelShader = m_device.CreatePixelShader(psBytes);
+
+	// LAYOUT
+	std::vector<D3D11_INPUT_ELEMENT_DESC> elements {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	m_layout = m_device.CreateInputLayout(elements, vsBytes);
+
+	SetShadersAndLayout();
+
+	// CONSTANT BUFFERS
+	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
+	m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
+	// ID3D11Buffer* psb[] = { nullptr };
+	// m_device.deviceContext()->PSSetConstantBuffers(0, 0, psb);
+
+	// STATES
+	RasterizerDescription rsdesc;
+	m_rastState = m_device.CreateRasterizerState(rsdesc);
+	m_device.deviceContext()->RSSetState(m_rastState.get());
+}
+
+void Application::Initialize() {
 	// RENDER TARGET
 	ID3D11Texture2D* temp = nullptr;
 	auto hr = m_device.swapChain()->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&temp));
@@ -45,27 +75,6 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	// VIEWPORT
 	Viewport viewport{ size };
 	m_device.deviceContext()->RSSetViewports(1, &viewport);
-
-	// SHADERS
-	const auto vsBytes = Device::LoadByteCode(L"vs.cso");
-	const auto psBytes = Device::LoadByteCode(L"ps.cso");
-	m_vertexShader = m_device.CreateVertexShader(vsBytes);
-	m_pixelShader = m_device.CreatePixelShader(psBytes);
-
-	// LAYOUT
-	std::vector<D3D11_INPUT_ELEMENT_DESC> elements {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	};
-	m_layout = m_device.CreateInputLayout(elements, vsBytes);
-
-	SetShadersAndLayout();
-
-	// CONSTANT BUFFERS
-	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
-	m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
-	// ID3D11Buffer* psb[] = { nullptr };
-	// m_device.deviceContext()->PSSetConstantBuffers(0, 0, psb);
 }
 
 Application::~Application() {
@@ -102,7 +111,7 @@ int Application::MainLoop() {
 			Render();
 
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-			m_device.swapChain()->Present(1, 0);
+			m_device.swapChain()->Present(0, 0);
 
 			if (m_firstPass) { m_firstPass = false; }
 		}
@@ -131,12 +140,16 @@ void Application::Update() {
 	}
 
 	if (m_torus.tranformChanged || m_firstPass) {
+		m_torus.transform.SetTranslation(0.0f, 0.0f, 0.0f); // COŚ NIE TAK!
+		m_torus.transform.SetRotation(0.0f, 0.0f, 0.0f);
+		m_torus.transform.SetScaling(0.2f, 0.2f, 0.2f);
 		m_torus.tranformChanged = false;
 		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix());
 		UpdateBuffer(m_constBuffModel, modelMtx);
 	}
 
 	if (m_torus.geometryChanged || m_firstPass) {
+		m_torus.geometryChanged = false;
 		m_torus.UpdateMesh(m_device);
 	}
 }
@@ -146,15 +159,15 @@ float Application::aspect() const {
 }
 
 gmod::matrix4<float> Application::projMatrix() const {
-	const float CTG_FOV_2 = 1 / std::tan(m_FOV / 2);
-	const float asp = aspect();
-	const float f_n = m_far - m_near;
+	const float Height = 1 / std::tan(0.5f * m_FOV);
+	const float Width = Height / aspect();
+	const float Range = m_far / (m_near - m_far);
 
 	return gmod::matrix4<float>(
-		CTG_FOV_2 / asp, 0,		    0,						0,
-		0,				 CTG_FOV_2, 0,						0,
-		0,				 0,		    (m_far + m_near) / f_n, (-2 * m_far * m_near) / f_n,
-		0,				 0,		    1,						0
+		Width, 0,      0,               0,
+		0,	   Height, 0,               0,
+		0,	   0,	   Range,          -1,
+		0,     0,      Range * m_near,  0
 	);
 }
 
@@ -172,9 +185,9 @@ void Application::RenderUI() {
 	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(width, 315.0f), ImGuiCond_Always);
 	ImGui::Begin("Parameters", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-	m_UI.RenderRotations(m_firstPass);
-	m_UI.RenderEllipsoid(m_firstPass);
-	m_UI.RenderRendering(m_firstPass);
+	m_UI.RenderRotations(false);
+	m_UI.RenderEllipsoid(false);
+	m_UI.RenderRendering(false);
 	ImGui::End();
 
 	const float height = 80.0f;
@@ -183,7 +196,7 @@ void Application::RenderUI() {
 
 	if (m_UI.m_showColors) {
 		ImGui::Begin("Colors", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-		m_UI.RenderColors(m_firstPass);
+		m_UI.RenderColors(false);
 		ImGui::End();
 	}
 	ImGui::Render();
@@ -221,7 +234,7 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	} else if (RMB) {
 		if (m_mouse.isShiftDown_flag) {
 			if (m_mouse.isCtrlDown_flag) {
-				m_camera.Zoom(std::sqrt(dx * dx + dy * dy));
+				m_camera.Zoom(-dy);
 			} else {
 				m_camera.Move(dx, dy);
 			}
@@ -292,6 +305,16 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 			m_mouse.UpdateDist(msg.wParam);
 			break;
 		}
+		case WM_SIZE: {
+			if (msg.wParam != SIZE_MINIMIZED) {
+				ResizeWnd(msg.lParam);
+			}
+			break;
+		}
+		case WM_ERASEBKGND: {
+			msg.result = 0;
+			break;
+		}
 		case WM_DESTROY: {
 			PostQuitMessage(0);
 			break;
@@ -306,4 +329,18 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 		}
 	}
 	return (msg.result == 0);
+}
+
+void Application::ResizeWnd(LPARAM lParam) {
+	m_winWidth = LOWORD(lParam);
+	m_winHeight = HIWORD(lParam);
+
+	if (!m_device.device()) { return; }
+
+	m_backBuffer.reset();
+	m_depthBuffer.reset();
+	m_device.swapChain()->ResizeBuffers(0, m_winWidth, m_winHeight, DXGI_FORMAT_UNKNOWN, 0);
+
+	Initialize();
+	m_wndSizeChanged = true;
 }

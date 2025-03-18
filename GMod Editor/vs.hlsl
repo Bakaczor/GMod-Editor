@@ -27,13 +27,9 @@ struct PSInput
 
 PSInput main(VSInput input)
 {
-    float4 pos = float4(input.position, 1.0f);
-    pos = mul(modelMatrix, pos);
-    pos = mul(viewMatrix, pos);
-    pos = mul(projMatrix, pos);
-    
     PSInput output;
-    output.position = pos;
+    float4 pos = float4(input.position, 1.0f);
+    output.position = mul(projMatrix, mul(viewMatrix, mul(modelMatrix, pos)));
     output.color = float4(input.color, 1.0f);
     return output;
 }

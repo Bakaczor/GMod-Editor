@@ -11,7 +11,8 @@ namespace gmod {
 		Transform(const vector3<T>& position = { 0, 0, 0 }, const vector3<T>& eulerAngles = { 0, 0, 0 }, const vector3<T>& scale = { 1, 1, 1 }) :
 			m_tx(position.x()), m_ty(position.y()), m_tz(position.z()),
 			m_rx(eulerAngles.x()), m_ry(eulerAngles.y()), m_rz(eulerAngles.z()),
-			m_sx(scale.x()), m_sy(scale.y()), m_sz(scale.z()) {
+			m_sx(scale.x()), m_sy(scale.y()), m_sz(scale.z())
+		{
 			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
 			AssertScales();
 		}

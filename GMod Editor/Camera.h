@@ -7,14 +7,14 @@
 class Camera {
 public:
 	bool cameraChanged = false;
-	float moveSensitivity = 0.005f;
-	float rotateSensitivity = 0.01f;
-	float zoomSensitivity = 0.01f;
+	float moveSensitivity = 0.002f;
+	float rotateSensitivity = 0.005f;
+	float zoomSensitivity = 0.0005f;
 
 	explicit Camera(gmod::Transform<float> target = gmod::Transform<float>(),
-		float minDist = 0.0f, float maxDist = std::numeric_limits<float>::max(), float dist = 0.0f);
+		float dist = 0.0f, float minDist = -std::numeric_limits<float>::max(), float maxDist = std::numeric_limits<float>::max());
 
-	explicit Camera(float minDist, float maxDist = std::numeric_limits<float>::max(), float dist = 0.0f);
+	explicit Camera(float dist = 0.0f, float minDist = -std::numeric_limits<float>::max(), float maxDist = std::numeric_limits<float>::max());
 
 	gmod::matrix4<float> viewMatrix() const ;
 	gmod::vector4<float> cameraPosition() const;

@@ -1,14 +1,15 @@
 #include "Camera.h"
 
-Camera::Camera(gmod::Transform<float> target, float minDist, float maxDist, float dist) : m_target(target), m_dist(dist) {
+Camera::Camera(gmod::Transform<float> target, float dist, float minDist, float maxDist) : m_target(target), m_dist(dist) {
 	SetDistanceRange(minDist, maxDist);
 }
 
-Camera::Camera(float minDist, float maxDist, float distance) : Camera(gmod::Transform<float>(), minDist, maxDist, distance) {}
+Camera::Camera(float dist, float minDist, float maxDist) : Camera(gmod::Transform<float>(), dist, minDist, maxDist) {}
 
 float Camera::distance() const {
 	return m_dist;
 }
+
 gmod::Transform<float> Camera::target() const {
 	return m_target;
 }
@@ -32,12 +33,12 @@ void Camera::ClampDistance() {
 }
 
 void Camera::Move(float dx, float dy) {
-	gmod::vector3<float> dt = moveSensitivity * (dx * m_target.right() + dy * m_target.up());
+	gmod::vector3<float> dt = moveSensitivity * (-dx * m_target.right() + -dy * m_target.up());
 	m_target.UpdateTranslation(dt.x(), dt.y(), dt.z());
 }
 
 void Camera::Rotate(float dx, float dy) {
-	m_target.UpdateRotation(rotateSensitivity * dx, rotateSensitivity * dy, 0);
+	m_target.UpdateRotation(rotateSensitivity * -dy, rotateSensitivity * dx, 0);
 }
 
 void Camera::Zoom(float dd) {
@@ -46,10 +47,18 @@ void Camera::Zoom(float dd) {
 }
 
 gmod::matrix4<float> Camera::viewMatrix() const {
-	const auto& pos = m_target.position();
-	const auto& angles = m_target.eulerAngles();
-	return gmod::matrix4<float>::translation(pos.x(), pos.y(), pos.z()) * gmod::matrix4<float>::rotationY(angles.y()) *
-		gmod::matrix4<float>::rotationX(angles.x()) * gmod::matrix4<float>::translation(0, 0, m_dist);
+	const gmod::vector3<float> ax = m_target.right();
+	const gmod::vector3<float> ay = m_target.up();
+	const gmod::vector3<float> az = m_target.forward();
+	const gmod::vector3<float> eye = cameraPosition();
+
+	return gmod::matrix4<float>(
+		 ax.x(),		ay.x(),		   az.x(),		 0,
+		 ax.y(),		ay.y(),		   az.y(),		 0,
+		 ax.z(),		ay.z(),	   	   az.z(),		 0,
+		-dot(ax, eye), -dot(ay, eye), -dot(az, eye), 1
+
+	);
 }
 
 gmod::vector4<float> Camera::cameraPosition() const {
