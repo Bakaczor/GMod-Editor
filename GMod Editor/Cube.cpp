@@ -12,14 +12,14 @@ Cube::Cube() {
 
 void Cube::RecalculateGeometry() {
 	m_vertices = {
-		{ gmod::vector3<double>(-0.5f, -0.5f,  0.5f), 0 },
-		{ gmod::vector3<double>(0.5f, -0.5f,  0.5f), 1 },
-		{ gmod::vector3<double>(0.5f, -0.5f, -0.5f), 2 },
-		{ gmod::vector3<double>(-0.5f, -0.5f, -0.5f), 3 },
-		{ gmod::vector3<double>(-0.5f,  0.5f,  0.5f), 4 },
-		{ gmod::vector3<double>(0.5f,  0.5f,  0.5f), 5 },
-		{ gmod::vector3<double>(0.5f,  0.5f, -0.5f), 6 },
-		{ gmod::vector3<double>(-0.5f,  0.5f, -0.5f), 7 }
+		{ gmod::vector3<double>(-0.5f, -0.5f,  0.5f) },
+		{ gmod::vector3<double>(0.5f, -0.5f,  0.5f) },
+		{ gmod::vector3<double>(0.5f, -0.5f, -0.5f) },
+		{ gmod::vector3<double>(-0.5f, -0.5f, -0.5f) },
+		{ gmod::vector3<double>(-0.5f,  0.5f,  0.5f) },
+		{ gmod::vector3<double>(0.5f,  0.5f,  0.5f) },
+		{ gmod::vector3<double>(0.5f,  0.5f, -0.5f) },
+		{ gmod::vector3<double>(-0.5f,  0.5f, -0.5f) }
 	};
 	m_edges = {
 		{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },

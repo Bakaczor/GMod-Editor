@@ -62,7 +62,6 @@ void Torus::RecalculateGeometry() {
 				sinv * (m_R + m_r * cosu),
 				m_r * sinu
 			);
-			vertex.idx = j * m_uParts + i;
 			m_vertices.push_back(vertex);
 		}
 	}

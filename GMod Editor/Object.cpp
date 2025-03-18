@@ -18,7 +18,7 @@ void Object::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const 
 }
 
 void Object::UpdateMesh(const Device& device) {
-	std::vector<Vertex_PoCo> verts;
+	std::vector<Vertex_Po> verts;
 	verts.reserve(m_vertices.size());
 
 	const unsigned int idxsNum = 2 * m_edges.size();
@@ -26,12 +26,11 @@ void Object::UpdateMesh(const Device& device) {
 	idxs.reserve(idxsNum);
 
 	for (const auto& vertex : m_vertices) {
-		Vertex_PoCo v;
+		Vertex_Po v;
 		v.position = DirectX::XMFLOAT3(
 			static_cast<float>(vertex.pos.x()),
 			static_cast<float>(vertex.pos.y()),
 			static_cast<float>(vertex.pos.z()));
-		v.color = DirectX::XMFLOAT3(color.r, color.g, color.b);
 		verts.push_back(v);
 	}
 

@@ -2,6 +2,9 @@
 #include "pch.h"
 
 struct UI {
+public:
+	void Render(bool firstPass);
+
 	int m_rotation = 0;
 	void RenderRotations(bool firstPass);
 
@@ -20,9 +23,15 @@ struct UI {
 	bool m_showColors = false;
 	bool m_addAmbient = false;
 
-	ImVec4 m_backgroundColor = ImVec4(0.5f, 0.25f, 0.5f, 1.0f);
-	ImVec4 m_ellipsoidColor = ImVec4(1.0f, 0.9f, 0.0f, 1.0f);
-	void RenderColors(bool firstPass);
+	// SETTINGS
+	bool m_useMMB = true;
+	bool m_gridOn = false;
+	ImVec4 m_bkgdColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	bool uiChanged = false;
+private:
+	void RenderRightPanel();
+	void RenderTransforms();
+	void RenderSettings(bool firstPass);
+
 };

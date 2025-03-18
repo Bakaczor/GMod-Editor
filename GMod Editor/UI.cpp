@@ -2,6 +2,33 @@
 #include "UI.h"
 #include <algorithm>
 
+void UI::Render(bool firstPass) {
+	RenderRightPanel();
+	RenderSettings(firstPass);
+}
+
+void UI::RenderRightPanel() {
+	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
+	const float width = 250.0f;
+	const float height = viewportSize.y;
+
+	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
+	ImGui::SetNextWindowBgAlpha(1.0f);
+
+	ImGui::Begin("Right panel", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+	RenderTransforms();
+	RenderRotations(false);
+	RenderEllipsoid(false);
+	RenderRendering(false);
+	ImGui::End();
+}
+
+void UI::RenderTransforms() {
+
+
+}
+
 void UI::RenderRotations(bool firstPass) {
 	if (firstPass) {
 		ImGui::SetNextItemOpen(true);
@@ -58,11 +85,24 @@ void UI::RenderRendering(bool firstPass) {
 	}
 }
 
-void UI::RenderColors(bool firstPass) {
-	if (ImGui::ColorEdit3("background", (float*)&m_backgroundColor)) {
-		uiChanged = true;
+void UI::RenderSettings(bool firstPass) {
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
+	if (firstPass) {
+		ImGui::SetNextItemOpen(false);
 	}
-	if (ImGui::ColorEdit3("ellipsoid", (float*)&m_ellipsoidColor)) {
-		uiChanged = true;
+	if (ImGui::CollapsingHeader("Editor Settings")) {
+		ImVec2 size = ImGui::GetWindowSize();
+		ImGui::SetWindowSize(ImVec2(size.x, 110.0f), ImGuiCond_Always);
+
+		if (ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&m_bkgdColor))) {
+			uiChanged = true;
+		}
+		if (ImGui::Checkbox("Show Grid", &m_gridOn)) {
+			uiChanged = true;
+		}
+		ImGui::Checkbox("Use MMB", &m_useMMB);
 	}
+	ImGui::End();
 }

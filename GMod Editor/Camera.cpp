@@ -57,7 +57,6 @@ gmod::matrix4<float> Camera::viewMatrix() const {
 		 ax.y(),		ay.y(),		   az.y(),		 0,
 		 ax.z(),		ay.z(),	   	   az.z(),		 0,
 		-dot(ax, eye), -dot(ay, eye), -dot(az, eye), 1
-
 	);
 }
 

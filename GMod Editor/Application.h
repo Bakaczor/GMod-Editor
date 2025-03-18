@@ -38,7 +38,7 @@ private:
 
 	void HandleCameraOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseWheel(WPARAM wParam);
-	void ResizeWnd(LPARAM lParam);
+	void ResizeWnd();
 
 	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count);
 
@@ -54,12 +54,9 @@ private:
 	const static std::wstring m_appName;
 	static int m_winWidth;
 	static int m_winHeight;
-
-	const std::array<float, 4> m_backGroundColor = { 0.5f, 0.5f, 0.5f, 1.0f };
 #pragma endregion
 
 #pragma region STATE
-	bool m_useMMB = true;
 	bool m_firstPass = true;
 	bool m_wndSizeChanged = false;
 	int m_currObjId = -1;
@@ -85,6 +82,7 @@ private:
 	mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 	mini::dx_ptr<ID3D11Buffer> m_constBuffView;
 	mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
+	mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
 #pragma endregion
 
 	template<typename T>

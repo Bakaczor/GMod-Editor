@@ -1,8 +1,8 @@
 #pragma once
 #include "pch.h"
-#include "vector3.h"
-#include "quaternion.h"
 #include "matrix4.h"
+#include "quaternion.h"
+#include "vector3.h"
 
 namespace gmod {
 	template <floating_point T>

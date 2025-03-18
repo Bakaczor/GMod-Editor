@@ -15,10 +15,11 @@ const float Application::m_far = 1000.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_torus(1.0f, 0.5f, 16, 16), m_camera(0.0f),
+	m_device(m_window), m_torus(1.0f, 0.5f, 32, 32), m_camera(0.0f),
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
-	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>())
+	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
+	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
@@ -45,8 +46,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	// CONSTANT BUFFERS
 	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
 	m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
-	// ID3D11Buffer* psb[] = { nullptr };
-	// m_device.deviceContext()->PSSetConstantBuffers(0, 0, psb);
+	ID3D11Buffer* psb[] = { m_constBuffColor.get() };
+	m_device.deviceContext()->PSSetConstantBuffers(0, 1, psb);
 
 	// STATES
 	RasterizerDescription rsdesc;
@@ -126,9 +127,20 @@ void Application::SetShadersAndLayout() {
 	m_device.deviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
+void Application::ResizeWnd() {
+	m_wndSizeChanged = false;
+	if (m_device.device()) {
+		m_backBuffer.reset();
+		m_depthBuffer.reset();
+		m_device.swapChain()->ResizeBuffers(0, m_winWidth, m_winHeight, DXGI_FORMAT_UNKNOWN, 0);
+
+		Initialize();
+	}
+}
+
 void Application::Update() {
 	if (m_wndSizeChanged || m_firstPass) {
-		m_wndSizeChanged = false;
+		ResizeWnd();
 		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
 		UpdateBuffer(m_constBuffProj, projMtx);
 	}
@@ -140,11 +152,11 @@ void Application::Update() {
 	}
 
 	if (m_torus.tranformChanged || m_firstPass) {
-		m_torus.transform.SetTranslation(0.0f, 0.0f, 0.0f); // COŚ NIE TAK!
+		m_torus.transform.SetTranslation(1.0f, 0.0f, 0.0f);
 		m_torus.transform.SetRotation(0.0f, 0.0f, 0.0f);
 		m_torus.transform.SetScaling(0.2f, 0.2f, 0.2f);
 		m_torus.tranformChanged = false;
-		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix());
+		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix().transposed());
 		UpdateBuffer(m_constBuffModel, modelMtx);
 	}
 
@@ -166,43 +178,24 @@ gmod::matrix4<float> Application::projMatrix() const {
 	return gmod::matrix4<float>(
 		Width, 0,      0,               0,
 		0,	   Height, 0,               0,
-		0,	   0,	   Range,          -1,
+		0,	   0,	   Range,		   -1,
 		0,     0,      Range * m_near,  0
 	);
 }
 
 void Application::RenderUI() {
-	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), m_backGroundColor.data());
+	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), reinterpret_cast<float*>(&m_UI.m_bkgdColor));
 	m_device.deviceContext()->ClearDepthStencilView(m_depthBuffer.get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-
-	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
-
-	const float width = 250.0f;
-	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(width, 315.0f), ImGuiCond_Always);
-	ImGui::Begin("Parameters", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-	m_UI.RenderRotations(false);
-	m_UI.RenderEllipsoid(false);
-	m_UI.RenderRendering(false);
-	ImGui::End();
-
-	const float height = 80.0f;
-	ImGui::SetNextWindowPos(ImVec2(0.0f, viewportSize.y - height), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(320.0f, height), ImGuiCond_Always);
-
-	if (m_UI.m_showColors) {
-		ImGui::Begin("Colors", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-		m_UI.RenderColors(false);
-		ImGui::End();
-	}
+	m_UI.Render(m_firstPass);
 	ImGui::Render();
 }
 
 void Application::Render() {
+	UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_torus.color.data()));
 	m_torus.RenderMesh(m_device.deviceContext());
 }
 
@@ -222,8 +215,8 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 
-	bool MMB = m_useMMB && m_mouse.isMMBDown_flag;
-	bool RMB = !m_useMMB && m_mouse.isRMBDown_flag;
+	bool MMB = m_UI.m_useMMB && m_mouse.isMMBDown_flag;
+	bool RMB = !m_UI.m_useMMB && m_mouse.isRMBDown_flag;
 	if (MMB) {
 		if (m_mouse.isShiftDown_flag) {
 			m_camera.Move(dx, dy);
@@ -246,7 +239,7 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 }
 
 void Application::HandleCameraOnMouseWheel(WPARAM wParam) {
-	if (!m_useMMB) { return; }
+	if (!m_UI.m_useMMB) { return; }
 	float dd = static_cast<float>(m_mouse.GetWheelDelta(wParam));
 	m_camera.Zoom(dd);
 	m_camera.cameraChanged = true;
@@ -307,7 +300,9 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 		}
 		case WM_SIZE: {
 			if (msg.wParam != SIZE_MINIMIZED) {
-				ResizeWnd(msg.lParam);
+				m_winWidth = LOWORD(msg.lParam);
+				m_winHeight = HIWORD(msg.lParam);
+				m_wndSizeChanged = true;
 			}
 			break;
 		}
@@ -329,18 +324,4 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 		}
 	}
 	return (msg.result == 0);
-}
-
-void Application::ResizeWnd(LPARAM lParam) {
-	m_winWidth = LOWORD(lParam);
-	m_winHeight = HIWORD(lParam);
-
-	if (!m_device.device()) { return; }
-
-	m_backBuffer.reset();
-	m_depthBuffer.reset();
-	m_device.swapChain()->ResizeBuffers(0, m_winWidth, m_winHeight, DXGI_FORMAT_UNKNOWN, 0);
-
-	Initialize();
-	m_wndSizeChanged = true;
 }
