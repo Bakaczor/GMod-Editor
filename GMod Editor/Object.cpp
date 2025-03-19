@@ -3,7 +3,7 @@
 int Object::m_globalObjectId = 1;
 unsigned short Object::m_globalObjectNum = 1;
 
-Object::Object() : transform(), m_mesh() {
+Object::Object() : transform(), m_mesh(), m_type("object") {
 	std::ostringstream os;
 	os << "object_" << m_globalObjectNum;
 	name = os.str();

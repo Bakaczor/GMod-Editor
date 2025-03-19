@@ -8,19 +8,20 @@ const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.01f;
 const float Application::scaSensitivity = 0.01f;
 const std::wstring Application::m_appName = L"GMod Editor";
-int Application::m_winWidth = 970;
+int Application::m_winWidth = 1024;
 int Application::m_winHeight = 720;
 const float Application::m_near = 0.01f;
 const float Application::m_far = 1000.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_torus(1.0f, 0.5f, 32, 32), m_camera(0.0f),
+	m_device(m_window), m_camera(0.0f),
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
+	m_UI.objects.push_back(std::make_shared<Torus>(1.0f, 0.5f, 32, 32));
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -35,12 +36,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_pixelShader = m_device.CreatePixelShader(psBytes);
 
 	// LAYOUT
-	std::vector<D3D11_INPUT_ELEMENT_DESC> elements {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	};
-	m_layout = m_device.CreateInputLayout(elements, vsBytes);
-
+	m_layout = m_device.CreateInputLayout<Vertex_Po>(vsBytes);
 	SetShadersAndLayout();
 
 	// CONSTANT BUFFERS
@@ -150,19 +146,17 @@ void Application::Update() {
 		DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
 		UpdateBuffer(m_constBuffView, viewMtx);
 	}
+	for (auto& object : m_UI.objects) {
+		if (object->transformChanged || m_firstPass) {
+			object->transformChanged = false;
+			DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(object->transform.modelMatrix().transposed());
+			UpdateBuffer(m_constBuffModel, modelMtx);
+		}
 
-	if (m_torus.tranformChanged || m_firstPass) {
-		m_torus.transform.SetTranslation(1.0f, 0.0f, 0.0f);
-		m_torus.transform.SetRotation(0.0f, 0.0f, 0.0f);
-		m_torus.transform.SetScaling(0.2f, 0.2f, 0.2f);
-		m_torus.tranformChanged = false;
-		DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(m_torus.transform.modelMatrix().transposed());
-		UpdateBuffer(m_constBuffModel, modelMtx);
-	}
-
-	if (m_torus.geometryChanged || m_firstPass) {
-		m_torus.geometryChanged = false;
-		m_torus.UpdateMesh(m_device);
+		if (object->geometryChanged || m_firstPass) {
+			object->geometryChanged = false;
+			object->UpdateMesh(m_device);
+		}
 	}
 }
 
@@ -195,8 +189,10 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
-	UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_torus.color.data()));
-	m_torus.RenderMesh(m_device.deviceContext());
+	for (auto& object : m_UI.objects) {
+		UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
+		object->RenderMesh(m_device.deviceContext());
+	}
 }
 
 void Application::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count) {
@@ -284,11 +280,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 		}
 		case WM_MOUSEMOVE: {
 			m_mouse.UpdateFlags(msg.wParam);
-			if (m_currObjId == -1) {
-				HandleCameraOnMouseMove(msg.lParam);
-			} else {
-				// handle object
-			}
+			HandleCameraOnMouseMove(msg.lParam);
 			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}

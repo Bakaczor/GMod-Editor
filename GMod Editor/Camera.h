@@ -7,7 +7,7 @@
 class Camera {
 public:
 	bool cameraChanged = false;
-	float moveSensitivity = 0.002f;
+	float moveSensitivity = 0.005f;
 	float rotateSensitivity = 0.005f;
 	float zoomSensitivity = 0.0005f;
 

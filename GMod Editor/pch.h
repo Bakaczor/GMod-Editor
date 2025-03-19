@@ -5,6 +5,7 @@
 
 #include <Windows.h>
 #include <DirectXMath.h>
+#include <vector>
 
 #include "../imgui/backends/imgui_impl_dx11.h"
 #include "../imgui/backends/imgui_impl_win32.h"

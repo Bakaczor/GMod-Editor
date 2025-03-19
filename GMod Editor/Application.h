@@ -1,4 +1,5 @@
 #pragma once
+#include "pch.h"
 #include "../gmod/matrix4.h"
 #include "../gmod/quaternion.h"
 #include "../gmod/vector3.h"
@@ -8,7 +9,6 @@
 #include "Device.h"
 #include "Keyboard.h"
 #include "Mouse.h"
-#include "pch.h"
 #include "Torus.h"
 #include "UI.h"
 
@@ -27,7 +27,6 @@ private:
 	Keyboard m_keyboard;
 	Camera m_camera;
 	UI m_UI;
-	Torus m_torus;
 
 	void Initialize();
 	void SetShadersAndLayout();
@@ -59,7 +58,6 @@ private:
 #pragma region STATE
 	bool m_firstPass = true;
 	bool m_wndSizeChanged = false;
-	int m_currObjId = -1;
 #pragma endregion
 
 #pragma region PROJECTION

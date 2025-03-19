@@ -5,12 +5,16 @@ class Torus : public Object{
 public:
 	Torus(double R, double r, unsigned int uParts, unsigned int vParts);
 
+	double Get_R() const;
 	void Set_R(double R);
 
+	double Get_r() const;
 	void Set_r(double r);
 
+	unsigned int Get_uParts() const;
 	void Set_uParts(unsigned int uParts);
 
+	unsigned int Get_vParts() const;
 	void Set_vParts(unsigned int vParts);
 private:
 	const static unsigned int m_uPartsMin = 4;

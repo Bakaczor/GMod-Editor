@@ -8,6 +8,7 @@
 unsigned short Torus::m_globalCubeNum = 1;
 
 Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R(R), m_r(r), m_uParts(uParts), m_vParts(vParts) {
+	m_type = "torus";
 	std::ostringstream os;
 	os << "torus_" << m_globalCubeNum;
 	name = os.str();
@@ -15,9 +16,17 @@ Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R
 	RecalculateGeometry();
 }
 
+double Torus::Get_R() const {
+	return m_R;
+}
+
 void Torus::Set_R(double R) {
 	m_R = R;
 	RecalculateGeometry();
+}
+
+double Torus::Get_r() const {
+	return m_r;
 }
 
 void Torus::Set_r(double r) {
@@ -25,9 +34,17 @@ void Torus::Set_r(double r) {
 	RecalculateGeometry();
 }
 
+unsigned int Torus::Get_uParts() const {
+	return m_uParts;
+}
+
 void Torus::Set_uParts(unsigned int uParts) {
 	m_uParts = std::max(uParts, m_uPartsMin);
 	RecalculateGeometry();
+}
+
+unsigned int Torus::Get_vParts() const {
+	return m_vParts;
 }
 
 void Torus::Set_vParts(unsigned int vParts) {
