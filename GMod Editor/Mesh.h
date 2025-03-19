@@ -34,9 +34,10 @@ public:
 	template<typename Vertex>
 	void Update(const Device& device, const std::vector<Vertex> verts, const std::vector<USHORT> idxs, D3D_PRIMITIVE_TOPOLOGY primitiveType = D3D11_PRIMITIVE_TOPOLOGY_LINELIST) {
 		m_indexBuffer = device.CreateIndexBuffer(idxs);
+		m_vertexBuffers.clear();
 		m_vertexBuffers.push_back(device.CreateVertexBuffer(verts));
-		m_strides.push_back(sizeof(Vertex));
-		m_offsets.push_back(0);
+		m_strides = { sizeof(Vertex) };
+		m_offsets = { 0 };
 		m_indexCount = idxs.size();
 		m_primitiveType = primitiveType;
 	}

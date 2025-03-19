@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "UI.h"
-#include <algorithm>
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -74,40 +73,14 @@ void UI::RenderTransforms() {
 	ImGui::PopStyleColor();
 }
 
-
-void UI::RenderEllipsoid(bool firstPass) {
-	if (firstPass) {
-		ImGui::SetNextItemOpen(true);
-	}
-	if (ImGui::CollapsingHeader("Ellipsoid")) {
-		if (ImGui::InputFloat("a", &m_a, 0.1f, 1.0f, "%.1f", ImGuiInputTextFlags_CharsDecimal)) {
-			uiChanged = true;
-		}
-		if (ImGui::InputFloat("b", &m_b, 0.1f, 1.0f, "%.1f", ImGuiInputTextFlags_CharsDecimal)) {
-			uiChanged = true;
-		}
-		if (ImGui::InputFloat("c", &m_c, 0.1f, 1.0f, "%.1f", ImGuiInputTextFlags_CharsDecimal)) {
-			uiChanged = true;
-		}
-		if (ImGui::SliderFloat("scale", &m_scale, 0.0f, 2.0f, "%.2f")) {
-			m_scale = std::max(0.001f, m_scale);
-			uiChanged = true;
-		}
-		if (ImGui::InputInt("step", &m_stepUI, 1, 10)) {
-			m_stepUI = std::max(1, m_stepUI);
-			m_step = m_stepUI;
-			uiChanged = true;
-		}
-	}
-}
-
 void UI::RenderObjectTable(bool firstPass) {
 	if (firstPass) {
 		ImGui::SetNextItemOpen(false);
 	}
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("List of objects")) {
-		ImGui::BeginChild("TableWindow", ImVec2(0, 200), false, ImGuiWindowFlags_None);
+		
+		ImGui::BeginChild("TableWindow", ImVec2(0, 300), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableSetupColumn("Type");
@@ -137,11 +110,53 @@ void UI::RenderObjectTable(bool firstPass) {
 }
 
 void UI::RenderSelectedObject() {
-	if (m_selectedObjIdx != -1) {
-		ImGui::Spacing();
-		ImGui::BeginChild("PropertiesWindow", ImVec2(0, 200), true, ImGuiWindowFlags_None);
-		ImGui::Text("Properties");
-		// TODO
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::Spacing();
+	if (ImGui::CollapsingHeader("Properties")) {
+		ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
+		if (m_selectedObjIdx != -1) {
+			std::shared_ptr<Object>& selectedObj = objects[m_selectedObjIdx];
+			double step = 0.001f;
+			double stepFast = 0.1f;
+
+			ImGui::Text("Position");
+			gmod::vector3<double> position = selectedObj->transform.position();
+			if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			}
+			if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			}
+			if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			}
+
+			ImGui::Text("Euler Angles");
+			gmod::vector3<double> eulerAngles = selectedObj->transform.eulerAngles();
+			if (ImGui::InputDouble("X##Euler Angles", &eulerAngles.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+			}
+			if (ImGui::InputDouble("Y##Euler Angles", &eulerAngles.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+			}
+			if (ImGui::InputDouble("Z##Euler Angles", &eulerAngles.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+			}
+
+			ImGui::Text("Scale");
+			gmod::vector3<double> scale = selectedObj->transform.scale();
+			if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			}
+			if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			}
+			if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			}
+			ImGui::Spacing();
+			selectedObj->RenderObjectProperties();
+		}
 		ImGui::EndChild();
 	}
 }
@@ -155,15 +170,11 @@ void UI::RenderSettings(bool firstPass) {
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
 		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 110.0f), ImGuiCond_Always);
-
-		if (ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&m_bkgdColor))) {
-			uiChanged = true;
-		}
-		if (ImGui::Checkbox("Show Grid", &m_gridOn)) {
-			uiChanged = true;
-		}
-		ImGui::Checkbox("Use MMB", &m_useMMB);
+		ImGui::SetWindowSize(ImVec2(size.x, 130.0f), ImGuiCond_Always);
+		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
+		ImGui::Checkbox("Show Grid", &showGrid);
+		ImGui::Checkbox("Show Axes", &showAxes);
+		ImGui::Checkbox("Use MMB", &useMMB);
 	}
 	ImGui::End();
 }

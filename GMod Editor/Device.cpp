@@ -1,6 +1,6 @@
+#include "pch.h"
 #include "Device.h"
 #include "../mini/exceptions.h"
-#include "../mini/window.h"
 #include <fstream>
 
 Device::Device(const mini::Window& window) {
@@ -98,6 +98,17 @@ mini::dx_ptr<ID3D11Buffer> Device::CreateBuffer(const void* data, const D3D11_BU
 	}
 	mini::dx_ptr<ID3D11Buffer> result(temp);
 	return result;
+}
+
+
+void Device::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count) {
+	D3D11_MAPPED_SUBRESOURCE res;
+	auto hr = m_deviceContext->Map(buffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	memcpy(res.pData, data, count);
+	m_deviceContext->Unmap(buffer.get(), 0);
 }
 #pragma endregion
 

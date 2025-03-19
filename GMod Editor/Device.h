@@ -1,12 +1,8 @@
 #pragma once
+#include "pch.h"
 #include "../mini/dxptr.h"
+#include "../mini/window.h"
 #include "Descriptions.h"
-#include <vector>
-#include <string>
-
-namespace mini {
-	class Window;
-}
 
 class Device {
 public:
@@ -51,6 +47,13 @@ public:
 	mini::dx_ptr<ID3D11Buffer> CreateConstantBuffer() const {
 		auto desc = BufferDescription::ConstantBufferDescription(N * sizeof(T));
 		return CreateBuffer(nullptr, desc);
+	}
+
+	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count);
+
+	template<typename T>
+	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const T& data) {
+		UpdateBuffer(buffer, &data, sizeof(T));
 	}
 #pragma endregion
 

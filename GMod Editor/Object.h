@@ -1,11 +1,10 @@
 #pragma once
+#include "pch.h"
+#include <sstream>
+#include "../imgui/imgui.h"
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
 #include "Mesh.h"
-#include <array>
-#include <sstream>
-#include <string>
-#include <vector>
 
 class Object {
 public:
@@ -24,13 +23,13 @@ public:
 	std::array<float, 4> color = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 	gmod::Transform<double> transform;
-	bool transformChanged = false;
 	bool geometryChanged = false;
 
 	Object();
 	virtual ~Object() = default;
 	void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	void UpdateMesh(const Device& device);
+	virtual void RenderObjectProperties();
 protected:
 	static unsigned short m_globalObjectNum;
 	static int m_globalObjectId;

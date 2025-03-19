@@ -1,9 +1,10 @@
+#include "pch.h"
 #include "Object.h"
 
 int Object::m_globalObjectId = 1;
 unsigned short Object::m_globalObjectNum = 1;
 
-Object::Object() : transform(), m_mesh(), m_type("object") {
+Object::Object() : transform(), m_mesh(), m_type("Object") {
 	std::ostringstream os;
 	os << "object_" << m_globalObjectNum;
 	name = os.str();
@@ -40,4 +41,12 @@ void Object::UpdateMesh(const Device& device) {
 	}
 
 	m_mesh.Update(device, verts, idxs);
+}
+
+void Object::RenderObjectProperties() {
+	ImGui::Separator();
+	ImGui::Spacing();
+	std::string text = "Properties of " + m_type + ":";
+	ImGui::Text(text.c_str());
+	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&color));
 }

@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 #include "Application.h"
-#include "../mini/exceptions.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -15,7 +14,7 @@ const float Application::m_far = 1000.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_camera(0.0f),
+	m_device(m_window), m_camera(0.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
@@ -49,6 +48,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	RasterizerDescription rsdesc;
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
+
+	m_axes.Initialize(m_device);
 }
 
 void Application::Initialize() {
@@ -138,25 +139,13 @@ void Application::Update() {
 	if (m_wndSizeChanged || m_firstPass) {
 		ResizeWnd();
 		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
-		UpdateBuffer(m_constBuffProj, projMtx);
+		m_device.UpdateBuffer(m_constBuffProj, projMtx);
 	}
 
 	if (m_camera.cameraChanged || m_firstPass) {
 		m_camera.cameraChanged = false;
 		DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
-		UpdateBuffer(m_constBuffView, viewMtx);
-	}
-	for (auto& object : m_UI.objects) {
-		if (object->transformChanged || m_firstPass) {
-			object->transformChanged = false;
-			DirectX::XMFLOAT4X4 modelMtx = matrix4_to_XMFLOAT4X4(object->transform.modelMatrix().transposed());
-			UpdateBuffer(m_constBuffModel, modelMtx);
-		}
-
-		if (object->geometryChanged || m_firstPass) {
-			object->geometryChanged = false;
-			object->UpdateMesh(m_device);
-		}
+		m_device.UpdateBuffer(m_constBuffView, viewMtx);
 	}
 }
 
@@ -178,7 +167,7 @@ gmod::matrix4<float> Application::projMatrix() const {
 }
 
 void Application::RenderUI() {
-	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), reinterpret_cast<float*>(&m_UI.m_bkgdColor));
+	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), reinterpret_cast<float*>(&m_UI.bkgdColor));
 	m_device.deviceContext()->ClearDepthStencilView(m_depthBuffer.get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ImGui_ImplDX11_NewFrame();
@@ -189,20 +178,20 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
+	if (m_UI.showAxes) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera).transposed()));
+		m_axes.Render(m_device, m_constBuffColor);
+	}
+
 	for (auto& object : m_UI.objects) {
-		UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->transform.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
+		if (object->geometryChanged || m_firstPass) {
+			object->geometryChanged = false;
+			object->UpdateMesh(m_device);
+		}
 		object->RenderMesh(m_device.deviceContext());
 	}
-}
-
-void Application::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count) {
-	D3D11_MAPPED_SUBRESOURCE res;
-	auto hr = m_device.deviceContext()->Map(buffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
-	if (FAILED(hr)) {
-		THROW_DX(hr);
-	}
-	memcpy(res.pData, data, count);
-	m_device.deviceContext()->Unmap(buffer.get(), 0);
 }
 
 void Application::HandleCameraOnMouseMove(LPARAM lParam) {
@@ -211,8 +200,8 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 
-	bool MMB = m_UI.m_useMMB && m_mouse.isMMBDown_flag;
-	bool RMB = !m_UI.m_useMMB && m_mouse.isRMBDown_flag;
+	bool MMB = m_UI.useMMB && m_mouse.isMMBDown_flag;
+	bool RMB = !m_UI.useMMB && m_mouse.isRMBDown_flag;
 	if (MMB) {
 		if (m_mouse.isShiftDown_flag) {
 			m_camera.Move(dx, dy);
@@ -235,7 +224,7 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 }
 
 void Application::HandleCameraOnMouseWheel(WPARAM wParam) {
-	if (!m_UI.m_useMMB) { return; }
+	if (!m_UI.useMMB) { return; }
 	float dd = static_cast<float>(m_mouse.GetWheelDelta(wParam));
 	m_camera.Zoom(dd);
 	m_camera.cameraChanged = true;

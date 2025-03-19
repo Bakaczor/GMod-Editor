@@ -9,7 +9,7 @@ WindowApplication::WindowApplication(HINSTANCE hInstance, int wndWidht, int wndH
 
 int WindowApplication::MainLoop() {
 	MSG msg = { nullptr };
-	while ( GetMessageW(&msg, nullptr, 0, 0) ) {
+	while (GetMessageW(&msg, nullptr, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

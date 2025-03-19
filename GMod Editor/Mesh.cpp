@@ -1,5 +1,4 @@
 #include "Mesh.h"
-#include <algorithm>
 
 Mesh::Mesh() : m_indexCount(0), m_primitiveType(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED) {}
 

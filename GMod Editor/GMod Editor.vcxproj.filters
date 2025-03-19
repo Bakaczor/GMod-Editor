@@ -81,6 +81,9 @@
     <ClInclude Include="Cube.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Axes.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -123,6 +126,9 @@
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
     <ClCompile Include="Cube.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Axes.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>

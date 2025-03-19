@@ -11,15 +11,17 @@ public:
 	double Get_r() const;
 	void Set_r(double r);
 
-	unsigned int Get_uParts() const;
-	void Set_uParts(unsigned int uParts);
+	int Get_uParts() const;
+	void Set_uParts(int uParts);
 
-	unsigned int Get_vParts() const;
-	void Set_vParts(unsigned int vParts);
+	int Get_vParts() const;
+	void Set_vParts(int vParts);
+
+	virtual void RenderObjectProperties() override;
 private:
-	const static unsigned int m_uPartsMin = 4;
-	const static unsigned int m_vPartsMin = 4;
-	static unsigned short m_globalCubeNum;
+	const static int m_uPartsMin = 3;
+	const static int m_vPartsMin = 3;
+	static unsigned short m_globalTorusNum;
 	double m_R, m_r;
 	unsigned int m_uParts, m_vParts;
 	void RecalculateGeometry();

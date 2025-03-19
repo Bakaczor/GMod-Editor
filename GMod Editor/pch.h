@@ -2,13 +2,14 @@
 #define GMOD_EDITOR_PCH_H
 
 #include "framework.h"
-
-#include <Windows.h>
 #include <DirectXMath.h>
-#include <vector>
+#include <d3d11.h>
 
-#include "../imgui/backends/imgui_impl_dx11.h"
-#include "../imgui/backends/imgui_impl_win32.h"
-#include "../imgui/imgui.h"
+#include <vector>
+#include <string>
+#include <array>
+#include <algorithm>
+#include <cmath>
+
 
 #endif //GMOD_EDITOR_PCH_H

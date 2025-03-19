@@ -3,7 +3,7 @@
 unsigned short Cube::m_globalCubeNum = 1;
 
 Cube::Cube() {
-	m_type = "cube";
+	m_type = "Cube";
 	std::ostringstream os;
 	os << "cube_" << m_globalCubeNum;
 	name = os.str();

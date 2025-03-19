@@ -1,6 +1,5 @@
 #pragma once
-#include <DirectXMath.h>
-#include <d3d11.h>
+#include "pch.h"
 
 struct Vertex_PoCo {
 	DirectX::XMFLOAT3 position;

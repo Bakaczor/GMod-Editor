@@ -1,9 +1,13 @@
 #pragma once
 #include "pch.h"
+#include <Windows.h>
+#include "../imgui/backends/imgui_impl_dx11.h"
+#include "../imgui/backends/imgui_impl_win32.h"
 #include "../gmod/matrix4.h"
 #include "../gmod/quaternion.h"
 #include "../gmod/vector3.h"
 #include "../mini/windowApplication.h"
+#include "../mini/exceptions.h"
 #include "Camera.h"
 #include "Cube.h"
 #include "Device.h"
@@ -11,6 +15,7 @@
 #include "Mouse.h"
 #include "Torus.h"
 #include "UI.h"
+#include "Axes.h"
 
 class Application : public mini::WindowApplication {
 public:
@@ -26,6 +31,7 @@ private:
 	Mouse m_mouse;
 	Keyboard m_keyboard;
 	Camera m_camera;
+	Axes m_axes;
 	UI m_UI;
 
 	void Initialize();
@@ -38,14 +44,6 @@ private:
 	void HandleCameraOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseWheel(WPARAM wParam);
 	void ResizeWnd();
-
-	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count);
-
-	template<typename T>
-	void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const T& data) {
-		UpdateBuffer(buffer, &data, sizeof(T));
-	}
-
 #pragma region APPLICATION
 	const static float traSensitivity;
 	const static float rotSensitivity;
