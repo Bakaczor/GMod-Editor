@@ -4,8 +4,8 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 const float Application::traSensitivity = 0.005f;
-const float Application::rotSensitivity = 0.01f;
-const float Application::scaSensitivity = 0.01f;
+const float Application::rotSensitivity = 0.005f;
+const float Application::scaSensitivity = 0.005f;
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 1024;
 int Application::m_winHeight = 720;
@@ -194,6 +194,56 @@ void Application::Render() {
 	}
 }
 
+void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
+	if (!m_mouse.isLMBDown_flag || m_UI.currentMode == UI::Mode::Neutral || m_UI.selectedObjId == -1) { return; }
+	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
+	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
+	gmod::vector3<float> trans;
+	if (m_UI.currentMode != UI::Mode::Rotate) {
+		std::swap(dx, dy);
+	}
+	switch (m_UI.currentAxis) {
+		case UI::Axis::X: {
+			trans = { dy, 0.0f, 0.0f };
+			break;
+		}
+		case UI::Axis::Y: {
+			trans = { 0.0f, dx, 0.0f };
+			break;
+		}
+		case UI::Axis::Z: {
+			trans = { 0.0f, 0.0f, -dy };
+			break;
+		}
+		case UI::Axis::All: {
+			trans = { -dx, -dx, -dx };
+			break;
+		}
+		default: {
+			trans = { 0.0f, 0.0f, 0.0f };
+			break;
+		}
+	}
+	switch (m_UI.currentMode) {
+		case UI::Mode::Translate: {
+			trans = trans * traSensitivity;
+			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+			break;
+		}
+		case UI::Mode::Rotate: {
+			trans = trans * rotSensitivity;
+			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+			break;
+		}
+		case UI::Mode::Scale: {
+			trans = trans * scaSensitivity;
+			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
+			break;
+		}
+		default: return;
+	}
+}
+
 void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	if (!m_mouse.isMMBDown_flag && !m_mouse.isRMBDown_flag) { return; }
 
@@ -270,6 +320,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 		case WM_MOUSEMOVE: {
 			m_mouse.UpdateFlags(msg.wParam);
 			HandleCameraOnMouseMove(msg.lParam);
+			HandleTransformsOnMouseMove(msg.lParam);
 			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}

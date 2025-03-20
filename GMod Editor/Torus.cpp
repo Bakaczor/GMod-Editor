@@ -63,11 +63,17 @@ void Torus::RenderObjectProperties() {
 	}
 	int uParts = m_uParts;
 	if (ImGui::InputInt("minor", &uParts, 1, 10)) {
+		if (uParts * m_vParts > std::numeric_limits<USHORT>::max()) {
+			uParts = m_uParts;
+		}
 		m_uParts = std::max(uParts, m_uPartsMin);
 		changed = true;
 	}
 	int vParts = m_vParts;
 	if (ImGui::InputInt("major", &vParts, 1, 10)) {
+		if (vParts * m_uParts > std::numeric_limits<USHORT>::max()) {
+			vParts = m_vParts;
+		}
 		m_vParts = std::max(vParts, m_vPartsMin);
 		changed = true;
 	}

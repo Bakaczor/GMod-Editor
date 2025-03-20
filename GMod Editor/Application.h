@@ -41,6 +41,7 @@ private:
 	void Update();
 	void Render();
 
+	void HandleTransformsOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseWheel(WPARAM wParam);
 	void ResizeWnd();

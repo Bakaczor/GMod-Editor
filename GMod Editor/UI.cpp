@@ -67,6 +67,11 @@ void UI::RenderTransforms() {
 		if (ImGui::RadioButton("Z", currentAxis == Axis::Z)) {
 			currentAxis = Axis::Z;
 		}
+		if (currentMode == Mode::Scale) {
+			if (ImGui::RadioButton("All", currentAxis == Axis::All)) {
+				currentAxis = Axis::All;
+			}
+		}
 		ImGui::Columns(1);
 	}
 	ImGui::EndGroup();
@@ -90,13 +95,13 @@ void UI::RenderObjectTable(bool firstPass) {
 				ImGui::TableNextRow();
 
 				ImGui::TableNextColumn();
-				if (ImGui::Selectable(objects[i]->name.c_str(), m_selectedObjIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (m_selectedObjIdx == i) {
-						m_selectedObjIdx = -1;
-						currObjId = -1;
+				if (ImGui::Selectable(objects[i]->name.c_str(), selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
+					if (selectedRowIdx == i) {
+						selectedRowIdx = -1;
+						selectedObjId = -1;
 					} else {
-						m_selectedObjIdx = i;
-						currObjId = objects[i]->id;
+						selectedRowIdx = i;
+						selectedObjId = objects[i]->id;
 					}
 				}
 				ImGui::TableNextColumn();
@@ -114,8 +119,8 @@ void UI::RenderSelectedObject() {
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("Properties")) {
 		ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
-		if (m_selectedObjIdx != -1) {
-			std::shared_ptr<Object>& selectedObj = objects[m_selectedObjIdx];
+		if (selectedRowIdx != -1) {
+			std::shared_ptr<Object>& selectedObj = objects[selectedRowIdx];
 			double step = 0.001f;
 			double stepFast = 0.1f;
 

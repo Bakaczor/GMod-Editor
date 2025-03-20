@@ -23,6 +23,6 @@ private:
 	const static int m_vPartsMin = 3;
 	static unsigned short m_globalTorusNum;
 	double m_R, m_r;
-	unsigned int m_uParts, m_vParts;
+	int m_uParts, m_vParts;
 	void RecalculateGeometry();
 };

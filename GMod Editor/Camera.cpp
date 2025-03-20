@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include <numbers>
 
 Camera::Camera(gmod::Transform<float> target, float dist, float minDist, float maxDist) : m_target(target), m_dist(dist) {
 	SetDistanceRange(minDist, maxDist);
@@ -33,12 +34,12 @@ void Camera::ClampDistance() {
 }
 
 void Camera::Move(float dx, float dy) {
-	gmod::vector3<float> dt = moveSensitivity * (-dx * m_target.right() + -dy * m_target.up());
+	gmod::vector3<float> dt = moveSensitivity * (-dx * m_target.right() + dy * m_target.up());
 	m_target.UpdateTranslation(dt.x(), dt.y(), dt.z());
 }
 
 void Camera::Rotate(float dx, float dy) {
-	m_target.UpdateRotation(rotateSensitivity * -dy, rotateSensitivity * dx, 0);
+	m_target.UpdateRotation_Euler(rotateSensitivity * -dy, rotateSensitivity * -dx, 0);
 }
 
 void Camera::Zoom(float dd) {

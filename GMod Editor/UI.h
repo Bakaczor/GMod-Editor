@@ -16,12 +16,13 @@ public:
 	Mode currentMode = Mode::Neutral;
 
 	enum class Axis {
-		X, Y, Z
+		X, Y, Z, All
 	};
 	Axis currentAxis = Axis::Y;
 
 	// OBJECTS
-	int currObjId = -1;
+	int selectedObjId = -1;
+	int selectedRowIdx = -1;
 	std::vector<std::shared_ptr<Object>> objects;
 
 	// SETTINGS
@@ -32,8 +33,6 @@ public:
 
 	void Render(bool firstPass);
 private:
-	int m_selectedObjIdx = -1;
-
 	void RenderRightPanel(bool firstPass);
 	void RenderTransforms();
 	void RenderObjectTable(bool firstPass);

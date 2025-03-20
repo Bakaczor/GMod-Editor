@@ -38,6 +38,23 @@ namespace gmod {
             );
         }
 
+        static gmod::vector3<T> to_euler(const quaternion& q) {
+            const T px = 2 * (q.w() * q.x() + q.y() * q.z());
+            const T py = 1 - 2 * (q.x() * q.x() + q.y() * q.y());
+            const T pitch = std::atan2(px, py);
+
+            const T tmp = 2 * (q.w() * q.y() - q.x() * q.z());
+            const T yx = std::sqrt(1 + tmp);
+            const T yy = std::sqrt(1 - tmp);
+            const T yaw = 2 * std::atan2(yx, yy) - std::numbers::pi_v<T> / 2;
+
+            const T rx = 2 * (q.w() * q.z() + q.x() * q.y());
+            const T ry = 1 - 2 * (q.y() * q.y() + q.z() * q.z());
+            const T roll = std::atan2(rx, ry);
+
+            return gmod::vector3<T>(pitch, yaw, roll);
+        }
+
         T& w() { return m_w; }
 
         const T& w() const { return m_w; }

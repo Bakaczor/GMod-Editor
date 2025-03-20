@@ -8,13 +8,10 @@ namespace gmod {
 	template <floating_point T>
 	class Transform {
 	public:
-		Transform(const vector3<T>& position = { 0, 0, 0 }, const vector3<T>& eulerAngles = { 0, 0, 0 }, const vector3<T>& scale = { 1, 1, 1 }) :
-			m_tx(position.x()), m_ty(position.y()), m_tz(position.z()),
-			m_rx(eulerAngles.x()), m_ry(eulerAngles.y()), m_rz(eulerAngles.z()),
-			m_sx(scale.x()), m_sy(scale.y()), m_sz(scale.z())
-		{
-			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
-			AssertScales();
+		Transform(const vector3<T>& position = { 0, 0, 0 }, const vector3<T>& eulerAngles = { 0, 0, 0 }, const vector3<T>& scale = { 1, 1, 1 }) {
+			SetTranslation(position.x(), position.y(), position.z());
+			SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+			SetScaling(scale.x(), scale.y(), scale.z());
 		}
 
 		vector3<T> position() const {
@@ -41,9 +38,9 @@ namespace gmod {
 
 		matrix4<T> modelMatrix() const {
 			matrix4<T> Mt = matrix4<T>::translation(m_tx, m_ty, m_tz);
-			matrix4<T> Mr = matrix4<T>::rotation(m_rx, m_ry, m_rz);
+			matrix4<T> Mr = matrix4<T>::from_quaternion(m_rot);
 			matrix4<T> Ms = matrix4<T>::scaling(m_sx, m_sy, m_sz);
-			return Mt * Mr * Ms;
+			return Ms * Mr * Mt;
 		}
 
 		void SetTranslation(T tx, T ty, T tz) {
@@ -53,10 +50,12 @@ namespace gmod {
 		}
 
 		void SetRotation(T rx, T ry, T rz) {
+			m_rot = quaternion<T>::from_euler(rx, ry, rz).normalized();
 			m_rx = ClampRotation(rx);
 			m_ry = ClampRotation(ry);
 			m_rz = ClampRotation(rz);
-			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
+			ResetAxes();
+			RotateAxes(m_rot);
 		}
 
 		void SetScaling(T sx, T sy, T sz) {
@@ -72,11 +71,28 @@ namespace gmod {
 			m_tz += dtz;
 		}
 
-		void UpdateRotation(T drx, T dry, T drz) {
+		// used for updating camera
+		void UpdateRotation_Euler(T drx, T dry, T drz) {
 			m_rx = ClampRotation(m_rx + drx);
+			const float PIdiv2 = std::numbers::pi_v<float> / 2;
+			if (std::fabs(m_rx) > PIdiv2) {
+				dry = -dry;
+			}
 			m_ry = ClampRotation(m_ry + dry);
 			m_rz = ClampRotation(m_rz + drz);
-			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz));
+			ResetAxes();
+			RotateAxes(quaternion<T>::from_euler(m_rx, m_ry, m_rz).normalized());
+		}
+
+		// used for updating models
+		void UpdateRotation_Quaternion(T drx, T dry, T drz) {
+			auto newRot = quaternion<T>::from_euler(drx, dry, drz).normalized();
+			m_rot = normalize(newRot * m_rot);
+			gmod::vector3<T> angles = quaternion<T>::to_euler(m_rot);
+			m_rx = ClampRotation(angles.x());
+			m_ry = ClampRotation(angles.y());
+			m_rz = ClampRotation(angles.z());
+			RotateAxes(newRot);
 		}
 
 		void UpdateScaling(T dsx, T dsy, T dsz) {
@@ -91,6 +107,7 @@ namespace gmod {
 		T m_tx, m_ty, m_tz;
 		T m_rx, m_ry, m_rz;
 		T m_sx, m_sy, m_sz;
+		quaternion<T> m_rot;
 
 		vector3<T> m_right;
 		vector3<T> m_up;
@@ -115,16 +132,15 @@ namespace gmod {
 		}
 
 		T ClampRotation(T rad) {
-			const auto PI2 = 2 * std::numbers::pi_v<T>;
-			if (rad > PI2 || rad < PI2) {
-				const int abs = static_cast<int>(rad / PI2);
-				rad -= abs * PI2;
+			const auto PImul2 = 2 * std::numbers::pi_v<T>;
+			if (std::fabs(rad) > PImul2) {
+				const int abs = static_cast<int>(rad / PImul2);
+				rad -= abs * PImul2;
 			}
 			return rad;
 		}
 
 		void RotateAxes(const quaternion<T>& q) {
-			ResetAxes();
 			m_right.rotate(q);
 			m_right.normalize();
 			m_up.rotate(q);
