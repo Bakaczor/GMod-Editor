@@ -37,7 +37,7 @@
       <Filter>Pliki nagłówkowe\math</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>Pliki nagłówkowe</Filter>
+      <Filter>Pliki nagłówkowe\math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

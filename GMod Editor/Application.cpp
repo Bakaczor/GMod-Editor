@@ -20,7 +20,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
-	m_UI.objects.push_back(std::make_shared<Torus>(1.0f, 0.5f, 32, 32));
+	m_UI.objects.push_back(std::make_shared<Torus>());
 	m_UI.objects.push_back(std::make_shared<Cube>());
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
@@ -50,7 +50,11 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
 
+	// GLOBAL
 	m_axes.UpdateMesh(m_device);
+
+	m_UI.cursor.transform.SetScaling(0.25, 0.25, 0.25);
+	m_UI.cursor.UpdateMesh(m_device);
 }
 
 void Application::Initialize() {
@@ -179,6 +183,9 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
+	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.cursor.transform.modelMatrix().transposed()));
+	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
+
 	if (m_UI.showAxes) {
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera).transposed()));
 		m_axes.RenderMesh(m_device, m_constBuffColor);
@@ -196,12 +203,13 @@ void Application::Render() {
 }
 
 void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
-	if (!m_mouse.isLMBDown_flag || m_UI.currentMode == UI::Mode::Neutral || m_UI.selectedObjId == -1) { return; }
+	if (!m_mouse.isLMBDown_flag || m_UI.currentMode == UI::Mode::Neutral) { return; }
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 	gmod::vector3<float> trans;
 	if (m_UI.currentMode != UI::Mode::Rotate) {
 		std::swap(dx, dy);
+		dx = -dx;
 	}
 	switch (m_UI.currentAxis) {
 		case UI::Axis::X: {
@@ -217,7 +225,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			break;
 		}
 		case UI::Axis::All: {
-			trans = { -dx, -dx, -dx };
+			trans = { dx, dx, dx };
 			break;
 		}
 		default: {
@@ -228,15 +236,21 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 	switch (m_UI.currentMode) {
 		case UI::Mode::Translate: {
 			trans = trans * traSensitivity;
-			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+			if (m_UI.noObjectSelected()) {
+				m_UI.cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+			} else {
+				m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+			}
 			break;
 		}
 		case UI::Mode::Rotate: {
+			if (m_UI.noObjectSelected()) { return; }
 			trans = trans * rotSensitivity;
 			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
 			break;
 		}
 		case UI::Mode::Scale: {
+			if (m_UI.noObjectSelected()) { return; }
 			trans = trans * scaSensitivity;
 			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
 			break;

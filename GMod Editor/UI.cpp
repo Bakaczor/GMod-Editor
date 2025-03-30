@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "UI.h"
+#include "Torus.h"
+#include "Cube.h"
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -39,6 +41,7 @@ void UI::RenderRightPanel(bool firstPass) {
 void UI::RenderTransforms() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::PushStyleColor(ImGuiCol_Header, style.Colors[ImGuiCol_Header]);
+	ImGui::BeginChild("TransformsWindow", ImVec2(0, 150), true, ImGuiWindowFlags_NoBackground);
 	ImGui::BeginGroup();
 
 	const float padx = style.WindowPadding.x / 2;
@@ -64,11 +67,13 @@ void UI::RenderTransforms() {
 	if (ImGui::RadioButton("Translate", currentMode == Mode::Translate)) {
 		currentMode = Mode::Translate;
 	}
-	if (ImGui::RadioButton("Rotate", currentMode == Mode::Rotate)) {
-		currentMode = Mode::Rotate;
-	}
-	if (ImGui::RadioButton("Scale", currentMode == Mode::Scale)) {
-		currentMode = Mode::Scale;
+	if (!noObjectSelected()) {
+		if (ImGui::RadioButton("Rotate", currentMode == Mode::Rotate)) {
+			currentMode = Mode::Rotate;
+		}
+		if (ImGui::RadioButton("Scale", currentMode == Mode::Scale)) {
+			currentMode = Mode::Scale;
+		}
 	}
 	if (currentMode != Mode::Neutral) {
 		ImGui::NextColumn();
@@ -90,10 +95,50 @@ void UI::RenderTransforms() {
 	}
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
+	ImGui::EndChild();
 }
 
 void UI::RenderCursor() {
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
+	double step = 0.001f;
+	double stepFast = 0.1f;
 
+	ImGui::Text("Position");
+	gmod::vector3<double> position = cursor.transform.position();
+	if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		cursor.transform.SetTranslation(position.x(), position.y(), position.z());
+	}
+	if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		cursor.transform.SetTranslation(position.x(), position.y(), position.z());
+	}
+	if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		cursor.transform.SetTranslation(position.x(), position.y(), position.z());
+	}
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Text("Object types:");
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+	ImGui::Combo("##types", &m_selectedObjType, m_objectTypeNames.data(), m_objectTypeNames.size());
+	if (ImGui::Button("Add", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		auto pos = cursor.transform.position();
+		switch (m_objectTypes.at(m_selectedObjType)) {
+			case ObjectType::Cube: {
+				auto obj = std::make_shared<Cube>();
+				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				objects.push_back(obj);
+				break;
+			}
+			case ObjectType::Torus: {
+				auto obj = std::make_shared<Torus>();
+				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				objects.push_back(obj);
+				break;
+			}
+		}
+	}
+	ImGui::EndChild();
 }
 
 void UI::RenderObjectTable(bool firstPass) {
@@ -102,8 +147,14 @@ void UI::RenderObjectTable(bool firstPass) {
 	}
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("List of objects")) {
-		
-		ImGui::BeginChild("TableWindow", ImVec2(0, 300), false, ImGuiWindowFlags_None);
+		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			if (selectedRowIdx != -1) {
+				objects.erase(objects.begin() + selectedRowIdx);
+				selectedRowIdx = -1;
+				selectedObjId = -1;;
+			}
+		}
+		ImGui::BeginChild("TableWindow", ImVec2(0, tableHeight(objects.size())), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableSetupColumn("Type");

@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "../imgui/imgui.h"
 #include "Object.h"
+#include "Cursor.h"
 #include <memory>
 
 class UI {
@@ -25,6 +26,11 @@ public:
 	int selectedRowIdx = -1;
 	std::vector<std::shared_ptr<Object>> objects;
 
+	Cursor cursor;
+	enum class ObjectType {
+		Torus, Cube
+	};
+
 	// SETTINGS
 	bool useMMB = true;
 	bool showGrid = false;
@@ -32,7 +38,15 @@ public:
 	ImVec4 bkgdColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	void Render(bool firstPass);
+
+	inline bool noObjectSelected() const {
+		return selectedObjId == -1;
+	}
 private:
+	int m_selectedObjType = 0;
+	std::vector<ObjectType> m_objectTypes = { ObjectType::Cube, ObjectType::Torus };
+	std::vector<const char*> m_objectTypeNames = { "Cube", "Torus" };
+
 	void RenderRightPanel(bool firstPass);
 	void RenderTransforms();
 	void RenderCursor();
@@ -40,4 +54,12 @@ private:
 	void RenderSelectionTable(bool firstPass);
 	void RenderSelectedObject();
 	void RenderSettings(bool firstPass);
+
+	inline int tableHeight(int rows) const {
+		const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+		const float headerHeight = ImGui::GetFrameHeightWithSpacing();
+		const float tableHeight = (rows * rowHeight) + headerHeight;
+		const float maxHeight = ImGui::GetContentRegionAvail().y * 0.5f;
+		return std::min(tableHeight, maxHeight);
+	}
 };

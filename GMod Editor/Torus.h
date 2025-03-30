@@ -3,7 +3,7 @@
 
 class Torus : public Object{
 public:
-	Torus(double R, double r, unsigned int uParts, unsigned int vParts);
+	Torus(double R = 0.5, double r = 0.25, unsigned int uParts = 32, unsigned int vParts = 32);
 
 	double Get_R() const;
 	void Set_R(double R);
