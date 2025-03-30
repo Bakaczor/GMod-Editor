@@ -20,7 +20,6 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
-	m_UI.objects.push_back(std::make_shared<Torus>());
 	m_UI.objects.push_back(std::make_shared<Cube>());
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),

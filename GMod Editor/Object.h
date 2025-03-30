@@ -16,6 +16,11 @@ public:
 		USHORT v1;
 		USHORT v2;
 	};
+	struct FACE {
+		USHORT v1;
+		USHORT v2;
+		USHORT v3;
+	};
 #pragma endregion
 	int id;
 	std::string name;
@@ -28,7 +33,7 @@ public:
 	Object();
 	virtual ~Object() = default;
 	void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
-	void UpdateMesh(const Device& device);
+	virtual void UpdateMesh(const Device& device);
 	virtual void RenderProperties();
 protected:
 	static int m_globalObjectId;
@@ -36,6 +41,7 @@ protected:
 	Mesh m_mesh;
 	std::vector<VERTEX> m_vertices;
 	std::vector<EDGE> m_edges;
+	std::vector<FACE> m_faces;
 private:
 	static unsigned short m_globalObjectNum;
 };

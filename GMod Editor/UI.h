@@ -28,8 +28,14 @@ public:
 
 	Cursor cursor;
 	enum class ObjectType {
-		Torus, Cube
+		Cube, Torus, Point
 	};
+
+	// ORIENTATION
+	enum class Orientation {
+		World, Cursor
+	};
+	Orientation currentOrientation = Orientation::World;
 
 	// SETTINGS
 	bool useMMB = true;
@@ -44,14 +50,14 @@ public:
 	}
 private:
 	int m_selectedObjType = 0;
-	std::vector<ObjectType> m_objectTypes = { ObjectType::Cube, ObjectType::Torus };
-	std::vector<const char*> m_objectTypeNames = { "Cube", "Torus" };
+	std::vector<ObjectType> m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
+	std::vector<const char*> m_objectTypeNames = { "Cube", "Torus", "Point"};
 
 	void RenderRightPanel(bool firstPass);
 	void RenderTransforms();
 	void RenderCursor();
 	void RenderObjectTable(bool firstPass);
-	void RenderSelectionTable(bool firstPass);
+	void RenderSelection(bool firstPass);
 	void RenderSelectedObject();
 	void RenderSettings(bool firstPass);
 

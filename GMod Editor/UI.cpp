@@ -2,6 +2,7 @@
 #include "UI.h"
 #include "Torus.h"
 #include "Cube.h"
+#include "Point.h"
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -26,7 +27,7 @@ void UI::RenderRightPanel(bool firstPass) {
 		}
 		if (ImGui::BeginTabItem("Objects")) {
 			RenderObjectTable(firstPass);
-			RenderSelectionTable(firstPass);
+			RenderSelection(firstPass);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Properties")) {
@@ -41,7 +42,7 @@ void UI::RenderRightPanel(bool firstPass) {
 void UI::RenderTransforms() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::PushStyleColor(ImGuiCol_Header, style.Colors[ImGuiCol_Header]);
-	ImGui::BeginChild("TransformsWindow", ImVec2(0, 150), true, ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild("TransformsWindow", ImVec2(0, 200), true, ImGuiWindowFlags_NoBackground);
 	ImGui::BeginGroup();
 
 	const float padx = style.WindowPadding.x / 2;
@@ -95,6 +96,17 @@ void UI::RenderTransforms() {
 	}
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
+	ImGui::Spacing();
+	if (ImGui::CollapsingHeader("Orientation")) {
+		ImGui::BeginGroup();
+		if (ImGui::RadioButton("World", currentOrientation == Orientation::World)) {
+			currentOrientation = Orientation::World;
+		}
+		if (ImGui::RadioButton("Cursor", currentOrientation == Orientation::Cursor)) {
+			currentOrientation = Orientation::Cursor;
+		}
+		ImGui::EndGroup();
+	}
 	ImGui::EndChild();
 }
 
@@ -132,6 +144,12 @@ void UI::RenderCursor() {
 			}
 			case ObjectType::Torus: {
 				auto obj = std::make_shared<Torus>();
+				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				objects.push_back(obj);
+				break;
+			}
+			case ObjectType::Point: {
+				auto obj = std::make_shared<Point>();
 				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(obj);
 				break;
@@ -183,12 +201,12 @@ void UI::RenderObjectTable(bool firstPass) {
 	}
 }
 
-void UI::RenderSelectionTable(bool firstPass) {
+void UI::RenderSelection(bool firstPass) {
 	if (firstPass) {
 		ImGui::SetNextItemOpen(false);
 	}
 	ImGui::Spacing();
-	if (ImGui::CollapsingHeader("List of selections")) {
+	if (ImGui::CollapsingHeader("Selection")) {
 		/*ImGui::BeginChild("TableWindow", ImVec2(0, 300), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
