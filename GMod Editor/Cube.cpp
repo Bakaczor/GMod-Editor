@@ -1,6 +1,6 @@
 #include "Cube.h"
 
-unsigned short Cube::m_globalCubeNum = 1;
+unsigned short Cube::m_globalCubeNum = 0;
 
 Cube::Cube() {
 	m_type = "Cube";
@@ -8,10 +8,12 @@ Cube::Cube() {
 	os << "cube_" << m_globalCubeNum;
 	name = os.str();
 	m_globalCubeNum += 1;
-	RecalculateGeometry();
+	InitGeometry();
 }
 
-void Cube::RecalculateGeometry() {
+void Cube::InitGeometry() {
+	geometryChanged = true;
+
 	m_vertices = {
 		{ gmod::vector3<double>(-0.5f, -0.5f,  0.5f) },
 		{ gmod::vector3<double>(0.5f, -0.5f,  0.5f) },

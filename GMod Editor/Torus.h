@@ -17,7 +17,7 @@ public:
 	int Get_vParts() const;
 	void Set_vParts(int vParts);
 
-	virtual void RenderObjectProperties() override;
+	virtual void RenderProperties() override;
 private:
 	const static int m_uPartsMin = 3;
 	const static int m_vPartsMin = 3;

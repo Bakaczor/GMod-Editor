@@ -35,7 +35,9 @@ public:
 private:
 	void RenderRightPanel(bool firstPass);
 	void RenderTransforms();
+	void RenderCursor();
 	void RenderObjectTable(bool firstPass);
+	void RenderSelectionTable(bool firstPass);
 	void RenderSelectedObject();
 	void RenderSettings(bool firstPass);
 };

@@ -6,5 +6,5 @@ public:
 	Cube();
 private:
 	static unsigned short m_globalCubeNum;
-	void RecalculateGeometry();
+	void InitGeometry();
 };

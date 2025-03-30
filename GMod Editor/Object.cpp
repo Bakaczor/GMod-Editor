@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "Object.h"
+#include "../imgui/misc/cpp/imgui_stdlib.h"
 
 int Object::m_globalObjectId = 1;
-unsigned short Object::m_globalObjectNum = 1;
+unsigned short Object::m_globalObjectNum = 0;
 
 Object::Object() : transform(), m_mesh(), m_type("Object") {
 	std::ostringstream os;
@@ -41,12 +42,14 @@ void Object::UpdateMesh(const Device& device) {
 	}
 
 	m_mesh.Update(device, verts, idxs);
+	m_vertices.clear();
+	m_edges.clear();
 }
 
-void Object::RenderObjectProperties() {
-	ImGui::Separator();
+void Object::RenderProperties() {
 	ImGui::Spacing();
 	std::string text = "Properties of " + m_type + ":";
 	ImGui::Text(text.c_str());
+	ImGui::InputText("Name", &name);
 	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&color));
 }

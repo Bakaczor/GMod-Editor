@@ -81,7 +81,19 @@
     <ClInclude Include="Cube.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Cursor.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="Selection.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="Polyline.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
     <ClInclude Include="Axes.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="AxesMesh.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
   </ItemGroup>
@@ -128,7 +140,19 @@
     <ClCompile Include="Cube.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
+    <ClCompile Include="Selection.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Polyline.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
     <ClCompile Include="Axes.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="AxesMesh.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Cursor.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>

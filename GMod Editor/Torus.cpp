@@ -1,7 +1,7 @@
 #include "Data.h"
 #include "Torus.h"
 
-unsigned short Torus::m_globalTorusNum = 1;
+unsigned short Torus::m_globalTorusNum = 0;
 
 Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R(R), m_r(r), m_uParts(uParts), m_vParts(vParts) {
 	m_type = "Torus";
@@ -48,8 +48,8 @@ void Torus::Set_vParts(int vParts) {
 	RecalculateGeometry();
 }
 
-void Torus::RenderObjectProperties() {
-	Object::RenderObjectProperties();
+void Torus::RenderProperties() {
+	Object::RenderProperties();
 	bool changed = false;
 	double R = m_R;
 	if (ImGui::InputDouble("R", &R, 0.001f, 0.1f, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {

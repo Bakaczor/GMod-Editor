@@ -139,8 +139,10 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Axes.h" />
+    <ClInclude Include="AxesMesh.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cube.h" />
+    <ClInclude Include="Cursor.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="framework.h" />
@@ -150,14 +152,18 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Descriptions.h" />
+    <ClInclude Include="Polyline.h" />
+    <ClInclude Include="Selection.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Axes.cpp" />
+    <ClCompile Include="AxesMesh.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cube.cpp" />
+    <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -166,6 +172,8 @@
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Descriptions.cpp" />
+    <ClCompile Include="Polyline.cpp" />
+    <ClCompile Include="Selection.cpp" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="UI.cpp" />

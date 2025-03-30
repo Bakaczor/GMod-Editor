@@ -40,7 +40,7 @@ namespace gmod {
 			matrix4<T> Mt = matrix4<T>::translation(m_tx, m_ty, m_tz);
 			matrix4<T> Mr = matrix4<T>::from_quaternion(m_rot);
 			matrix4<T> Ms = matrix4<T>::scaling(m_sx, m_sy, m_sz);
-			return Ms * Mr * Mt;
+			return Mt * Mr * Ms;
 		}
 
 		void SetTranslation(T tx, T ty, T tz) {
@@ -149,4 +149,14 @@ namespace gmod {
 			m_forward.normalize();
 		}
 	};
+
+	template <floating_point T>
+	static T deg2rad(T deg) {
+		return std::numbers::pi_v<T> * deg / 180;
+	}
+
+	template <floating_point T>
+	static T rad2deg(T rad) {
+		return 180 * rad / std::numbers::pi_v<T>;
+	}
 }

@@ -21,6 +21,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
 	m_UI.objects.push_back(std::make_shared<Torus>(1.0f, 0.5f, 32, 32));
+	m_UI.objects.push_back(std::make_shared<Cube>());
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -49,7 +50,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
 
-	m_axes.Initialize(m_device);
+	m_axes.UpdateMesh(m_device);
 }
 
 void Application::Initialize() {
@@ -180,7 +181,7 @@ void Application::RenderUI() {
 void Application::Render() {
 	if (m_UI.showAxes) {
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera).transposed()));
-		m_axes.Render(m_device, m_constBuffColor);
+		m_axes.RenderMesh(m_device, m_constBuffColor);
 	}
 
 	for (auto& object : m_UI.objects) {

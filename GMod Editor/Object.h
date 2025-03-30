@@ -20,7 +20,7 @@ public:
 	int id;
 	std::string name;
 	std::string type() const { return m_type; }
-	std::array<float, 4> color = { 1.0f, 0.0f, 0.0f, 1.0f };
+	std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	gmod::Transform<double> transform;
 	bool geometryChanged = false;
@@ -29,12 +29,13 @@ public:
 	virtual ~Object() = default;
 	void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	void UpdateMesh(const Device& device);
-	virtual void RenderObjectProperties();
+	virtual void RenderProperties();
 protected:
-	static unsigned short m_globalObjectNum;
 	static int m_globalObjectId;
 	std::string m_type;
 	Mesh m_mesh;
 	std::vector<VERTEX> m_vertices;
 	std::vector<EDGE> m_edges;
+private:
+	static unsigned short m_globalObjectNum;
 };
