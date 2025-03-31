@@ -9,6 +9,7 @@ Point::Point() {
 	name = os.str();
 	m_globalPointNum += 1;
 	InitGeometry();
+	color = { 1.0f, 0.0f, 0.0f, 1.0f };
 }
 
 void Point::UpdateMesh(const Device& device) {
@@ -34,12 +35,47 @@ void Point::UpdateMesh(const Device& device) {
 		idxs.push_back(face.v3);
 	}
 
-	m_mesh.Update(device, verts, idxs);
+	m_mesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_vertices.clear();
 	m_edges.clear();
 }
 
 void Point::InitGeometry() {
+	geometryChanged = true;
 
+	const int verticesNum = m_parts * m_parts;
+	m_vertices.clear();
+	m_vertices.reserve(verticesNum);
+	m_faces.clear();
+	m_faces.reserve(2 * verticesNum);
 
+	const double step = 2 * DirectX::XM_PI / m_parts;
+
+	for (int j = 0; j < m_parts; ++j) {
+		const double v = j * step;
+		const double cosv = std::cos(v);
+		const double sinv = std::sin(v);
+
+		for (int i = 0; i < m_parts; ++i) {
+			const double u = i * step;
+			const double cosu = std::cos(u);
+			const double sinu = std::sin(u);
+
+			VERTEX vertex;
+			vertex.pos = m_r * gmod::vector3<double>(cosv * cosu, sinv * cosu, sinu);
+			m_vertices.push_back(vertex);
+		}
+	}
+
+	for (int j = 0; j < m_parts - 1; ++j) {
+		for (int i = 0; i < m_parts - 1; ++i) {
+			USHORT v1 = j * m_parts + i;
+			USHORT v2 = j * m_parts + (i + 1) % m_parts;
+			USHORT v3 = (j + 1) * m_parts + i;
+			USHORT v4 = (j + 1) * m_parts + (i + 1) % m_parts;
+
+			m_faces.push_back({ v1, v2, v3 });
+			m_faces.push_back({ v2, v4, v3 });
+		}
+	}
 }
