@@ -44,8 +44,10 @@ private:
 	void HandleTransformsOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseMove(LPARAM lParam);
 	void HandleCameraOnMouseWheel(WPARAM wParam);
+	Object* HandleSelectionOnMouseClick(LPARAM lParam);
 	void ResizeWnd();
 #pragma region APPLICATION
+	const static float selectionRadius;
 	const static float traSensitivity;
 	const static float rotSensitivity;
 	const static float scaSensitivity;

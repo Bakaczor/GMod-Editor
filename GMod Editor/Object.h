@@ -44,6 +44,12 @@ public:
 	virtual void UpdateScaling(double dsx, double dsy, double dsz);
 	virtual void UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p);
 #pragma endregion
+#pragma region PARENTS_RELATED
+	virtual void AddParent(Object* obj) { return; }
+	virtual void RemoveParent(Object* obj) { return; }
+	virtual void InformParents() { return; }
+	virtual void RemoveReferences() { return; }
+#pragma endregion
 	int id;
 	std::string name;
 	std::string type() const { return m_type; }
@@ -55,11 +61,6 @@ public:
 	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	virtual void UpdateMesh(const Device& device);
 	virtual void RenderProperties();
-
-	virtual void AddParent(Object* obj) { return; }
-	virtual void RemoveParent(Object* obj) { return; }
-	virtual void InformParents() { return; }
-	virtual void RemoveReferences() { return; }
 protected:
 	static int m_globalObjectId;
 	std::string m_type;

@@ -215,6 +215,15 @@ void UI::RenderObjectTable(bool firstPass) {
 	}
 }
 
+void UI::SelectPoint(Object* obj) {
+	objects_selectedObjId = obj->id;
+	int i;
+	for (i = 0; i < objects.size(); i++) {
+		if (objects[i]->id == objects_selectedObjId) { break; }
+	}
+	objects_selectedRowIdx = i;
+}
+
 void UI::RenderSelection(bool firstPass) {
 	if (firstPass) {
 		ImGui::SetNextItemOpen(false);

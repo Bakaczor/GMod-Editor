@@ -3,6 +3,7 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+const float Application::selectionRadius = 0.1f;
 const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.005f;
 const float Application::scaSensitivity = 0.005f;
@@ -346,6 +347,10 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 	switch (msg.message) {
 		case WM_LBUTTONDOWN: {
 			m_mouse.isLMBDown_flag = true;
+			Object* clicked = nullptr;
+			if (clicked = HandleSelectionOnMouseClick(msg.lParam)) {
+				m_UI.SelectPoint(clicked);
+			}
 			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
@@ -414,3 +419,51 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 	}
 	return (msg.result == 0);
 }
+
+Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
+	const float x = static_cast<float>(Mouse::GetXPos(lParam));
+	const float y = static_cast<float>(Mouse::GetYPos(lParam));
+	const float nx = (2.0f * x) / m_winWidth - 1.0f;
+	const float ny = 1.0f - (2.0f * y) / m_winHeight;
+
+	// TODO : remove DirectX functions to minimum
+	const auto projMatrix = matrix4_to_XMFLOAT4X4(this->projMatrix());
+	DirectX::XMMATRIX projMatrixXM = DirectX::XMLoadFloat4x4(&projMatrix);
+	const auto invProj = DirectX::XMMatrixInverse(nullptr, projMatrixXM);
+
+	DirectX::XMVECTOR nearPoint = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(nx, ny, 0.0f, 1.0f), invProj);
+	DirectX::XMVECTOR farPoint = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(nx, ny, 1.0f, 1.0f), invProj);
+
+	const auto viewMatrix = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
+	DirectX::XMMATRIX viewMatrixXM = DirectX::XMLoadFloat4x4(&viewMatrix);
+	const auto invView = DirectX::XMMatrixInverse(nullptr, viewMatrixXM);
+
+	DirectX::XMVECTOR rayOrigin = DirectX::XMVector3TransformCoord(nearPoint, invView);
+	DirectX::XMVECTOR rayEnd = DirectX::XMVector3TransformCoord(farPoint, invView);
+	DirectX::XMVECTOR rayDir = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(rayEnd, rayOrigin));
+
+	const gmod::vector3<double> origin(
+		DirectX::XMVectorGetX(rayOrigin),
+		DirectX::XMVectorGetY(rayOrigin),
+		DirectX::XMVectorGetZ(rayOrigin)
+	);
+	const gmod::vector3<double> direction(
+		DirectX::XMVectorGetX(rayDir),
+		DirectX::XMVectorGetY(rayDir),
+		DirectX::XMVectorGetZ(rayDir)
+	);
+
+	Object* closestPoint = nullptr;
+	for (auto& obj : m_UI.objects) {
+		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
+		const auto vecToPoint = obj->position() - origin;
+		const auto crossProd = gmod::cross(vecToPoint, direction);
+
+		if (crossProd.length() < selectionRadius) {
+			closestPoint = obj.get();
+			break;
+		}
+	}
+	return closestPoint;
+}
+
