@@ -3,6 +3,7 @@
 #include "Torus.h"
 #include "Cube.h"
 #include "Point.h"
+#include "Pointline.h"
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -252,6 +253,12 @@ void UI::RenderSelection(bool firstPass) {
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();
+		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			auto pos = selection.midpoint();
+			auto obj = std::make_shared<Pointline>(selection.selected);
+			obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+			objects.push_back(obj);
+		}
 	}
 }
 
@@ -279,6 +286,10 @@ void UI::RenderSelectedObject() {
 
 		if (flag) {
 			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			auto point = dynamic_cast<Point*>(selectedObj.get());
+			if (point != nullptr) {
+				point->InformParents();
+			}
 		}
 
 		ImGui::Text("Euler Angles");

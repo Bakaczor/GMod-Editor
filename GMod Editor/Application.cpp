@@ -248,7 +248,12 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			if (m_UI.noObjectSelected()) {
 				m_UI.cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			} else {
-				m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+				auto& selectedObj = m_UI.objects.at(m_UI.objects_selectedRowIdx);
+				selectedObj->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+				auto point = dynamic_cast<Point*>(selectedObj.get());
+				if (point != nullptr) {
+					point->InformParents();
+				}
 			}
 			break;
 		}

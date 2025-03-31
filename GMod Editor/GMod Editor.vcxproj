@@ -153,7 +153,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Descriptions.h" />
     <ClInclude Include="Point.h" />
-    <ClInclude Include="Polyline.h" />
+    <ClInclude Include="Pointline.h" />
     <ClInclude Include="Selection.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
@@ -174,7 +174,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Descriptions.cpp" />
     <ClCompile Include="Point.cpp" />
-    <ClCompile Include="Polyline.cpp" />
+    <ClCompile Include="Pointline.cpp" />
     <ClCompile Include="Selection.cpp" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
