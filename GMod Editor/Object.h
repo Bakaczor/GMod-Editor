@@ -35,6 +35,11 @@ public:
 	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	virtual void UpdateMesh(const Device& device);
 	virtual void RenderProperties();
+
+	virtual void AddParent(Object* obj) { return; }
+	virtual void RemoveParent(Object* obj) { return; }
+	virtual void InformParents() { return; }
+	virtual void RemoveReferences() { return; }
 protected:
 	static int m_globalObjectId;
 	std::string m_type;
@@ -42,6 +47,7 @@ protected:
 	std::vector<VERTEX> m_vertices;
 	std::vector<EDGE> m_edges;
 	std::vector<FACE> m_faces;
+	std::vector<Object*> m_parents;
 private:
 	static unsigned short m_globalObjectNum;
 };

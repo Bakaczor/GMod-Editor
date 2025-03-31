@@ -1,5 +1,10 @@
 #include "Selection.h"
 
+Selection::Selection() {
+	m_type = "Selection";
+	name = "selection";
+}
+
 gmod::vector3<double> Selection::midpoint() {
 	gmod::vector3<double> mid;
 	for (const auto& obj : selected) {
@@ -13,23 +18,23 @@ gmod::vector3<double> Selection::midpoint() {
 	return mid;
 }
 
-void Selection::AddObject(std::shared_ptr<Object> obj) {
+void Selection::AddObject(Object* obj) {
 	if (Contains(obj->id)) { return; }
 	selected.push_back(obj);
 	midpoint();
-	auto point = dynamic_cast<Point*>(obj.get());
+	auto point = dynamic_cast<Point*>(obj);
 	if (point != nullptr) {
 		m_numOfPoints++;
 	}
 }
 
-void Selection::RemoveObject(std::shared_ptr<Object> obj) {
+void Selection::RemoveObject(Object* obj) {
 	int erased = std::erase_if(selected, [&obj](const auto& o) {
 		return o->id == obj->id;
 	});
 	if (erased > 0) {
 		midpoint();
-		auto point = dynamic_cast<Point*>(obj.get());
+		auto point = dynamic_cast<Point*>(obj);
 		if (point != nullptr) {
 			m_numOfPoints--;
 		}

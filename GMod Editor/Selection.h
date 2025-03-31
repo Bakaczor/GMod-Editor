@@ -3,14 +3,15 @@
 #include "Point.h"
 #include <memory>
 
-class Selection {
+class Selection : public Object {
 public:
 	Point point;
-	std::vector<std::shared_ptr<Object>> selected;
+	std::vector<Object*> selected;
 	gmod::vector3<double> midpoint();
 
-	void AddObject(std::shared_ptr<Object> obj);
-	void RemoveObject(std::shared_ptr<Object> obj);
+	Selection();
+	void AddObject(Object* obj);
+	void RemoveObject(Object* obj);
 	void Clear();
 	bool Contains(int id) const;
 

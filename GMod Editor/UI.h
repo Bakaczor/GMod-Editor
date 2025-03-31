@@ -25,7 +25,7 @@ public:
 	// OBJECTS
 	int objects_selectedObjId = -1;
 	int objects_selectedRowIdx = -1;
-	std::vector<std::shared_ptr<Object>> objects;
+	std::vector<std::unique_ptr<Object>> objects;
 
 	int selection_selectedObjId = -1;
 	int selection_selectedRowIdx = -1;
@@ -56,7 +56,7 @@ public:
 private:
 	int m_selectedObjType = 0;
 	std::vector<ObjectType> m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
-	std::vector<const char*> m_objectTypeNames = { "Cube", "Torus", "Point"};
+	std::vector<const char*> m_objectTypeNames = { "Cube", "Torus", "Point" };
 
 	void RenderRightPanel(bool firstPass);
 	void RenderTransforms();

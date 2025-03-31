@@ -12,16 +12,23 @@ Point::Point() {
 	color = { 1.0f, 0.0f, 0.0f, 1.0f };
 }
 
-void Point::AddParent(const Object* obj) {
+void Point::AddParent(Object* obj) {
 	if (std::find_if(m_parents.begin(), m_parents.end(), [&obj](const auto& o) { return o->id == obj->id; }) != m_parents.end()) { return; }
-	// CHECK
-	//m_parents.push_back(std::make_shared<Object>(obj));
+	m_parents.push_back(obj);
+}
+
+void RemoveParent(Object* obj) {
+	std::erase_if(selected, [&obj](const auto& o) { return o->id == obj->id; });
 }
 
 void Point::InformParents() {
 	for (auto& obj : m_parents) {
 		obj->geometryChanged = true;
 	}
+}
+
+void RemoveReferences() {
+
 }
 
 void Point::UpdateMesh(const Device& device) {

@@ -141,21 +141,21 @@ void UI::RenderCursor() {
 		auto pos = cursor.transform.position();
 		switch (m_objectTypes.at(m_selectedObjType)) {
 			case ObjectType::Cube: {
-				auto obj = std::make_shared<Cube>();
+				auto obj = std::make_unique<Cube>();
 				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(obj);
+				objects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Torus: {
-				auto obj = std::make_shared<Torus>();
+				auto obj = std::make_unique<Torus>();
 				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(obj);
+				objects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Point: {
-				auto obj = std::make_shared<Point>();
+				auto obj = std::make_unique<Point>();
 				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(obj);
+				objects.push_back(std::move(obj));
 				break;
 			}
 		}
@@ -171,12 +171,12 @@ void UI::RenderObjectTable(bool firstPass) {
 	if (ImGui::CollapsingHeader("List of objects")) {
 		if (ImGui::Button("Add to selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 			if (objects_selectedRowIdx != -1) {
-				selection.AddObject(objects[objects_selectedRowIdx]);
+				selection.AddObject(objects[objects_selectedRowIdx].get());
 			}
 		}
 		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 			if (objects_selectedRowIdx != -1) {
-				selection.RemoveObject(objects[objects_selectedRowIdx]);
+				selection.RemoveObject(objects[objects_selectedRowIdx].get());
 				objects.erase(objects.begin() + objects_selectedRowIdx);
 
 				objects_selectedRowIdx = -1;
@@ -254,10 +254,15 @@ void UI::RenderSelection(bool firstPass) {
 		}
 		ImGui::EndChild();
 		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			auto pos = selection.midpoint();
-			auto obj = std::make_shared<Pointline>(selection.selected);
-			obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
-			objects.push_back(obj);
+			//auto pos = selection.midpoint();
+			//auto obj = std::make_unique<Pointline>(selection.selected);
+			//obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+			//objects.push_back(obj);
+
+			//for (auto& p : m_points) {
+			//	auto point = dynamic_cast<Point*>(p.get());
+			//	point->AddParent(this);
+			//}
 		}
 	}
 }
@@ -266,7 +271,7 @@ void UI::RenderSelectedObject() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
 	if (objects_selectedRowIdx != -1) {
-		std::shared_ptr<Object>& selectedObj = objects[objects_selectedRowIdx];
+		Object* selectedObj = objects[objects_selectedRowIdx].get();
 		double step = 0.001f;
 		double stepFast = 0.1f;
 		bool flag = true;
@@ -286,7 +291,7 @@ void UI::RenderSelectedObject() {
 
 		if (flag) {
 			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
-			auto point = dynamic_cast<Point*>(selectedObj.get());
+			auto point = dynamic_cast<Point*>(selectedObj);
 			if (point != nullptr) {
 				point->InformParents();
 			}
