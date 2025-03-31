@@ -243,43 +243,81 @@ void UI::RenderSelectedObject() {
 		std::shared_ptr<Object>& selectedObj = objects[selectedRowIdx];
 		double step = 0.001f;
 		double stepFast = 0.1f;
+		bool flag = true;
 
 		ImGui::Text("Position");
 		gmod::vector3<double> position = selectedObj->transform.position();
+		flag = false;
 		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+			flag = true;
+		}
+
+		if (flag) {
 			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
 		}
 
 		ImGui::Text("Euler Angles");
 		gmod::vector3<double> eulerAngles = selectedObj->transform.eulerAngles();
+		flag = false;
 		auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
 		if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetRotation(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
+			eulerAngles = gmod::vector3<double>(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Y##Euler Angles", &eulerAnglesDeg.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetRotation(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
+			eulerAngles = gmod::vector3<double>(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Z##Euler Angles", &eulerAnglesDeg.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
+			eulerAngles = gmod::vector3<double>(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
+			flag = true;
+		}
+
+		if (flag) {
+			switch (currentOrientation) {
+				case Orientation::World: {
+					selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+					break;
+				}
+				case Orientation::Cursor: {
+					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
+					break;
+				}
+			}
 		}
 
 		ImGui::Text("Scale");
 		gmod::vector3<double> scale = selectedObj->transform.scale();
+		flag = false;
 		if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			flag = true;
 		}
 		if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+			flag = true;
 		}
+
+		if (flag) {
+			switch (currentOrientation) {
+				case Orientation::World: {
+					selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+					break;
+				}
+				case Orientation::Cursor: {
+					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+					break;
+				}
+			}
+		}
+
 		ImGui::Spacing();
 		ImGui::Separator();
 		selectedObj->RenderProperties();

@@ -58,11 +58,33 @@ namespace gmod {
 			RotateAxes(m_rot);
 		}
 
+		void SetRotationAroundPoint(T rx, T ry, T rz, const vector3<T>& p) {
+			auto offset = position() - p;
+			offset.rotate(m_rot.inverted());
+
+			SetRotation(rx, ry, rz);
+			offset.rotate(m_rot);
+			SetTranslation(p.x() + offset.x(), p.y() + offset.y(), p.z() + offset.z());
+		}
+
 		void SetScaling(T sx, T sy, T sz) {
 			m_sx = sx;
 			m_sy = sy;
 			m_sz = sz;
 			AssertScales();
+		}
+
+		void SetScalingAroundPoint(T sx, T sy, T sz, const vector3<T>& p) {
+			auto offset = position() - p;
+			offset.x() *= 1 / m_sx;
+			offset.y() *= 1 / m_sy;
+			offset.z() *= 1 / m_sz;
+ 
+			SetScaling(sx, sy, sz);
+			offset.x() *= m_sx;
+			offset.y() *= m_sy;
+			offset.z() *= m_sz;
+			SetTranslation(p.x() + offset.x(), p.y() + offset.y(), p.z() + offset.z());
 		}
 
 		void UpdateTranslation(T dtx, T dty, T dtz) {
@@ -95,11 +117,35 @@ namespace gmod {
 			RotateAxes(newRot);
 		}
 
+		void UpdateRotationAroundPoint_Quaternion(T drx, T dry, T drz, const vector3<T>& p) {
+			auto offset = position() - p;
+			offset.rotate(m_rot.inverted());
+
+			UpdateRotation_Quaternion(drx, dry, drz);
+			offset.rotate(m_rot);
+			SetTranslation(p.x() + offset.x(), p.y() + offset.y(), p.z() + offset.z());
+		}
+
 		void UpdateScaling(T dsx, T dsy, T dsz) {
 			m_sx += dsx;
 			m_sy += dsy;
 			m_sz += dsz;
 			AssertScales();
+		}
+
+		void UpdateScalingAroundPoint(T dsx, T dsy, T dsz, const vector3<T>& p) {
+			auto pos = position() - p;
+			pos.x() *= 1 / m_sx;
+			pos.y() *= 1 / m_sy;
+			pos.z() *= 1 / m_sz;
+			pos = pos + p;
+
+			UpdateScaling(dsx, dsy, dsz);
+			vector3<T> offset = pos - p;
+			offset.x() *= m_sx;
+			offset.y() *= m_sy;
+			offset.z() *= m_sz;
+			SetTranslation(p.x() + offset.x(), p.y() + offset.y(), p.z() + offset.z());
 		}
 	private:
 		const T m_minScale = 10 * std::numeric_limits<T>::epsilon();

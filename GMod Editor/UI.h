@@ -33,7 +33,7 @@ public:
 
 	// ORIENTATION
 	enum class Orientation {
-		World, Cursor
+		World, Cursor, Selection
 	};
 	Orientation currentOrientation = Orientation::World;
 

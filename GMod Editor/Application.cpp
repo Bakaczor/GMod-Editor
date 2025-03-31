@@ -245,13 +245,33 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 		case UI::Mode::Rotate: {
 			if (m_UI.noObjectSelected()) { return; }
 			trans = trans * rotSensitivity;
-			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+			switch (m_UI.currentOrientation) {
+				case UI::Orientation::World: {
+					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					break;
+				}
+				case UI::Orientation::Cursor: {
+					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+						m_UI.cursor.transform.position());
+					break;
+				}
+			}
 			break;
 		}
 		case UI::Mode::Scale: {
 			if (m_UI.noObjectSelected()) { return; }
 			trans = trans * scaSensitivity;
-			m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
+			switch (m_UI.currentOrientation) {
+				case UI::Orientation::World: {
+					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
+					break;
+				}
+				case UI::Orientation::Cursor: {
+					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+						m_UI.cursor.transform.position());
+					break;
+				}
+			}
 			break;
 		}
 		default: return;
