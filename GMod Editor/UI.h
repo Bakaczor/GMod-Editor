@@ -3,6 +3,7 @@
 #include "../imgui/imgui.h"
 #include "Object.h"
 #include "Cursor.h"
+#include "Selection.h"
 #include <memory>
 
 class UI {
@@ -22,9 +23,13 @@ public:
 	Axis currentAxis = Axis::Y;
 
 	// OBJECTS
-	int selectedObjId = -1;
-	int selectedRowIdx = -1;
+	int objects_selectedObjId = -1;
+	int objects_selectedRowIdx = -1;
 	std::vector<std::shared_ptr<Object>> objects;
+
+	int selection_selectedObjId = -1;
+	int selection_selectedRowIdx = -1;
+	Selection selection;
 
 	Cursor cursor;
 	enum class ObjectType {
@@ -46,7 +51,7 @@ public:
 	void Render(bool firstPass);
 
 	inline bool noObjectSelected() const {
-		return selectedObjId == -1;
+		return objects_selectedObjId == -1;
 	}
 private:
 	int m_selectedObjType = 0;

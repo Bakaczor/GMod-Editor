@@ -238,7 +238,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			if (m_UI.noObjectSelected()) {
 				m_UI.cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			} else {
-				m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+				m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			}
 			break;
 		}
@@ -247,12 +247,17 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			trans = trans * rotSensitivity;
 			switch (m_UI.currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
 						m_UI.cursor.transform.position());
+					break;
+				}
+				case UI::Orientation::Selection:{
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+						m_UI.selection.midpoint());
 					break;
 				}
 			}
@@ -263,12 +268,17 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			trans = trans * scaSensitivity;
 			switch (m_UI.currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
 						m_UI.cursor.transform.position());
+					break;
+				}
+				case UI::Orientation::Selection: {
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+						m_UI.selection.midpoint());
 					break;
 				}
 			}

@@ -32,7 +32,7 @@ public:
 
 	Object();
 	virtual ~Object() = default;
-	void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
+	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	virtual void UpdateMesh(const Device& device);
 	virtual void RenderProperties();
 protected:

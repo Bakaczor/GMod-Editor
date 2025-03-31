@@ -68,7 +68,7 @@ void UI::RenderTransforms() {
 	if (ImGui::RadioButton("Translate", currentMode == Mode::Translate)) {
 		currentMode = Mode::Translate;
 	}
-	if (!noObjectSelected()) {
+	if (!noObjectSelected() && !(currentOrientation == Orientation::Selection && selection.Contains(objects_selectedObjId))) {
 		if (ImGui::RadioButton("Rotate", currentMode == Mode::Rotate)) {
 			currentMode = Mode::Rotate;
 		}
@@ -104,6 +104,9 @@ void UI::RenderTransforms() {
 		}
 		if (ImGui::RadioButton("Cursor", currentOrientation == Orientation::Cursor)) {
 			currentOrientation = Orientation::Cursor;
+		}
+		if (ImGui::RadioButton("Selection", currentOrientation == Orientation::Selection)) {
+			currentOrientation = Orientation::Selection;
 		}
 		ImGui::EndGroup();
 	}
@@ -165,14 +168,24 @@ void UI::RenderObjectTable(bool firstPass) {
 	}
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("List of objects")) {
-		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			if (selectedRowIdx != -1) {
-				objects.erase(objects.begin() + selectedRowIdx);
-				selectedRowIdx = -1;
-				selectedObjId = -1;;
+		if (ImGui::Button("Add to selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			if (objects_selectedRowIdx != -1) {
+				selection.AddObject(objects[objects_selectedRowIdx]);
 			}
 		}
-		ImGui::BeginChild("TableWindow", ImVec2(0, tableHeight(objects.size())), false, ImGuiWindowFlags_None);
+		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			if (objects_selectedRowIdx != -1) {
+				selection.RemoveObject(objects[objects_selectedRowIdx]);
+				objects.erase(objects.begin() + objects_selectedRowIdx);
+
+				objects_selectedRowIdx = -1;
+				objects_selectedObjId = -1;
+
+				selection_selectedRowIdx = -1;
+				selection_selectedObjId = -1;
+			}
+		}
+		ImGui::BeginChild("ObjectTableWindow", ImVec2(0, tableHeight(objects.size())), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableSetupColumn("Type");
@@ -180,21 +193,19 @@ void UI::RenderObjectTable(bool firstPass) {
 
 			for (int i = 0; i < objects.size(); i++) {
 				ImGui::TableNextRow();
-
 				ImGui::TableNextColumn();
-				if (ImGui::Selectable(objects[i]->name.c_str(), selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (selectedRowIdx == i) {
-						selectedRowIdx = -1;
-						selectedObjId = -1;
+				if (ImGui::Selectable(objects[i]->name.c_str(), objects_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
+					if (objects_selectedRowIdx == i) {
+						objects_selectedRowIdx = -1;
+						objects_selectedObjId = -1;
 					} else {
-						selectedRowIdx = i;
-						selectedObjId = objects[i]->id;
+						objects_selectedRowIdx = i;
+						objects_selectedObjId = objects[i]->id;
 					}
 				}
 				ImGui::TableNextColumn();
 				ImGui::Text(objects[i]->type().c_str());
 			}
-
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();
@@ -207,40 +218,43 @@ void UI::RenderSelection(bool firstPass) {
 	}
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("Selection")) {
-		/*ImGui::BeginChild("TableWindow", ImVec2(0, 300), false, ImGuiWindowFlags_None);
-		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
+		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			if (selection_selectedRowIdx != -1) {
+				selection.RemoveObject(selection.selected[selection_selectedRowIdx]);
+			}
+		}
+		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.selected.size())), false, ImGuiWindowFlags_None);
+		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableSetupColumn("Type");
 			ImGui::TableHeadersRow();
 
-			for (int i = 0; i < objects.size(); i++) {
+			for (int i = 0; i < selection.selected.size(); i++) {
 				ImGui::TableNextRow();
-
 				ImGui::TableNextColumn();
-				if (ImGui::Selectable(objects[i]->name.c_str(), selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (selectedRowIdx == i) {
-						selectedRowIdx = -1;
-						selectedObjId = -1;
+				if (ImGui::Selectable(selection.selected[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
+					if (selection_selectedRowIdx == i) {
+						selection_selectedRowIdx = -1;
+						selection_selectedObjId = -1;
 					} else {
-						selectedRowIdx = i;
-						selectedObjId = objects[i]->id;
+						selection_selectedRowIdx = i;
+						selection_selectedObjId = selection.selected[i]->id;
 					}
 				}
 				ImGui::TableNextColumn();
-				ImGui::Text(objects[i]->type().c_str());
+				ImGui::Text(selection.selected[i]->type().c_str());
 			}
-
-			ImGui::EndTable();*/
-		//}
-		//ImGui::EndChild();
+			ImGui::EndTable();
+		}
+		ImGui::EndChild();
 	}
 }
 
 void UI::RenderSelectedObject() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
-	if (selectedRowIdx != -1) {
-		std::shared_ptr<Object>& selectedObj = objects[selectedRowIdx];
+	if (objects_selectedRowIdx != -1) {
+		std::shared_ptr<Object>& selectedObj = objects[objects_selectedRowIdx];
 		double step = 0.001f;
 		double stepFast = 0.1f;
 		bool flag = true;
@@ -289,6 +303,10 @@ void UI::RenderSelectedObject() {
 					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
 					break;
 				}
+				case Orientation::Selection: {
+					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.midpoint());
+					break;
+				}
 			}
 		}
 
@@ -313,6 +331,10 @@ void UI::RenderSelectedObject() {
 				}
 				case Orientation::Cursor: {
 					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+					break;
+				}
+				case Orientation::Selection: {
+					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.midpoint());
 					break;
 				}
 			}
