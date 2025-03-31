@@ -250,10 +250,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			} else {
 				auto& selectedObj = m_UI.objects.at(m_UI.objects_selectedRowIdx);
 				selectedObj->UpdateTranslation(trans.x(), trans.y(), trans.z());
-				auto point = dynamic_cast<Point*>(selectedObj.get());
-				if (point != nullptr) {
-					point->InformParents();
-				}
+				selectedObj->InformParents();
 			}
 			break;
 		}

@@ -294,10 +294,7 @@ void UI::RenderSelectedObject() {
 
 		if (flag) {
 			selectedObj->SetTranslation(position.x(), position.y(), position.z());
-			auto point = dynamic_cast<Point*>(selectedObj);
-			if (point != nullptr) {
-				point->InformParents();
-			}
+			selectedObj->InformParents();
 		}
 
 		ImGui::Text("Euler Angles");

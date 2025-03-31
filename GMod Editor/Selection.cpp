@@ -7,13 +7,15 @@ Selection::Selection() {
 
 gmod::vector3<double> Selection::UpdateMidpoint() {
 	gmod::vector3<double> mid;
-	for (const auto& obj : selected) {
-		const auto pos = obj->position();
-		mid.x() += pos.x();
-		mid.y() += pos.y();
-		mid.z() += pos.z();
+	if (!selected.empty()) {
+		for (const auto& obj : selected) {
+			const auto pos = obj->position();
+			mid.x() += pos.x();
+			mid.y() += pos.y();
+			mid.z() += pos.z();
+		}
+		mid = mid * (1.0 / selected.size());
 	}
-	mid = mid * (1.0 / selected.size());
 	midpoint.SetTranslation(mid.x(), mid.y(), mid.z());
 	return mid;
 }
@@ -59,7 +61,7 @@ void Selection::SetTranslation(double tx, double ty, double tz) {
 	UpdateMidpoint();
 }
 void Selection::SetRotation(double rx, double ry, double rz) {
-	Object::SetRotation(rx, ry, rz);
+	Object::SetRotationAroundPoint(rx, ry, rz, midpoint.position());
 	for (auto& obj : selected) {
 		obj->SetRotationAroundPoint(rx, ry, rz, midpoint.position());
 	}
@@ -73,7 +75,7 @@ void Selection::SetRotationAroundPoint(double rx, double ry, double rz, const gm
 	UpdateMidpoint();
 }
 void Selection::SetScaling(double sx, double sy, double sz) {
-	Object::SetScaling(sx, sy, sz);
+	Object::SetScalingAroundPoint(sx, sy, sz, midpoint.position());
 	for (auto& obj : selected) {
 		obj->SetScalingAroundPoint(sx, sy, sz, midpoint.position());
 	}
@@ -94,7 +96,7 @@ void Selection::UpdateTranslation(double dtx, double dty, double dtz) {
 	UpdateMidpoint();
 }
 void Selection::UpdateRotation_Quaternion(double drx, double dry, double drz) {
-	Object::UpdateRotation_Quaternion(drx, dry, drz);
+	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, midpoint.position());
 	for (auto& obj : selected) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, midpoint.position());
 	}
@@ -108,7 +110,7 @@ void Selection::UpdateRotationAroundPoint_Quaternion(double drx, double dry, dou
 	UpdateMidpoint();
 }
 void Selection::UpdateScaling(double dsx, double dsy, double dsz) {
-	Object::UpdateScaling(dsx, dsy, dsz);
+	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, midpoint.position());
 	for (auto& obj : selected) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, midpoint.position());
 	}
