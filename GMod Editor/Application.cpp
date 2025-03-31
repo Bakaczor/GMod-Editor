@@ -52,8 +52,12 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	// GLOBAL
 	m_axes.UpdateMesh(m_device);
 
-	m_UI.cursor.transform.SetScaling(0.25, 0.25, 0.25);
+	m_UI.cursor.transform.SetScaling(0.5, 0.5, 0.5);
 	m_UI.cursor.UpdateMesh(m_device);
+
+	m_UI.selection.point.color = { 0.0f, 0.0f, 1.0f, 1.0f };
+	m_UI.selection.point.transform.SetScaling(0.75, 0.75, 0.75);
+	m_UI.selection.point.UpdateMesh(m_device);
 }
 
 void Application::Initialize() {
@@ -185,6 +189,12 @@ void Application::Render() {
 	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.cursor.transform.modelMatrix().transposed()));
 	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
 
+	if (!m_UI.selection.empty()) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.point.transform.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.point.color.data()));
+		m_UI.selection.point.RenderMesh(m_device.deviceContext());
+	}
+
 	if (m_UI.showAxes) {
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera).transposed()));
 		m_axes.RenderMesh(m_device, m_constBuffColor);
@@ -286,6 +296,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 		}
 		default: return;
 	}
+	m_UI.selection.midpoint();
 }
 
 void Application::HandleCameraOnMouseMove(LPARAM lParam) {

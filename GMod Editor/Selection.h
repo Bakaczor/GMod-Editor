@@ -5,14 +5,20 @@
 
 class Selection {
 public:
+	Point point;
 	std::vector<std::shared_ptr<Object>> selected;
+	gmod::vector3<double> midpoint();
 
-	gmod::vector3<double> midpoint() const;
 	void AddObject(std::shared_ptr<Object> obj);
 	void RemoveObject(std::shared_ptr<Object> obj);
+	void Clear();
 	bool Contains(int id) const;
+
 	inline bool isPolyline() const {
 		return m_numOfPoints == selected.size();
+	}
+	inline bool empty() const {
+		return selected.empty();
 	}
 private:
 	int m_numOfPoints = 0;

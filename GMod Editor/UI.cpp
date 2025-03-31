@@ -223,6 +223,11 @@ void UI::RenderSelection(bool firstPass) {
 				selection.RemoveObject(selection.selected[selection_selectedRowIdx]);
 			}
 		}
+		if (ImGui::Button("Clear selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+			selection.Clear();
+			selection_selectedRowIdx = -1;
+			selection_selectedObjId = -1;
+		}
 		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.selected.size())), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
@@ -345,6 +350,7 @@ void UI::RenderSelectedObject() {
 		selectedObj->RenderProperties();
 	}
 	ImGui::EndChild();
+	selection.midpoint();
 }
 
 void UI::RenderSettings(bool firstPass) {
