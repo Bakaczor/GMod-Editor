@@ -56,7 +56,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_UI.cursor.UpdateMesh(m_device);
 
 	m_UI.selection.midpoint.color = { 0.0f, 0.0f, 1.0f, 1.0f };
-	m_UI.selection.midpoint.transform.SetScaling(0.75, 0.75, 0.75);
+	m_UI.selection.midpoint.SetScaling(0.75, 0.75, 0.75);
 	m_UI.selection.midpoint.UpdateMesh(m_device);
 }
 
@@ -190,7 +190,7 @@ void Application::Render() {
 	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
 
 	if (!m_UI.selection.empty()) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.transform.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.modelMatrix().transposed()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.midpoint.color.data()));
 		m_UI.selection.midpoint.RenderMesh(m_device.deviceContext());
 	}
@@ -201,7 +201,7 @@ void Application::Render() {
 	}
 
 	for (auto& object : m_UI.objects) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->transform.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->modelMatrix().transposed()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
 		if (object->geometryChanged || m_firstPass) {
 			object->geometryChanged = false;
@@ -249,7 +249,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 				m_UI.cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			} else {
 				auto& selectedObj = m_UI.objects.at(m_UI.objects_selectedRowIdx);
-				selectedObj->transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+				selectedObj->UpdateTranslation(trans.x(), trans.y(), trans.z());
 				auto point = dynamic_cast<Point*>(selectedObj.get());
 				if (point != nullptr) {
 					point->InformParents();
@@ -262,16 +262,16 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			trans = trans * rotSensitivity;
 			switch (m_UI.currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
 						m_UI.cursor.transform.position());
 					break;
 				}
 				case UI::Orientation::Selection:{
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
 						m_UI.selection.UpdateMidpoint());
 					break;
 				}
@@ -283,16 +283,16 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			trans = trans * scaSensitivity;
 			switch (m_UI.currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScaling(trans.x(), trans.y(), trans.z());
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScaling(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
 						m_UI.cursor.transform.position());
 					break;
 				}
 				case UI::Orientation::Selection: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
 						m_UI.selection.UpdateMidpoint());
 					break;
 				}

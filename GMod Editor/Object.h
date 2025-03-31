@@ -22,12 +22,32 @@ public:
 		USHORT v3;
 	};
 #pragma endregion
+#pragma region TRANSFORM_WRAPPER
+	gmod::vector3<double> position() const;
+	gmod::vector3<double> eulerAngles() const;
+	gmod::vector3<double> scale() const;
+	gmod::quaternion<double> rotation() const;
+	gmod::vector3<double> right() const;
+	gmod::vector3<double> up() const;
+	gmod::vector3<double> forward() const;
+	gmod::matrix4<double> modelMatrix() const;
+	void UpdateRotation_Euler(double drx, double dry, double drz);
+
+	virtual void SetTranslation(double tx, double ty, double tz);
+	virtual void SetRotation(double rx, double ry, double rz);
+	virtual void SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p);
+	virtual void SetScaling(double sx, double sy, double sz);
+	virtual void SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p);
+	virtual void UpdateTranslation(double dtx, double dty, double dtz);
+	virtual void UpdateRotation_Quaternion(double drx, double dry, double drz);
+	virtual void UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p);
+	virtual void UpdateScaling(double dsx, double dsy, double dsz);
+	virtual void UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p);
+#pragma endregion
 	int id;
 	std::string name;
 	std::string type() const { return m_type; }
 	std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-	gmod::Transform<double> transform;
 	bool geometryChanged = false;
 
 	Object();
@@ -44,6 +64,7 @@ protected:
 	static int m_globalObjectId;
 	std::string m_type;
 	Mesh m_mesh;
+	gmod::Transform<double> m_transform;
 	std::vector<VERTEX> m_vertices;
 	std::vector<EDGE> m_edges;
 	std::vector<FACE> m_faces;

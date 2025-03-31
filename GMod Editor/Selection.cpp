@@ -8,13 +8,13 @@ Selection::Selection() {
 gmod::vector3<double> Selection::UpdateMidpoint() {
 	gmod::vector3<double> mid;
 	for (const auto& obj : selected) {
-		const auto pos = obj->transform.position();
+		const auto pos = obj->position();
 		mid.x() += pos.x();
 		mid.y() += pos.y();
 		mid.z() += pos.z();
 	}
 	mid = mid * (1.0 / selected.size());
-	midpoint.transform.SetTranslation(mid.x(), mid.y(), mid.z());
+	midpoint.SetTranslation(mid.x(), mid.y(), mid.z());
 	return mid;
 }
 
@@ -49,3 +49,76 @@ void Selection::Clear() {
 bool Selection::Contains(int id) const {
 	return std::find_if(selected.begin(), selected.end(), [&id](const auto& o) { return o->id == id; }) != selected.end();
 }
+
+#pragma region TRANSFORM_WRAPPER
+void Selection::SetTranslation(double tx, double ty, double tz) {
+	Object::SetTranslation(tx, ty, tz);
+	for (auto& obj : selected) {
+		obj->SetTranslation(tx, ty, tz);
+	}
+	UpdateMidpoint();
+}
+void Selection::SetRotation(double rx, double ry, double rz) {
+	Object::SetRotation(rx, ry, rz);
+	for (auto& obj : selected) {
+		obj->SetRotationAroundPoint(rx, ry, rz, midpoint.position());
+	}
+	UpdateMidpoint();
+}
+void Selection::SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) {
+	Object::SetRotationAroundPoint(rx, ry, rz, p);
+	for (auto& obj : selected) {
+		obj->SetRotationAroundPoint(rx, ry, rz, p);
+	}
+	UpdateMidpoint();
+}
+void Selection::SetScaling(double sx, double sy, double sz) {
+	Object::SetScaling(sx, sy, sz);
+	for (auto& obj : selected) {
+		obj->SetScalingAroundPoint(sx, sy, sz, midpoint.position());
+	}
+	UpdateMidpoint();
+}
+void Selection::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) {
+	Object::SetScalingAroundPoint(sx, sy, sz, p);
+	for (auto& obj : selected) {
+		obj->SetScalingAroundPoint(sx, sy, sz, p);
+	}
+	UpdateMidpoint();
+}
+void Selection::UpdateTranslation(double dtx, double dty, double dtz) {
+	Object::UpdateTranslation(dtx, dty, dtz);
+	for (auto& obj : selected) {
+		obj->UpdateTranslation(dtx, dty, dtz);
+	}
+	UpdateMidpoint();
+}
+void Selection::UpdateRotation_Quaternion(double drx, double dry, double drz) {
+	Object::UpdateRotation_Quaternion(drx, dry, drz);
+	for (auto& obj : selected) {
+		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, midpoint.position());
+	}
+	UpdateMidpoint();
+}
+void Selection::UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) {
+	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
+	for (auto& obj : selected) {
+		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
+	}
+	UpdateMidpoint();
+}
+void Selection::UpdateScaling(double dsx, double dsy, double dsz) {
+	Object::UpdateScaling(dsx, dsy, dsz);
+	for (auto& obj : selected) {
+		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, midpoint.position());
+	}
+	UpdateMidpoint();
+}
+void Selection::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) {
+	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, p);
+	for (auto& obj : selected) {
+		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, p);
+	}
+	UpdateMidpoint();
+}
+#pragma endregion

@@ -142,19 +142,19 @@ void UI::RenderCursor() {
 		switch (m_objectTypes.at(m_selectedObjType)) {
 			case ObjectType::Cube: {
 				auto obj = std::make_unique<Cube>();
-				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Torus: {
 				auto obj = std::make_unique<Torus>();
-				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Point: {
 				auto obj = std::make_unique<Point>();
-				obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
+				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
 				break;
 			}
@@ -280,7 +280,7 @@ void UI::RenderSelectedObject() {
 		bool flag = true;
 
 		ImGui::Text("Position");
-		gmod::vector3<double> position = selectedObj->transform.position();
+		gmod::vector3<double> position = selectedObj->position();
 		flag = false;
 		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
@@ -293,7 +293,7 @@ void UI::RenderSelectedObject() {
 		}
 
 		if (flag) {
-			selectedObj->transform.SetTranslation(position.x(), position.y(), position.z());
+			selectedObj->SetTranslation(position.x(), position.y(), position.z());
 			auto point = dynamic_cast<Point*>(selectedObj);
 			if (point != nullptr) {
 				point->InformParents();
@@ -301,7 +301,7 @@ void UI::RenderSelectedObject() {
 		}
 
 		ImGui::Text("Euler Angles");
-		gmod::vector3<double> eulerAngles = selectedObj->transform.eulerAngles();
+		gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();
 		flag = false;
 		auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
 		if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
@@ -320,22 +320,22 @@ void UI::RenderSelectedObject() {
 		if (flag) {
 			switch (currentOrientation) {
 				case Orientation::World: {
-					selectedObj->transform.SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+					selectedObj->SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
 					break;
 				}
 				case Orientation::Cursor: {
-					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
+					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
 					break;
 				}
 				case Orientation::Selection: {
-					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.UpdateMidpoint());
+					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.UpdateMidpoint());
 					break;
 				}
 			}
 		}
 
 		ImGui::Text("Scale");
-		gmod::vector3<double> scale = selectedObj->transform.scale();
+		gmod::vector3<double> scale = selectedObj->scale();
 		flag = false;
 		if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
@@ -350,15 +350,15 @@ void UI::RenderSelectedObject() {
 		if (flag) {
 			switch (currentOrientation) {
 				case Orientation::World: {
-					selectedObj->transform.SetScaling(scale.x(), scale.y(), scale.z());
+					selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
 					break;
 				}
 				case Orientation::Cursor: {
-					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
 					break;
 				}
 				case Orientation::Selection: {
-					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.UpdateMidpoint());
+					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.UpdateMidpoint());
 					break;
 				}
 			}

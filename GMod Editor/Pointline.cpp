@@ -25,7 +25,7 @@ void Pointline::UpdateMesh(const Device& device) {
 
 	for (int i = 0; i < selected.size(); ++i) {
 		VERTEX vertex;
-		vertex.pos = selected[i]->transform.position();
+		vertex.pos = selected[i]->position();
 		m_vertices.push_back(vertex);
 
 		if (i < selected.size() - 1) {
