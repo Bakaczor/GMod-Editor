@@ -55,9 +55,9 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_UI.cursor.transform.SetScaling(0.5, 0.5, 0.5);
 	m_UI.cursor.UpdateMesh(m_device);
 
-	m_UI.selection.point.color = { 0.0f, 0.0f, 1.0f, 1.0f };
-	m_UI.selection.point.transform.SetScaling(0.75, 0.75, 0.75);
-	m_UI.selection.point.UpdateMesh(m_device);
+	m_UI.selection.midpoint.color = { 0.0f, 0.0f, 1.0f, 1.0f };
+	m_UI.selection.midpoint.transform.SetScaling(0.75, 0.75, 0.75);
+	m_UI.selection.midpoint.UpdateMesh(m_device);
 }
 
 void Application::Initialize() {
@@ -190,9 +190,9 @@ void Application::Render() {
 	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
 
 	if (!m_UI.selection.empty()) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.point.transform.modelMatrix().transposed()));
-		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.point.color.data()));
-		m_UI.selection.point.RenderMesh(m_device.deviceContext());
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.transform.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.midpoint.color.data()));
+		m_UI.selection.midpoint.RenderMesh(m_device.deviceContext());
 	}
 
 	if (m_UI.showAxes) {
@@ -272,7 +272,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 				}
 				case UI::Orientation::Selection:{
 					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
-						m_UI.selection.midpoint());
+						m_UI.selection.UpdateMidpoint());
 					break;
 				}
 			}
@@ -293,7 +293,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 				}
 				case UI::Orientation::Selection: {
 					m_UI.objects.at(m_UI.objects_selectedRowIdx)->transform.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
-						m_UI.selection.midpoint());
+						m_UI.selection.UpdateMidpoint());
 					break;
 				}
 			}
@@ -301,7 +301,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 		}
 		default: return;
 	}
-	m_UI.selection.midpoint();
+	m_UI.selection.UpdateMidpoint();
 }
 
 void Application::HandleCameraOnMouseMove(LPARAM lParam) {

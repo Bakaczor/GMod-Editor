@@ -1,13 +1,11 @@
 #pragma once
-#include "Object.h"
 #include "Point.h"
-#include <memory>
 
 class Selection : public Object {
 public:
-	Point point;
+	Point midpoint;
 	std::vector<Object*> selected;
-	gmod::vector3<double> midpoint();
+	gmod::vector3<double> UpdateMidpoint();
 
 	Selection();
 	void AddObject(Object* obj);
@@ -16,7 +14,7 @@ public:
 	bool Contains(int id) const;
 
 	inline bool isPolyline() const {
-		return m_numOfPoints == selected.size();
+		return m_numOfPoints > 1 && m_numOfPoints == selected.size();
 	}
 	inline bool empty() const {
 		return selected.empty();

@@ -4,9 +4,10 @@
 
 class Pointline : public Selection {
 public:
-	Pointline();
-	virtual void UpdateMesh(const Device& device);
-	virtual void RenderProperties();
+	Pointline(std::vector<Object*> objects);
+	virtual void UpdateMesh(const Device& device) override;
+	virtual void RenderProperties() override;
+	virtual void RemoveReferences() override;
 private:
-	static unsigned short m_globalPolylineNum;
+	static unsigned short m_globalPointlineNum;
 };

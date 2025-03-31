@@ -1,4 +1,5 @@
 #include "Point.h"
+#include "Selection.h"
 
 unsigned short Point::m_globalPointNum = 0;
 
@@ -17,8 +18,8 @@ void Point::AddParent(Object* obj) {
 	m_parents.push_back(obj);
 }
 
-void RemoveParent(Object* obj) {
-	std::erase_if(selected, [&obj](const auto& o) { return o->id == obj->id; });
+void Point::RemoveParent(Object* obj) {
+	std::erase_if(m_parents, [&obj](const auto& o) { return o->id == obj->id; });
 }
 
 void Point::InformParents() {
@@ -27,8 +28,14 @@ void Point::InformParents() {
 	}
 }
 
-void RemoveReferences() {
-
+void Point::RemoveReferences() {
+	for (auto& obj : m_parents) {
+		obj->geometryChanged = true;
+		auto selection = dynamic_cast<Selection*>(obj);
+		if (selection != nullptr) {
+			std::erase_if(selection->selected, [this](const auto& o) { return o->id == id; });
+		}
+	}
 }
 
 void Point::UpdateMesh(const Device& device) {

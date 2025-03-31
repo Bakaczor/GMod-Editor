@@ -5,7 +5,7 @@ Selection::Selection() {
 	name = "selection";
 }
 
-gmod::vector3<double> Selection::midpoint() {
+gmod::vector3<double> Selection::UpdateMidpoint() {
 	gmod::vector3<double> mid;
 	for (const auto& obj : selected) {
 		const auto pos = obj->transform.position();
@@ -14,14 +14,14 @@ gmod::vector3<double> Selection::midpoint() {
 		mid.z() += pos.z();
 	}
 	mid = mid * (1.0 / selected.size());
-	point.transform.SetTranslation(mid.x(), mid.y(), mid.z());
+	midpoint.transform.SetTranslation(mid.x(), mid.y(), mid.z());
 	return mid;
 }
 
 void Selection::AddObject(Object* obj) {
 	if (Contains(obj->id)) { return; }
 	selected.push_back(obj);
-	midpoint();
+	UpdateMidpoint();
 	auto point = dynamic_cast<Point*>(obj);
 	if (point != nullptr) {
 		m_numOfPoints++;
@@ -33,7 +33,7 @@ void Selection::RemoveObject(Object* obj) {
 		return o->id == obj->id;
 	});
 	if (erased > 0) {
-		midpoint();
+		UpdateMidpoint();
 		auto point = dynamic_cast<Point*>(obj);
 		if (point != nullptr) {
 			m_numOfPoints--;
@@ -43,7 +43,7 @@ void Selection::RemoveObject(Object* obj) {
 
 void Selection::Clear() {
 	selected.clear();
-	midpoint();
+	UpdateMidpoint();
 }
 
 bool Selection::Contains(int id) const {

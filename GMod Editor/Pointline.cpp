@@ -1,13 +1,20 @@
 #include "Pointline.h"
 
-unsigned short Pointline::m_globalPolylineNum = 0;
+unsigned short Pointline::m_globalPointlineNum = 0;
 
-Pointline::Pointline() {
-	m_type = "Polyline";
+Pointline::Pointline(std::vector<Object*> objects) {
+	m_type = "Pointline";
 	std::ostringstream os;
-	os << "point_" << m_globalPolylineNum;
+	os << "pointline_" << m_globalPointlineNum;
 	name = os.str();
-	m_globalPolylineNum += 1;
+	m_globalPointlineNum += 1;
+
+	selected = objects;
+	for (auto& obj : selected) {
+		auto point = dynamic_cast<Point*>(obj);
+		point->AddParent(this);
+	}
+	geometryChanged = true;
 }
 
 void Pointline::UpdateMesh(const Device& device) {
@@ -28,10 +35,31 @@ void Pointline::UpdateMesh(const Device& device) {
 			m_edges.push_back(edge);
 		}
 	}
+	if (selected.size() <= 1) {
+		EDGE edge;
+		edge.v1 = 0;
+		edge.v2 = 0;
+		m_edges.push_back(edge);
+	}
 	Object::UpdateMesh(device);
 }
 
 void Pointline::RenderProperties() {
 	Object::RenderProperties();
-	// TODO : display points
+	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
+		ImGui::TableSetupColumn("Name");
+		ImGui::TableHeadersRow();
+		for (int i = 0; i < selected.size(); i++) {
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::Selectable(selected[i]->name.c_str(), false, ImGuiSelectableFlags_Disabled);
+		}
+		ImGui::EndTable();
+	}
+}
+
+void Pointline::RemoveReferences() {
+	for (auto& obj : selected) {
+		obj->RemoveParent(this);
+	}
 }

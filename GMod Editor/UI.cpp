@@ -176,7 +176,9 @@ void UI::RenderObjectTable(bool firstPass) {
 		}
 		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 			if (objects_selectedRowIdx != -1) {
-				selection.RemoveObject(objects[objects_selectedRowIdx].get());
+				auto obj = objects[objects_selectedRowIdx].get();
+				selection.RemoveObject(obj);
+				obj->RemoveReferences();
 				objects.erase(objects.begin() + objects_selectedRowIdx);
 
 				objects_selectedRowIdx = -1;
@@ -222,6 +224,8 @@ void UI::RenderSelection(bool firstPass) {
 		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 			if (selection_selectedRowIdx != -1) {
 				selection.RemoveObject(selection.selected[selection_selectedRowIdx]);
+				selection_selectedRowIdx = -1;
+				selection_selectedObjId = -1;
 			}
 		}
 		if (ImGui::Button("Clear selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
@@ -253,16 +257,15 @@ void UI::RenderSelection(bool firstPass) {
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();
+		if (!selection.isPolyline()) {
+			ImGui::BeginDisabled();
+		}
 		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			//auto pos = selection.midpoint();
-			//auto obj = std::make_unique<Pointline>(selection.selected);
-			//obj->transform.SetTranslation(pos.x(), pos.y(), pos.z());
-			//objects.push_back(obj);
-
-			//for (auto& p : m_points) {
-			//	auto point = dynamic_cast<Point*>(p.get());
-			//	point->AddParent(this);
-			//}
+			auto obj = std::make_unique<Pointline>(selection.selected);
+			objects.push_back(std::move(obj));
+		}
+		if (!selection.isPolyline()) {
+			ImGui::EndDisabled();
 		}
 	}
 }
@@ -325,7 +328,7 @@ void UI::RenderSelectedObject() {
 					break;
 				}
 				case Orientation::Selection: {
-					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.midpoint());
+					selectedObj->transform.SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.UpdateMidpoint());
 					break;
 				}
 			}
@@ -355,7 +358,7 @@ void UI::RenderSelectedObject() {
 					break;
 				}
 				case Orientation::Selection: {
-					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.midpoint());
+					selectedObj->transform.SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.UpdateMidpoint());
 					break;
 				}
 			}
@@ -366,7 +369,7 @@ void UI::RenderSelectedObject() {
 		selectedObj->RenderProperties();
 	}
 	ImGui::EndChild();
-	selection.midpoint();
+	selection.UpdateMidpoint();
 }
 
 void UI::RenderSettings(bool firstPass) {
