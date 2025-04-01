@@ -30,7 +30,7 @@ public:
 	int selection_selectedObjId = -1;
 	int selection_selectedRowIdx = -1;
 	Selection selection;
-	void SelectPoint(Object* obj);
+	void SelectObjectOnMouseClick(Object* obj);
 
 	Cursor cursor;
 	enum class ObjectType {

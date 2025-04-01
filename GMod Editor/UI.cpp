@@ -215,13 +215,21 @@ void UI::RenderObjectTable(bool firstPass) {
 	}
 }
 
-void UI::SelectPoint(Object* obj) {
-	objects_selectedObjId = obj->id;
+void UI::SelectObjectOnMouseClick(Object* obj) {
 	int i;
+	objects_selectedObjId = obj->id;
+	selection_selectedObjId = obj->id;
+	selection.AddObject(obj);
+
 	for (i = 0; i < objects.size(); i++) {
 		if (objects[i]->id == objects_selectedObjId) { break; }
 	}
 	objects_selectedRowIdx = i;
+
+	for (i = 0; i < selection.selected.size(); i++) {
+		if (selection.selected[i]->id == selection_selectedObjId) { break; }
+	}
+	selection_selectedRowIdx = i;
 }
 
 void UI::RenderSelection(bool firstPass) {

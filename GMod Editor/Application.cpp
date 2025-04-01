@@ -349,7 +349,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 			m_mouse.isLMBDown_flag = true;
 			Object* clicked = nullptr;
 			if (clicked = HandleSelectionOnMouseClick(msg.lParam)) {
-				m_UI.SelectPoint(clicked);
+				m_UI.SelectObjectOnMouseClick(clicked);
 			}
 			m_mouse.UpdatePos(msg.lParam);
 			break;
