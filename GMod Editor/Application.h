@@ -67,6 +67,7 @@ private:
 	const static float m_FOV;
 	float aspect() const;
 	gmod::matrix4<float> projMatrix() const;
+	gmod::matrix4<float> projMatrix_inv() const;
 #pragma endregion
 
 #pragma region DEVICE

@@ -3,7 +3,7 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-const float Application::selectionRadius = 0.1f;
+const float Application::selectionRadius = 0.05f;
 const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.005f;
 const float Application::scaSensitivity = 0.005f;
@@ -172,6 +172,19 @@ gmod::matrix4<float> Application::projMatrix() const {
 		0,	   Height, 0,               0,
 		0,	   0,	   Range,		   -1,
 		0,     0,      Range * m_near,  0
+	);
+}
+
+gmod::matrix4<float> Application::projMatrix_inv() const {
+	const float Height_1 = std::tan(0.5f * m_FOV);
+	const float Width_1 = Height_1 * aspect();
+	const float Range_1 = (m_near - m_far) / m_far;
+
+	return gmod::matrix4<float>(
+		Width_1, 0, 0, 0,
+		0, Height_1, 0, 0,
+		0, 0, 0, Range_1 * (1 / m_near),
+		0, 0, -1, 1 / m_near
 	);
 }
 

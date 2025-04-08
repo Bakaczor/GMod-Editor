@@ -16,7 +16,8 @@ public:
 
 	explicit Camera(float dist = 0.0f, float minDist = -std::numeric_limits<float>::max(), float maxDist = std::numeric_limits<float>::max());
 
-	gmod::matrix4<float> viewMatrix() const ;
+	gmod::matrix4<float> viewMatrix() const;
+	gmod::matrix4<float> viewMatrix_inv() const;
 	gmod::vector4<float> cameraPosition() const;
 
 	void Move(float dx, float dy);

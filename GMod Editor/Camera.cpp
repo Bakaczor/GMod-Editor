@@ -61,6 +61,26 @@ gmod::matrix4<float> Camera::viewMatrix() const {
 	);
 }
 
+gmod::matrix4<float> Camera::viewMatrix_inv() const {
+	const gmod::vector3<float> ax = m_target.right();
+	const gmod::vector3<float> ay = m_target.up();
+	const gmod::vector3<float> az = m_target.forward();
+	const gmod::vector3<float> eye = cameraPosition();
+	const float tx = dot(ax, eye);
+	const float ty = dot(ay, eye);
+	const float tz = dot(az, eye);
+	const float ctx = tx * ax.x() + ty * ay.x() + tz * az.x();
+	const float cty = tx * ax.y() + ty * ay.y() + tz * az.y();
+	const float ctz = tx * ax.z() + ty * ay.z() + tz * az.z();
+
+	return gmod::matrix4<float>(
+		ax.x(), ax.y(), ax.z(), 0,
+		ay.x(), ay.y(), ay.z(), 0,
+		az.x(), az.y(), az.z(), 0,
+		ctx,    cty,    ctz,    1
+	);
+}
+
 gmod::vector4<float> Camera::cameraPosition() const {
 	if (m_dist == 0.0f) {
 		return gmod::vector4<float>(m_target.position(), 1.0f);
