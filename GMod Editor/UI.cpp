@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "UI.h"
 #include "Torus.h"
 #include "Cube.h"

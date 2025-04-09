@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Device.h"
 #include "../mini/exceptions.h"
 #include <fstream>

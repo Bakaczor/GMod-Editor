@@ -70,6 +70,20 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir);$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(IncludePath)</IncludePath>
+    <ExternalIncludePath>$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(OutDir);$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(OutDir);$(ExecutablePath)</ExecutablePath>
+    <SourcePath>$(ProjectDir);$(ProjectDir)\..\mini;$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir);$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(IncludePath)</IncludePath>
+    <ExternalIncludePath>$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(OutDir);$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(OutDir);$(ExecutablePath)</ExecutablePath>
+    <SourcePath>$(ProjectDir);$(ProjectDir)\..\mini;$(SourcePath)</SourcePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -145,12 +159,10 @@
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="Device.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="pch.h" />
     <ClInclude Include="Descriptions.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Pointline.h" />
@@ -171,7 +183,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Mouse.cpp" />
-    <ClCompile Include="pch.cpp" />
     <ClCompile Include="Descriptions.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Pointline.cpp" />

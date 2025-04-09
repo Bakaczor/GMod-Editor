@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Data.h"
 
 const D3D11_INPUT_ELEMENT_DESC Vertex_PoCo::layout[2] = {

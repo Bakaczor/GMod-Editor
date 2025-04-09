@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Object.h"
 #include "../imgui/misc/cpp/imgui_stdlib.h"
 

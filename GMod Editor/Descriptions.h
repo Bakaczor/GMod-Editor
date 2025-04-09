@@ -1,5 +1,15 @@
 #pragma once
-#include "pch.h"
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
+#include <DirectXMath.h>
+#include <d3d11.h>
+
+#include <vector>
+#include <string>
+#include <array>
+#include <algorithm>
+#include <cmath>
 
 struct SwapChainDescription : DXGI_SWAP_CHAIN_DESC {
 	SwapChainDescription(HWND wndHwnd, SIZE wndSize);

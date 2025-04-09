@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Descriptions.h"
 
 SwapChainDescription::SwapChainDescription(HWND wndHwnd, SIZE wndSize) {
