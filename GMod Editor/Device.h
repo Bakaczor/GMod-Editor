@@ -1,15 +1,7 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
-#include <DirectXMath.h>
-#include <d3d11.h>
-
+#include "framework.h"
 #include <vector>
 #include <string>
-#include <array>
-#include <algorithm>
-#include <cmath>
 #include "../mini/dxptr.h"
 #include "../mini/window.h"
 #include "Descriptions.h"

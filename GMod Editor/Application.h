@@ -1,15 +1,5 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
-#include <DirectXMath.h>
-#include <d3d11.h>
-
-#include <vector>
-#include <string>
-#include <array>
-#include <algorithm>
-#include <cmath>
+#include "framework.h"
 #include <Windows.h>
 #include "../imgui/backends/imgui_impl_dx11.h"
 #include "../imgui/backends/imgui_impl_win32.h"

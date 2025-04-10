@@ -1,15 +1,7 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
-#include <DirectXMath.h>
+#include "framework.h"
 #include <d3d11.h>
-
-#include <vector>
-#include <string>
-#include <array>
-#include <algorithm>
-#include <cmath>
+#include <DirectXMath.h>
 
 struct Vertex_PoCo {
 	DirectX::XMFLOAT3 position;

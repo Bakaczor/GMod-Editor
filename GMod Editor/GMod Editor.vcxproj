@@ -75,7 +75,7 @@
     <ExternalIncludePath>$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(OutDir);$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(OutDir);$(ExecutablePath)</ExecutablePath>
-    <SourcePath>$(ProjectDir);$(ProjectDir)\..\mini;$(SourcePath)</SourcePath>
+    <SourcePath>$(ProjectDir);$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir);$(ProjectDir)\..\mini;$(ProjectDir)\..\gmod;$(ProjectDir)\..\imgui\backends;$(ProjectDir)\..\imgui\misc\cpp;$(ProjectDir)\..\imgui\misc\debuggers;$(IncludePath)</IncludePath>
@@ -159,6 +159,7 @@
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="Device.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mouse.h" />
