@@ -4,10 +4,10 @@
 class Point : public Object {
 public:
 	Point();
+	~Point() override;
 	virtual void AddParent(Object* obj) override;
 	virtual void RemoveParent(Object* obj) override;
 	virtual void InformParents() override;
-	virtual void RemoveReferences() override;
 	virtual void UpdateMesh(const Device& device) override;
 private:
 	const float m_r = 0.05f;

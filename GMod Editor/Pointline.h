@@ -1,13 +1,13 @@
 #pragma once
-#include "Selection.h"
+#include "ObjectGroup.h"
 #include "Point.h"
 
-class Pointline : public Selection {
+class Pointline : public ObjectGroup {
 public:
 	Pointline(std::vector<Object*> objects);
+	~Pointline() override;
 	virtual void UpdateMesh(const Device& device) override;
 	virtual void RenderProperties() override;
-	virtual void RemoveReferences() override;
 private:
 	static unsigned short m_globalPointlineNum;
 };

@@ -1,13 +1,13 @@
 #pragma once
 #include "Point.h"
 
-class Selection : public Object {
+class ObjectGroup : public Object {
 public:
 	Point midpoint;
-	std::vector<Object*> selected;
+	std::vector<Object*> objects;
 	gmod::vector3<double> UpdateMidpoint();
 
-	Selection();
+	ObjectGroup();
 	void AddObject(Object* obj);
 	void RemoveObject(Object* obj);
 	void Clear();
@@ -26,10 +26,10 @@ public:
 #pragma endregion
 
 	inline bool isPolyline() const {
-		return m_numOfPoints > 1 && m_numOfPoints == selected.size();
+		return m_numOfPoints > 1 && m_numOfPoints == objects.size();
 	}
 	inline bool empty() const {
-		return selected.empty();
+		return objects.empty();
 	}
 private:
 	int m_numOfPoints = 0;

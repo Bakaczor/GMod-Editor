@@ -78,7 +78,7 @@
     <ClInclude Include="Cursor.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
-    <ClInclude Include="Selection.h">
+    <ClInclude Include="ObjectGroup.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="Pointline.h">
@@ -137,7 +137,7 @@
     <ClCompile Include="Cube.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
-    <ClCompile Include="Selection.cpp">
+    <ClCompile Include="ObjectGroup.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="Pointline.cpp">

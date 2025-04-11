@@ -179,7 +179,6 @@ void UI::RenderObjectTable(bool firstPass) {
 			if (objects_selectedRowIdx != -1) {
 				auto obj = objects[objects_selectedRowIdx].get();
 				selection.RemoveObject(obj);
-				obj->RemoveReferences();
 				if (nullptr != dynamic_cast<Point*>(obj)) {
 					numOfPointObjects--;
 				}
@@ -198,7 +197,27 @@ void UI::RenderObjectTable(bool firstPass) {
 			ImGui::TableSetupColumn("Type");
 			ImGui::TableHeadersRow();
 
-			for (int i = 0; i < objects.size(); i++) {
+			for (auto& obj : objects) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				bool selected = selection.Contains(obj->id);
+				if (ImGui::Selectable(obj->name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns)) {
+					if (ImGui::GetIO().KeyCtrl) {
+						if (selected) {
+							selection.RemoveObject(obj.get());
+						} else {
+							selection.AddObject(obj.get());
+						}
+					} else {
+						selection.Clear();
+						selection.AddObject(obj.get());
+					}
+				}
+				ImGui::TableNextColumn();
+				ImGui::Text(obj->type().c_str());
+			}
+
+			/*for (int i = 0; i < objects.size(); i++) {
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 				if (ImGui::Selectable(objects[i]->name.c_str(), objects_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
@@ -212,7 +231,7 @@ void UI::RenderObjectTable(bool firstPass) {
 				}
 				ImGui::TableNextColumn();
 				ImGui::Text(objects[i]->type().c_str());
-			}
+			}*/
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();
@@ -230,8 +249,8 @@ void UI::SelectObjectOnMouseClick(Object* obj) {
 	}
 	objects_selectedRowIdx = i;
 
-	for (i = 0; i < selection.selected.size(); i++) {
-		if (selection.selected[i]->id == selection_selectedObjId) { break; }
+	for (i = 0; i < selection.objects.size(); i++) {
+		if (selection.objects[i]->id == selection_selectedObjId) { break; }
 	}
 	selection_selectedRowIdx = i;
 }
@@ -244,7 +263,7 @@ void UI::RenderSelection(bool firstPass) {
 	if (ImGui::CollapsingHeader("Selection")) {
 		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 			if (selection_selectedRowIdx != -1) {
-				selection.RemoveObject(selection.selected[selection_selectedRowIdx]);
+				selection.RemoveObject(selection.objects[selection_selectedRowIdx]);
 				selection_selectedRowIdx = -1;
 				selection_selectedObjId = -1;
 			}
@@ -254,26 +273,26 @@ void UI::RenderSelection(bool firstPass) {
 			selection_selectedRowIdx = -1;
 			selection_selectedObjId = -1;
 		}
-		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.selected.size())), false, ImGuiWindowFlags_None);
+		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.objects.size())), false, ImGuiWindowFlags_None);
 		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableSetupColumn("Type");
 			ImGui::TableHeadersRow();
 
-			for (int i = 0; i < selection.selected.size(); i++) {
+			for (int i = 0; i < selection.objects.size(); i++) {
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				if (ImGui::Selectable(selection.selected[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
+				if (ImGui::Selectable(selection.objects[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
 					if (selection_selectedRowIdx == i) {
 						selection_selectedRowIdx = -1;
 						selection_selectedObjId = -1;
 					} else {
 						selection_selectedRowIdx = i;
-						selection_selectedObjId = selection.selected[i]->id;
+						selection_selectedObjId = selection.objects[i]->id;
 					}
 				}
 				ImGui::TableNextColumn();
-				ImGui::Text(selection.selected[i]->type().c_str());
+				ImGui::Text(selection.objects[i]->type().c_str());
 			}
 			ImGui::EndTable();
 		}
@@ -282,7 +301,7 @@ void UI::RenderSelection(bool firstPass) {
 			ImGui::BeginDisabled();
 		}
 		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			auto obj = std::make_unique<Pointline>(selection.selected);
+			auto obj = std::make_unique<Pointline>(selection.objects);
 			objects.push_back(std::move(obj));
 		}
 		if (!selection.isPolyline()) {

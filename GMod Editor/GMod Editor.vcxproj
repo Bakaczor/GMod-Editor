@@ -183,7 +183,7 @@
     <ClInclude Include="Descriptions.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Pointline.h" />
-    <ClInclude Include="Selection.h" />
+    <ClInclude Include="ObjectGroup.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
@@ -203,7 +203,7 @@
     <ClCompile Include="Descriptions.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Pointline.cpp" />
-    <ClCompile Include="Selection.cpp" />
+    <ClCompile Include="ObjectGroup.cpp" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="UI.cpp" />

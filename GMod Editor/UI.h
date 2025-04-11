@@ -3,7 +3,7 @@
 #include "../imgui/imgui.h"
 #include "Object.h"
 #include "Cursor.h"
-#include "Selection.h"
+#include "ObjectGroup.h"
 #include <memory>
 
 class UI {
@@ -29,7 +29,7 @@ public:
 
 	int selection_selectedObjId = -1;
 	int selection_selectedRowIdx = -1;
-	Selection selection;
+	ObjectGroup selection;
 	int numOfPointObjects = 0;
 	void SelectObjectOnMouseClick(Object* obj);
 

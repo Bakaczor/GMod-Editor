@@ -1,5 +1,5 @@
 #include "Point.h"
-#include "Selection.h"
+#include "ObjectGroup.h"
 
 unsigned short Point::m_globalPointNum = 0;
 
@@ -11,6 +11,16 @@ Point::Point() {
 	m_globalPointNum += 1;
 	InitGeometry();
 	color = { 1.0f, 0.0f, 0.0f, 1.0f };
+}
+
+Point::~Point() {
+	for (auto& obj : m_parents) {
+		obj->geometryChanged = true;
+		auto selection = dynamic_cast<ObjectGroup*>(obj);
+		if (selection != nullptr) {
+			std::erase_if(selection->objects, [this](const auto& o) { return o->id == id; });
+		}
+	}
 }
 
 void Point::AddParent(Object* obj) {
@@ -25,16 +35,6 @@ void Point::RemoveParent(Object* obj) {
 void Point::InformParents() {
 	for (auto& obj : m_parents) {
 		obj->geometryChanged = true;
-	}
-}
-
-void Point::RemoveReferences() {
-	for (auto& obj : m_parents) {
-		obj->geometryChanged = true;
-		auto selection = dynamic_cast<Selection*>(obj);
-		if (selection != nullptr) {
-			std::erase_if(selection->selected, [this](const auto& o) { return o->id == id; });
-		}
 	}
 }
 

@@ -9,33 +9,39 @@ Pointline::Pointline(std::vector<Object*> objects) {
 	name = os.str();
 	m_globalPointlineNum += 1;
 
-	selected = objects;
-	for (auto& obj : selected) {
+	objects = objects;
+	for (auto& obj : objects) {
 		auto point = dynamic_cast<Point*>(obj);
 		point->AddParent(this);
 	}
 	geometryChanged = true;
 }
 
+Pointline::~Pointline() {
+	for (auto& obj : objects) {
+		obj->RemoveParent(this);
+	}
+}
+
 void Pointline::UpdateMesh(const Device& device) {
 	m_vertices.clear();
-	m_vertices.reserve(selected.size());
+	m_vertices.reserve(objects.size());
 	m_edges.clear();
-	m_edges.reserve(selected.size() - 1);
+	m_edges.reserve(objects.size() - 1);
 
-	for (int i = 0; i < selected.size(); ++i) {
+	for (int i = 0; i < objects.size(); ++i) {
 		VERTEX vertex;
-		vertex.pos = selected[i]->position();
+		vertex.pos = objects[i]->position();
 		m_vertices.push_back(vertex);
 
-		if (i < selected.size() - 1) {
+		if (i < objects.size() - 1) {
 			EDGE edge;
 			edge.v1 = i;
 			edge.v2 = i + 1;
 			m_edges.push_back(edge);
 		}
 	}
-	if (selected.size() <= 1) {
+	if (objects.size() <= 1) {
 		EDGE edge;
 		edge.v1 = 0;
 		edge.v2 = 0;
@@ -49,17 +55,11 @@ void Pointline::RenderProperties() {
 	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
 		ImGui::TableSetupColumn("Name");
 		ImGui::TableHeadersRow();
-		for (int i = 0; i < selected.size(); i++) {
+		for (int i = 0; i < objects.size(); i++) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::Selectable(selected[i]->name.c_str(), false, ImGuiSelectableFlags_Disabled);
+			ImGui::Selectable(objects[i]->name.c_str(), false, ImGuiSelectableFlags_Disabled);
 		}
 		ImGui::EndTable();
-	}
-}
-
-void Pointline::RemoveReferences() {
-	for (auto& obj : selected) {
-		obj->RemoveParent(this);
 	}
 }
