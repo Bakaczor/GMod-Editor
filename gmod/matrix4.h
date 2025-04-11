@@ -22,6 +22,20 @@ namespace gmod {
 
         matrix4(std::array<T, 16>&& A) : m_A(std::move(A)) {}
 
+        vector4<T> row(int i) const {
+            if (i < 0 || i >= 4) {
+                throw std::out_of_range("Index out of range for matrix4");
+            }
+            return vector4<T>(m_A[4 * i], m_A[4 * i + 1], m_A[4 * i + 2], m_A[4 * i + 3]);
+        }
+
+        vector4<T> col(int j) const {
+            if (j < 0 || j >= 4) {
+                throw std::out_of_range("Index out of range for matrix4");
+            }
+            return vector4<T>(m_A[j], m_A[4 + j], m_A[8 + j], m_A[12 + j]);
+        }
+
         static matrix4 identity() {
             return matrix4(
                 1, 0, 0, 0,

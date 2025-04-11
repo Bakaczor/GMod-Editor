@@ -1,4 +1,5 @@
 ﻿#include "Application.h"
+#include "../gmod/utility.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -167,10 +168,10 @@ gmod::matrix4<float> Application::projMatrix() const {
 	const float Range = m_far / (m_near - m_far);
 
 	return gmod::matrix4<float>(
-		Width, 0,      0,               0,
-		0,	   Height, 0,               0,
-		0,	   0,	   Range,		   -1,
-		0,     0,      Range * m_near,  0
+		Width, 0,       0,     0,
+		0,	   Height,  0,     0,
+		0,	   0,	    Range, Range * m_near,
+		0,     0,      -1,	   0
 	);
 }
 
@@ -180,10 +181,10 @@ gmod::matrix4<float> Application::projMatrix_inv() const {
 	const float Range_1 = (m_near - m_far) / m_far;
 
 	return gmod::matrix4<float>(
-		Width_1, 0, 0, 0,
-		0, Height_1, 0, 0,
-		0, 0, 0, Range_1 * (1 / m_near),
-		0, 0, -1, 1 / m_near
+		Width_1, 0,		   0,						0,
+		0,		 Height_1, 0,						0,
+		0,		 0,		   0,					   -1,
+		0,		 0,		   Range_1 * (1 / m_near),  1 / m_near
 	);
 }
 
@@ -199,22 +200,22 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
-	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.cursor.transform.modelMatrix().transposed()));
+	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.cursor.transform.modelMatrix()));
 	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
 
 	if (!m_UI.selection.empty()) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.midpoint.color.data()));
 		m_UI.selection.midpoint.RenderMesh(m_device.deviceContext());
 	}
 
 	if (m_UI.showAxes) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera).transposed()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera)));
 		m_axes.RenderMesh(m_device, m_constBuffColor);
 	}
 
 	for (auto& object : m_UI.objects) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->modelMatrix().transposed()));
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
 		if (object->geometryChanged || m_firstPass) {
 			object->geometryChanged = false;
@@ -433,43 +434,29 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 }
 
 Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
+	if (m_UI.numOfPointObjects == 0) { return nullptr; }
 	const float x = static_cast<float>(Mouse::GetXPos(lParam));
 	const float y = static_cast<float>(Mouse::GetYPos(lParam));
 	const float nx = (2.0f * x) / m_winWidth - 1.0f;
 	const float ny = 1.0f - (2.0f * y) / m_winHeight;
 
-	// TODO : remove DirectX functions to minimum
-	const auto projMatrix = matrix4_to_XMFLOAT4X4(this->projMatrix());
-	DirectX::XMMATRIX projMatrixXM = DirectX::XMLoadFloat4x4(&projMatrix);
-	const auto invProj = DirectX::XMMatrixInverse(nullptr, projMatrixXM);
+	const gmod::matrix4<float> invProj = this->projMatrix_inv();
+	const gmod::vector4<float> nearPoint = gmod::transform_coord(gmod::vector4<float>(nx, ny, 0.0f, 1.0f), invProj);
+	const gmod::vector4<float> farPoint = gmod::transform_coord(gmod::vector4<float>(nx, ny, 1.0f, 1.0f), invProj);
 
-	DirectX::XMVECTOR nearPoint = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(nx, ny, 0.0f, 1.0f), invProj);
-	DirectX::XMVECTOR farPoint = DirectX::XMVector3TransformCoord(DirectX::XMVectorSet(nx, ny, 1.0f, 1.0f), invProj);
+	const gmod::matrix4<float> invView = m_camera.viewMatrix_inv();
+	const gmod::vector4<float> rayOrigin = gmod::transform_coord(nearPoint, invView);
+	const gmod::vector4<float> rayEnd = gmod::transform_coord(farPoint, invView);
+	const gmod::vector4<float> rayDir = gmod::normalize(rayEnd - rayOrigin);
 
-	const auto viewMatrix = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
-	DirectX::XMMATRIX viewMatrixXM = DirectX::XMLoadFloat4x4(&viewMatrix);
-	const auto invView = DirectX::XMMatrixInverse(nullptr, viewMatrixXM);
-
-	DirectX::XMVECTOR rayOrigin = DirectX::XMVector3TransformCoord(nearPoint, invView);
-	DirectX::XMVECTOR rayEnd = DirectX::XMVector3TransformCoord(farPoint, invView);
-	DirectX::XMVECTOR rayDir = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(rayEnd, rayOrigin));
-
-	const gmod::vector3<double> origin(
-		DirectX::XMVectorGetX(rayOrigin),
-		DirectX::XMVectorGetY(rayOrigin),
-		DirectX::XMVectorGetZ(rayOrigin)
-	);
-	const gmod::vector3<double> direction(
-		DirectX::XMVectorGetX(rayDir),
-		DirectX::XMVectorGetY(rayDir),
-		DirectX::XMVectorGetZ(rayDir)
-	);
+	const gmod::vector3<double> origin(rayOrigin.x(), rayOrigin.y(), rayOrigin.z());
+	const gmod::vector3<double> direction(rayDir.x(), rayDir.y(), rayDir.z());
 
 	Object* closestPoint = nullptr;
 	for (auto& obj : m_UI.objects) {
 		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
-		const auto vecToPoint = obj->position() - origin;
-		const auto crossProd = gmod::cross(vecToPoint, direction);
+		const gmod::vector3<double> vecToPoint = obj->position() - origin;
+		const gmod::vector3<double> crossProd = gmod::cross(vecToPoint, direction);
 
 		if (crossProd.length() < selectionRadius) {
 			closestPoint = obj.get();

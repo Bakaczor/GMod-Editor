@@ -195,14 +195,4 @@ namespace gmod {
 			m_forward.normalize();
 		}
 	};
-
-	template <floating_point T>
-	static T deg2rad(T deg) {
-		return std::numbers::pi_v<T> * deg / 180;
-	}
-
-	template <floating_point T>
-	static T rad2deg(T rad) {
-		return 180 * rad / std::numbers::pi_v<T>;
-	}
 }

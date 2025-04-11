@@ -90,7 +90,7 @@ private:
 		DirectX::XMFLOAT4X4 result;
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
-				result(i, j) = static_cast<float>(M(i, j));
+				result(i, j) = static_cast<float>(M(j, i));
 			}
 		}
 		return result;

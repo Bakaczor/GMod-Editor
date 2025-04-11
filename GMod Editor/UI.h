@@ -30,6 +30,7 @@ public:
 	int selection_selectedObjId = -1;
 	int selection_selectedRowIdx = -1;
 	Selection selection;
+	int numOfPointObjects = 0;
 	void SelectObjectOnMouseClick(Object* obj);
 
 	Cursor cursor;

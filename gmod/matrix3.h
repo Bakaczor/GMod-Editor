@@ -19,6 +19,20 @@ namespace gmod {
 
         matrix3(std::array<T, 9>&& A) : m_A(std::move(A)) {}
 
+        vector3<T> row(int i) const {
+            if (i < 0 || i >= 3) {
+                throw std::out_of_range("Index out of range for matrix3");
+            }
+            return vector3<T>(m_A[3 * i], m_A[3 * i + 1], m_A[3 * i + 2]);
+        }
+
+        vector3<T> col(int j) const {
+            if (j < 0 || j >= 3) {
+                throw std::out_of_range("Index out of range for matrix3");
+            }
+            return vector3<T>(m_A[j], m_A[3 + j], m_A[6 + j]);
+        }
+
         static matrix3 identity() {
             return matrix3(
                 1, 0, 0,

@@ -146,6 +146,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="quaternion.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="utility.h" />
     <ClInclude Include="vector3.h" />
     <ClInclude Include="vector4.h" />
   </ItemGroup>

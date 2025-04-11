@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "../gmod/utility.h"
 #include "Torus.h"
 #include "Cube.h"
 #include "Point.h"
@@ -155,6 +156,7 @@ void UI::RenderCursor() {
 				auto obj = std::make_unique<Point>();
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
+				numOfPointObjects++;
 				break;
 			}
 		}
@@ -178,6 +180,9 @@ void UI::RenderObjectTable(bool firstPass) {
 				auto obj = objects[objects_selectedRowIdx].get();
 				selection.RemoveObject(obj);
 				obj->RemoveReferences();
+				if (nullptr != dynamic_cast<Point*>(obj)) {
+					numOfPointObjects--;
+				}
 				objects.erase(objects.begin() + objects_selectedRowIdx);
 
 				objects_selectedRowIdx = -1;

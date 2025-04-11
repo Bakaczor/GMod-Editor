@@ -54,10 +54,10 @@ gmod::matrix4<float> Camera::viewMatrix() const {
 	const gmod::vector3<float> eye = cameraPosition();
 
 	return gmod::matrix4<float>(
-		 ax.x(),		ay.x(),		   az.x(),		 0,
-		 ax.y(),		ay.y(),		   az.y(),		 0,
-		 ax.z(),		ay.z(),	   	   az.z(),		 0,
-		-dot(ax, eye), -dot(ay, eye), -dot(az, eye), 1
+		ax.x(), ax.y(), ax.z(), -dot(ax, eye),
+		ay.x(), ay.y(), ay.z(), -dot(ay, eye),
+		az.x(), az.y(), az.z(), -dot(az, eye),
+		0,		0,		0,		 1
 	);
 }
 
@@ -74,10 +74,10 @@ gmod::matrix4<float> Camera::viewMatrix_inv() const {
 	const float ctz = tx * ax.z() + ty * ay.z() + tz * az.z();
 
 	return gmod::matrix4<float>(
-		ax.x(), ax.y(), ax.z(), 0,
-		ay.x(), ay.y(), ay.z(), 0,
-		az.x(), az.y(), az.z(), 0,
-		ctx,    cty,    ctz,    1
+		ax.x(), ay.x(), az.x(), ctx,
+		ax.y(), ay.y(), az.y(), cty,
+		ax.z(), ay.z(), az.z(), ctz,
+		0,      0,      0,      1
 	);
 }
 
