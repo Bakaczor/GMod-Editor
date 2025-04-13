@@ -183,7 +183,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="Descriptions.h" />
     <ClInclude Include="Point.h" />
-    <ClInclude Include="Pointline.h" />
+    <ClInclude Include="Polyline.h" />
     <ClInclude Include="ObjectGroup.h" />
     <ClInclude Include="PointModel.h" />
     <ClInclude Include="Torus.h" />
@@ -205,7 +205,7 @@
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Descriptions.cpp" />
     <ClCompile Include="Point.cpp" />
-    <ClCompile Include="Pointline.cpp" />
+    <ClCompile Include="Polyline.cpp" />
     <ClCompile Include="ObjectGroup.cpp" />
     <ClCompile Include="PointModel.cpp" />
     <ClCompile Include="Torus.cpp" />

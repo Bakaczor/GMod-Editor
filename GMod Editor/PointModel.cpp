@@ -24,11 +24,12 @@ void PointModel::Initialize(const Device& device) {
 			const double cosu = std::cos(u);
 			const double sinu = std::sin(u);
 
-			Vertex_Po vertex;
-			vertex.position = DirectX::XMFLOAT3(
+			Vertex_Po vertex{ 
+				DirectX::XMFLOAT3(
 				static_cast<float>(m_r * cosv * cosu),
 				static_cast<float>(m_r * sinv * cosu),
-				static_cast<float>(m_r * sinu));
+				static_cast<float>(m_r * sinu))
+			};
 			verts.push_back(vertex);
 		}
 	}

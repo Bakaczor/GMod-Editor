@@ -21,7 +21,7 @@ void CubeModel::Initialize(const Device& device) {
 		{ DirectX::XMFLOAT3(-0.5f,  0.5f, -0.5f) }
 	};
 
-	m_mesh.Update(device, verts, idxs);
+	m_mesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
 void CubeModel::Render(const mini::dx_ptr<ID3D11DeviceContext>& context) const {

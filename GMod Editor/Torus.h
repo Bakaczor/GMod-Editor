@@ -17,6 +17,7 @@ public:
 	int Get_vParts() const;
 	void Set_vParts(int vParts);
 
+	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
 	virtual void UpdateMesh(const Device& device) override;
 	virtual void RenderProperties() override;
 private:
@@ -25,5 +26,10 @@ private:
 	static unsigned short m_globalTorusNum;
 	double m_R, m_r;
 	int m_uParts, m_vParts;
+
+	Mesh m_mesh;
+	std::vector<VERTEX> m_vertices;
+	std::vector<EDGE> m_edges;
+
 	void RecalculateGeometry();
 };

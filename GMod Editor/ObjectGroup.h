@@ -8,15 +8,19 @@ public:
 	gmod::vector3<double> UpdateMidpoint();
 
 	ObjectGroup(PointModel* model = nullptr);
-	void SetModel(PointModel* model);
 	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
 
+	void SetModel(PointModel* model);
 	void AddObject(Object* obj);
 	void RemoveObject(Object* obj);
 	void Clear();
 	bool Contains(int id) const;
+	inline bool Empty() const {
+		return objects.empty();
+	}
 #pragma region TRANSFORM_WRAPPER
-	virtual gmod::matrix4<double> modelMatrix() const;
+	virtual gmod::vector3<double> position() const override;
+	virtual gmod::matrix4<double> modelMatrix() const override;
 	virtual void SetTranslation(double tx, double ty, double tz) override;
 	virtual void SetRotation(double rx, double ry, double rz) override;
 	virtual void SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) override;
@@ -28,12 +32,8 @@ public:
 	virtual void UpdateScaling(double dsx, double dsy, double dsz) override;
 	virtual void UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) override;
 #pragma endregion
-
-	inline bool isPolyline() const {
+	inline bool IsPolyline() const {
 		return m_numOfPoints > 1 && m_numOfPoints == objects.size();
-	}
-	inline bool empty() const {
-		return objects.empty();
 	}
 private:
 	const float m_midpointScale = 0.75f;

@@ -4,7 +4,7 @@
 #include "Torus.h"
 #include "Cube.h"
 #include "Point.h"
-#include "Pointline.h"
+#include "Polyline.h"
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -298,14 +298,14 @@ void UI::RenderSelection(bool firstPass) {
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();
-		if (!selection.isPolyline()) {
+		if (!selection.IsPolyline()) {
 			ImGui::BeginDisabled();
 		}
 		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			auto obj = std::make_unique<Pointline>(selection.objects);
+			auto obj = std::make_unique<Polyline>(selection.objects);
 			objects.push_back(std::move(obj));
 		}
-		if (!selection.isPolyline()) {
+		if (!selection.IsPolyline()) {
 			ImGui::EndDisabled();
 		}
 	}

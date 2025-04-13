@@ -4,7 +4,7 @@
 int Object::m_globalObjectId = 1;
 unsigned short Object::m_globalObjectNum = 0;
 
-Object::Object() : m_transform(), m_mesh(), m_type("Object") {
+Object::Object() : m_transform(), m_type("Object") {
 	std::ostringstream os;
 	os << "object_" << m_globalObjectNum;
 	name = os.str();
@@ -12,10 +12,6 @@ Object::Object() : m_transform(), m_mesh(), m_type("Object") {
 
 	id = m_globalObjectId;
 	m_globalObjectId += 1;
-}
-
-void Object::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
-	m_mesh.Render(context);
 }
 
 void Object::RenderProperties() {
@@ -26,7 +22,23 @@ void Object::RenderProperties() {
 	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&color));
 }
 
-#pragma region TRANSFORM_WRAPPER
+#pragma region PARENTS
+void Object::AddParent(Object* obj) {
+	if (std::find_if(m_parents.begin(), m_parents.end(), [&obj](const auto& o) { return o->id == obj->id; }) != m_parents.end()) { return; }
+	m_parents.push_back(obj);
+}
+
+void Object::RemoveParent(Object* obj) {
+	std::erase_if(m_parents, [&obj](const auto& o) { return o->id == obj->id; });
+}
+
+void Object::InformParents() {
+	for (auto& obj : m_parents) {
+		obj->geometryChanged = true;
+	}
+}
+#pragma endregion
+#pragma region TRANSFORM
 gmod::vector3<double> Object::position() const { 
 	return m_transform.position();
 }
@@ -69,9 +81,6 @@ void Object::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::
 void Object::UpdateTranslation(double dtx, double dty, double dtz) {
 	m_transform.UpdateTranslation(dtx, dty, dtz);
 }
-void Object::UpdateRotation_Euler(double drx, double dry, double drz) {
-	m_transform.UpdateRotation_Euler(drx, dry, drz);
-}
 void Object::UpdateRotation_Quaternion(double drx, double dry, double drz) {
 	m_transform.UpdateRotation_Quaternion(drx, dry, drz);
 }
@@ -85,3 +94,4 @@ void Object::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const 
 	m_transform.UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 }
 #pragma endregion
+

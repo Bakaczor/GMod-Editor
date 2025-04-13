@@ -65,75 +65,68 @@ bool ObjectGroup::Contains(int id) const {
 }
 
 #pragma region TRANSFORM_WRAPPER
+gmod::vector3<double> ObjectGroup::position() const {
+	return m_midpoint;
+}
 gmod::matrix4<double> ObjectGroup::modelMatrix() const {
 	return gmod::matrix4<double>::translation(m_midpoint.x(), m_midpoint.y(), m_midpoint.z()) * 
 		gmod::matrix4<double>::scaling(m_midpointScale, m_midpointScale, m_midpointScale);
 }
 void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
-	Object::SetTranslation(tx, ty, tz);
 	for (auto& obj : objects) {
 		obj->SetTranslation(tx, ty, tz);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::SetRotation(double rx, double ry, double rz) {
-	Object::SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 	for (auto& obj : objects) {
 		obj->SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) {
-	Object::SetRotationAroundPoint(rx, ry, rz, p);
 	for (auto& obj : objects) {
 		obj->SetRotationAroundPoint(rx, ry, rz, p);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::SetScaling(double sx, double sy, double sz) {
-	Object::SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 	for (auto& obj : objects) {
 		obj->SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) {
-	Object::SetScalingAroundPoint(sx, sy, sz, p);
 	for (auto& obj : objects) {
 		obj->SetScalingAroundPoint(sx, sy, sz, p);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
-	Object::UpdateTranslation(dtx, dty, dtz);
 	for (auto& obj : objects) {
 		obj->UpdateTranslation(dtx, dty, dtz);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) {
-	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 	for (auto& obj : objects) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) {
-	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
 	for (auto& obj : objects) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
-	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 	for (auto& obj : objects) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) {
-	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 	for (auto& obj : objects) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 	}

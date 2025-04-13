@@ -84,7 +84,7 @@
     <ClInclude Include="ObjectGroup.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
-    <ClInclude Include="Pointline.h">
+    <ClInclude Include="Polyline.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="Axes.h">
@@ -152,7 +152,7 @@
     <ClCompile Include="ObjectGroup.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
-    <ClCompile Include="Pointline.cpp">
+    <ClCompile Include="Polyline.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="Axes.cpp">

@@ -32,7 +32,7 @@ public:
 	void Render(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 
 	template<typename Vertex>
-	void Update(const Device& device, const std::vector<Vertex> verts, const std::vector<USHORT> idxs, D3D_PRIMITIVE_TOPOLOGY primitiveType = D3D11_PRIMITIVE_TOPOLOGY_LINELIST) {
+	void Update(const Device& device, const std::vector<Vertex> verts, const std::vector<USHORT> idxs, D3D_PRIMITIVE_TOPOLOGY primitiveType) {
 		m_indexBuffer = device.CreateIndexBuffer(idxs);
 		m_vertexBuffers.clear();
 		m_vertexBuffers.push_back(device.CreateVertexBuffer(verts));

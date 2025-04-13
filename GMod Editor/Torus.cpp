@@ -1,5 +1,5 @@
-#include "Data.h"
 #include "Torus.h"
+#include "Data.h"
 
 unsigned short Torus::m_globalTorusNum = 0;
 
@@ -48,6 +48,10 @@ void Torus::Set_vParts(int vParts) {
 	RecalculateGeometry();
 }
 
+void Torus::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+	m_mesh.Render(context);
+}
+
 void Torus::UpdateMesh(const Device& device) {
 	std::vector<Vertex_Po> verts;
 	verts.reserve(m_vertices.size());
@@ -59,9 +63,9 @@ void Torus::UpdateMesh(const Device& device) {
 	for (const auto& vertex : m_vertices) {
 		Vertex_Po v;
 		v.position = DirectX::XMFLOAT3(
-			static_cast<float>(vertex.pos.x()),
-			static_cast<float>(vertex.pos.y()),
-			static_cast<float>(vertex.pos.z()));
+			static_cast<float>(vertex.x),
+			static_cast<float>(vertex.y),
+			static_cast<float>(vertex.z));
 		verts.push_back(v);
 	}
 
@@ -70,7 +74,7 @@ void Torus::UpdateMesh(const Device& device) {
 		idxs.push_back(edge.v2);
 	}
 
-	m_mesh.Update(device, verts, idxs);
+	m_mesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	m_vertices.clear();
 	m_edges.clear();
 }
@@ -132,12 +136,11 @@ void Torus::RecalculateGeometry() {
 			const double cosu = std::cos(u);
 			const double sinu = std::sin(u);
 
-			VERTEX vertex;
-			vertex.pos = gmod::vector3<double>(
-				cosv * (m_R + m_r * cosu),
-				sinv * (m_R + m_r * cosu),
-				m_r * sinu
-			);
+			VERTEX vertex{
+				.x = cosv * (m_R + m_r * cosu),
+				.y = sinv * (m_R + m_r * cosu),
+				.z = m_r * sinu
+			};
 			m_vertices.push_back(vertex);
 		}
 	}
@@ -151,14 +154,16 @@ void Torus::RecalculateGeometry() {
 			int nextU = j_m_uParts + ((i + 1) % m_uParts);
 			int nextV = j_1_m_vParts_m_uParts + i;
 
-			EDGE nextUEdge;
-			nextUEdge.v1 = curr;
-			nextUEdge.v2 = nextU;
+			EDGE nextUEdge{
+				.v1 = static_cast<USHORT>(curr),
+				.v2 = static_cast<USHORT>(nextU)
+			};
 			m_edges.push_back(nextUEdge);
 
-			EDGE nextVEdge;
-			nextVEdge.v1 = curr;
-			nextVEdge.v2 = nextV;
+			EDGE nextVEdge{
+				.v1 = static_cast<USHORT>(curr),
+				.v2 = static_cast<USHORT>(nextV)
+			};
 			m_edges.push_back(nextVEdge);
 		}
 	}

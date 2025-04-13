@@ -19,9 +19,9 @@ void AxesModel::Initialize(const Device& device) {
 		{ DirectX::XMFLOAT3(0, 0, 0.5f) }
 	};
 
-	m_meshX.Update(device, vertsX, idxs);
-	m_meshY.Update(device, vertsY, idxs);
-	m_meshZ.Update(device, vertsZ, idxs);
+	m_meshX.Update(device, vertsX, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	m_meshY.Update(device, vertsY, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	m_meshZ.Update(device, vertsZ, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
 void AxesModel::Render(Device& device, mini::dx_ptr<ID3D11Buffer>& constBuffColor) const {
