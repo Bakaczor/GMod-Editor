@@ -169,9 +169,10 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Axes.h" />
-    <ClInclude Include="AxesMesh.h" />
+    <ClInclude Include="AxesModel.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cube.h" />
+    <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="Device.h" />
@@ -184,15 +185,17 @@
     <ClInclude Include="Point.h" />
     <ClInclude Include="Pointline.h" />
     <ClInclude Include="ObjectGroup.h" />
+    <ClInclude Include="PointModel.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Axes.cpp" />
-    <ClCompile Include="AxesMesh.cpp" />
+    <ClCompile Include="AxesModel.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cube.cpp" />
+    <ClCompile Include="CubeModel.cpp" />
     <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="Device.cpp" />
@@ -204,6 +207,7 @@
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Pointline.cpp" />
     <ClCompile Include="ObjectGroup.cpp" />
+    <ClCompile Include="PointModel.cpp" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="UI.cpp" />

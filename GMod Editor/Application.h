@@ -14,10 +14,15 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Torus.h"
-#include "UI.h"
 #include "Axes.h"
+#include "CubeModel.h"
+#include "AxesModel.h"
+#include "PointModel.h"
+
+class UI;
 
 class Application : public mini::WindowApplication {
+	friend class UI;
 public:
 	explicit Application(HINSTANCE hInstance);
 	~Application();
@@ -28,11 +33,12 @@ protected:
 	bool ProcessMessage(mini::WindowMessage& msg) override;
 
 private:
+	std::unique_ptr<UI> m_UI;
+
 	Mouse m_mouse;
 	Keyboard m_keyboard;
 	Camera m_camera;
 	Axes m_axes;
-	UI m_UI;
 
 	void Initialize();
 	void SetShadersAndLayout();
@@ -68,6 +74,12 @@ private:
 	float aspect() const;
 	gmod::matrix4<float> projMatrix() const;
 	gmod::matrix4<float> projMatrix_inv() const;
+#pragma endregion
+
+#pragma region STATIC_MODELS
+	static std::unique_ptr<AxesModel> m_axesModel;
+	static std::unique_ptr<CubeModel> m_cubeModel;
+	static std::unique_ptr<PointModel> m_pointModel;
 #pragma endregion
 
 #pragma region DEVICE

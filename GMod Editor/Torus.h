@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.h"
 
-class Torus : public Object{
+class Torus : public Object {
 public:
 	Torus(double R = 0.5, double r = 0.25, unsigned int uParts = 32, unsigned int vParts = 32);
 
@@ -17,6 +17,7 @@ public:
 	int Get_vParts() const;
 	void Set_vParts(int vParts);
 
+	virtual void UpdateMesh(const Device& device) override;
 	virtual void RenderProperties() override;
 private:
 	const static int m_uPartsMin = 3;

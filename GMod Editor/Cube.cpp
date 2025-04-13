@@ -2,31 +2,14 @@
 
 unsigned short Cube::m_globalCubeNum = 0;
 
-Cube::Cube() {
+Cube::Cube(CubeModel* model) : m_model(model) {
 	m_type = "Cube";
 	std::ostringstream os;
 	os << "cube_" << m_globalCubeNum;
 	name = os.str();
 	m_globalCubeNum += 1;
-	InitGeometry();
 }
 
-void Cube::InitGeometry() {
-	geometryChanged = true;
-
-	m_vertices = {
-		{ gmod::vector3<double>(-0.5f, -0.5f,  0.5f) },
-		{ gmod::vector3<double>(0.5f, -0.5f,  0.5f) },
-		{ gmod::vector3<double>(0.5f, -0.5f, -0.5f) },
-		{ gmod::vector3<double>(-0.5f, -0.5f, -0.5f) },
-		{ gmod::vector3<double>(-0.5f,  0.5f,  0.5f) },
-		{ gmod::vector3<double>(0.5f,  0.5f,  0.5f) },
-		{ gmod::vector3<double>(0.5f,  0.5f, -0.5f) },
-		{ gmod::vector3<double>(-0.5f,  0.5f, -0.5f) }
-	};
-	m_edges = {
-		{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
-		{ 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 },
-		{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 }
-	};
+void Cube::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+	m_model->Render(context);
 }

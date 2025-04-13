@@ -1,17 +1,16 @@
 #pragma once
 #include "Object.h"
+#include "PointModel.h"
 
 class Point : public Object {
 public:
-	Point();
+	Point(PointModel* model);
 	~Point() override;
+	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
 	virtual void AddParent(Object* obj) override;
 	virtual void RemoveParent(Object* obj) override;
 	virtual void InformParents() override;
-	virtual void UpdateMesh(const Device& device) override;
 private:
-	const float m_r = 0.05f;
-	const int m_parts = 12;
 	static unsigned short m_globalPointNum;
-	void InitGeometry();
+	PointModel* m_model;
 };

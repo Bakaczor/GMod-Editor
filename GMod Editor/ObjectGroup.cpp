@@ -1,8 +1,20 @@
 #include "ObjectGroup.h"
 
-ObjectGroup::ObjectGroup() {
+ObjectGroup::ObjectGroup(PointModel* model) : m_model(model) {
 	m_type = "ObjectGroup";
 	name = "selection";
+}
+
+void ObjectGroup::SetModel(PointModel* model) {
+	m_model = model;
+}
+
+void ObjectGroup::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+	m_model->Render(context);
+}
+
+gmod::vector3<double> ObjectGroup::Midpoint() const {
+	return m_midpoint;
 }
 
 gmod::vector3<double> ObjectGroup::UpdateMidpoint() {
@@ -16,8 +28,8 @@ gmod::vector3<double> ObjectGroup::UpdateMidpoint() {
 		}
 		mid = mid * (1.0 / objects.size());
 	}
-	midpoint.SetTranslation(mid.x(), mid.y(), mid.z());
-	return mid;
+	m_midpoint = mid;
+	return m_midpoint;
 }
 
 void ObjectGroup::AddObject(Object* obj) {
@@ -53,6 +65,10 @@ bool ObjectGroup::Contains(int id) const {
 }
 
 #pragma region TRANSFORM_WRAPPER
+gmod::matrix4<double> ObjectGroup::modelMatrix() const {
+	return gmod::matrix4<double>::translation(m_midpoint.x(), m_midpoint.y(), m_midpoint.z()) * 
+		gmod::matrix4<double>::scaling(m_midpointScale, m_midpointScale, m_midpointScale);
+}
 void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
 	Object::SetTranslation(tx, ty, tz);
 	for (auto& obj : objects) {
@@ -61,9 +77,9 @@ void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::SetRotation(double rx, double ry, double rz) {
-	Object::SetRotationAroundPoint(rx, ry, rz, midpoint.position());
+	Object::SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 	for (auto& obj : objects) {
-		obj->SetRotationAroundPoint(rx, ry, rz, midpoint.position());
+		obj->SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
@@ -75,9 +91,9 @@ void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const 
 	UpdateMidpoint();
 }
 void ObjectGroup::SetScaling(double sx, double sy, double sz) {
-	Object::SetScalingAroundPoint(sx, sy, sz, midpoint.position());
+	Object::SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 	for (auto& obj : objects) {
-		obj->SetScalingAroundPoint(sx, sy, sz, midpoint.position());
+		obj->SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
@@ -96,9 +112,9 @@ void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) {
-	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, midpoint.position());
+	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 	for (auto& obj : objects) {
-		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, midpoint.position());
+		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 	}
 	UpdateMidpoint();
 }
@@ -110,9 +126,9 @@ void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, d
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
-	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, midpoint.position());
+	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 	for (auto& obj : objects) {
-		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, midpoint.position());
+		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 	}
 	UpdateMidpoint();
 }

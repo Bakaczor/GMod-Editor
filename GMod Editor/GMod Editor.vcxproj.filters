@@ -37,6 +37,12 @@
     <Filter Include="Pliki źródłowe\app">
       <UniqueIdentifier>{9b11bd43-5b20-4ae5-9702-b9064d2cdbc1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki źródłowe\models">
+      <UniqueIdentifier>{bf79789e-3c4a-41a2-9df3-476a1f934f60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\models">
+      <UniqueIdentifier>{8ac115aa-221a-4eb1-a48d-4fec3683776c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -75,9 +81,6 @@
     <ClInclude Include="Cube.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
-    <ClInclude Include="Cursor.h">
-      <Filter>Pliki nagłówkowe\object</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectGroup.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
@@ -87,14 +90,23 @@
     <ClInclude Include="Axes.h">
       <Filter>Pliki nagłówkowe\app</Filter>
     </ClInclude>
-    <ClInclude Include="AxesMesh.h">
-      <Filter>Pliki nagłówkowe\object</Filter>
-    </ClInclude>
     <ClInclude Include="Point.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="Cursor.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="AxesModel.h">
+      <Filter>Pliki nagłówkowe\models</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeModel.h">
+      <Filter>Pliki nagłówkowe\models</Filter>
+    </ClInclude>
+    <ClInclude Include="PointModel.h">
+      <Filter>Pliki nagłówkowe\models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -146,14 +158,20 @@
     <ClCompile Include="Axes.cpp">
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
-    <ClCompile Include="AxesMesh.cpp">
+    <ClCompile Include="Point.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="Cursor.cpp">
-      <Filter>Pliki źródłowe\object</Filter>
+      <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
-    <ClCompile Include="Point.cpp">
-      <Filter>Pliki źródłowe\object</Filter>
+    <ClCompile Include="AxesModel.cpp">
+      <Filter>Pliki źródłowe\models</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeModel.cpp">
+      <Filter>Pliki źródłowe\models</Filter>
+    </ClCompile>
+    <ClCompile Include="PointModel.cpp">
+      <Filter>Pliki źródłowe\models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -25,15 +25,14 @@ public:
 	};
 #pragma endregion
 #pragma region TRANSFORM_WRAPPER
-	gmod::vector3<double> position() const;
-	gmod::vector3<double> eulerAngles() const;
-	gmod::vector3<double> scale() const;
-	gmod::quaternion<double> rotation() const;
-	gmod::vector3<double> right() const;
-	gmod::vector3<double> up() const;
-	gmod::vector3<double> forward() const;
-	gmod::matrix4<double> modelMatrix() const;
-	void UpdateRotation_Euler(double drx, double dry, double drz);
+	virtual gmod::vector3<double> position() const;
+	virtual gmod::vector3<double> eulerAngles() const;
+	virtual gmod::vector3<double> scale() const;
+	virtual gmod::quaternion<double> rotation() const;
+	virtual gmod::vector3<double> right() const;
+	virtual gmod::vector3<double> up() const;
+	virtual gmod::vector3<double> forward() const;
+	virtual gmod::matrix4<double> modelMatrix() const;
 
 	virtual void SetTranslation(double tx, double ty, double tz);
 	virtual void SetRotation(double rx, double ry, double rz);
@@ -41,6 +40,7 @@ public:
 	virtual void SetScaling(double sx, double sy, double sz);
 	virtual void SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p);
 	virtual void UpdateTranslation(double dtx, double dty, double dtz);
+	virtual void UpdateRotation_Euler(double drx, double dry, double drz);
 	virtual void UpdateRotation_Quaternion(double drx, double dry, double drz);
 	virtual void UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p);
 	virtual void UpdateScaling(double dsx, double dsy, double dsz);
@@ -61,7 +61,7 @@ public:
 	Object();
 	virtual ~Object() = default;
 	virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
-	virtual void UpdateMesh(const Device& device);
+	virtual void UpdateMesh(const Device& device) { return; };
 	virtual void RenderProperties();
 protected:
 	static int m_globalObjectId;

@@ -1,4 +1,5 @@
 ﻿#include "Application.h"
+#include "UI.h"
 #include "../gmod/utility.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -14,6 +15,10 @@ const float Application::m_near = 0.01f;
 const float Application::m_far = 1000.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
+std::unique_ptr<AxesModel> Application::m_axesModel = std::make_unique<AxesModel>();
+std::unique_ptr<CubeModel> Application::m_cubeModel = std::make_unique<CubeModel>();
+std::unique_ptr<PointModel> Application::m_pointModel = std::make_unique<PointModel>();
+
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
 	m_device(m_window), m_camera(0.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
@@ -21,7 +26,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
-	m_UI.objects.push_back(std::make_unique<Cube>());
+	m_UI = std::make_unique<UI>();
+	m_UI->objects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -51,14 +57,16 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_device.deviceContext()->RSSetState(m_rastState.get());
 
 	// GLOBAL
-	m_axes.UpdateMesh(m_device);
+	m_axesModel->Initialize(m_device);
+	m_cubeModel->Initialize(m_device);
+	m_pointModel->Initialize(m_device);
 
-	m_UI.cursor.transform.SetScaling(0.5, 0.5, 0.5);
-	m_UI.cursor.UpdateMesh(m_device);
+	m_axes.SetModel(m_axesModel.get());
+	m_UI->cursor.SetModel(m_axesModel.get());
+	m_UI->cursor.transform.SetScaling(0.5, 0.5, 0.5);
 
-	m_UI.selection.midpoint.color = { 0.0f, 0.0f, 1.0f, 1.0f };
-	m_UI.selection.midpoint.SetScaling(0.75, 0.75, 0.75);
-	m_UI.selection.midpoint.UpdateMesh(m_device);
+	m_UI->selection.color = { 0.0f, 0.0f, 1.0f, 1.0f };
+	m_UI->selection.SetModel(m_pointModel.get());
 }
 
 void Application::Initialize() {
@@ -189,32 +197,32 @@ gmod::matrix4<float> Application::projMatrix_inv() const {
 }
 
 void Application::RenderUI() {
-	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), reinterpret_cast<float*>(&m_UI.bkgdColor));
+	m_device.deviceContext()->ClearRenderTargetView(m_backBuffer.get(), reinterpret_cast<float*>(&m_UI->bkgdColor));
 	m_device.deviceContext()->ClearDepthStencilView(m_depthBuffer.get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	m_UI.Render(m_firstPass);
+	m_UI->Render(m_firstPass);
 	ImGui::Render();
 }
 
 void Application::Render() {
-	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.cursor.transform.modelMatrix()));
-	m_UI.cursor.RenderMesh(m_device, m_constBuffColor);
+	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
+	m_UI->cursor.RenderMesh(m_device, m_constBuffColor);
 
-	if (!m_UI.selection.empty()) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI.selection.midpoint.modelMatrix()));
-		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI.selection.midpoint.color.data()));
-		m_UI.selection.midpoint.RenderMesh(m_device.deviceContext());
+	if (!m_UI->selection.empty()) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->selection.modelMatrix()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->selection.color.data()));
+		m_UI->selection.RenderMesh(m_device.deviceContext());
 	}
 
-	if (m_UI.showAxes) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera)));
+	if (m_UI->showAxes) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera, m_far, m_FOV)));
 		m_axes.RenderMesh(m_device, m_constBuffColor);
 	}
 
-	for (auto& object : m_UI.objects) {
+	for (auto& object : m_UI->objects) {
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
 		if (object->geometryChanged || m_firstPass) {
@@ -226,15 +234,15 @@ void Application::Render() {
 }
 
 void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
-	if (!m_mouse.isLMBDown_flag || m_UI.currentMode == UI::Mode::Neutral) { return; }
+	if (!m_mouse.isLMBDown_flag || m_UI->currentMode == UI::Mode::Neutral) { return; }
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 	gmod::vector3<float> trans;
-	if (m_UI.currentMode != UI::Mode::Rotate) {
+	if (m_UI->currentMode != UI::Mode::Rotate) {
 		std::swap(dx, dy);
 		dx = -dx;
 	}
-	switch (m_UI.currentAxis) {
+	switch (m_UI->currentAxis) {
 		case UI::Axis::X: {
 			trans = { dy, 0.0f, 0.0f };
 			break;
@@ -256,55 +264,55 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			break;
 		}
 	}
-	switch (m_UI.currentMode) {
+	switch (m_UI->currentMode) {
 		case UI::Mode::Translate: {
 			trans = trans * traSensitivity;
-			if (m_UI.noObjectSelected()) {
-				m_UI.cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
+			if (m_UI->noObjectSelected()) {
+				m_UI->cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			} else {
-				auto& selectedObj = m_UI.objects.at(m_UI.objects_selectedRowIdx);
+				auto& selectedObj = m_UI->objects.at(m_UI->objects_selectedRowIdx);
 				selectedObj->UpdateTranslation(trans.x(), trans.y(), trans.z());
 				selectedObj->InformParents();
 			}
 			break;
 		}
 		case UI::Mode::Rotate: {
-			if (m_UI.noObjectSelected()) { return; }
+			if (m_UI->noObjectSelected()) { return; }
 			trans = trans * rotSensitivity;
-			switch (m_UI.currentOrientation) {
+			switch (m_UI->currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
-						m_UI.cursor.transform.position());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+						m_UI->cursor.transform.position());
 					break;
 				}
 				case UI::Orientation::Selection:{
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
-						m_UI.selection.UpdateMidpoint());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
+						m_UI->selection.UpdateMidpoint());
 					break;
 				}
 			}
 			break;
 		}
 		case UI::Mode::Scale: {
-			if (m_UI.noObjectSelected()) { return; }
+			if (m_UI->noObjectSelected()) { return; }
 			trans = trans * scaSensitivity;
-			switch (m_UI.currentOrientation) {
+			switch (m_UI->currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScaling(trans.x(), trans.y(), trans.z());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScaling(trans.x(), trans.y(), trans.z());
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
-						m_UI.cursor.transform.position());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+						m_UI->cursor.transform.position());
 					break;
 				}
 				case UI::Orientation::Selection: {
-					m_UI.objects.at(m_UI.objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
-						m_UI.selection.UpdateMidpoint());
+					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
+						m_UI->selection.UpdateMidpoint());
 					break;
 				}
 			}
@@ -312,7 +320,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 		}
 		default: return;
 	}
-	m_UI.selection.UpdateMidpoint();
+	m_UI->selection.UpdateMidpoint();
 }
 
 void Application::HandleCameraOnMouseMove(LPARAM lParam) {
@@ -321,8 +329,8 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 
-	bool MMB = m_UI.useMMB && m_mouse.isMMBDown_flag;
-	bool RMB = !m_UI.useMMB && m_mouse.isRMBDown_flag;
+	bool MMB = m_UI->useMMB && m_mouse.isMMBDown_flag;
+	bool RMB = !m_UI->useMMB && m_mouse.isRMBDown_flag;
 	if (MMB) {
 		if (m_mouse.isShiftDown_flag) {
 			m_camera.Move(dx, dy);
@@ -345,7 +353,7 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 }
 
 void Application::HandleCameraOnMouseWheel(WPARAM wParam) {
-	if (!m_UI.useMMB) { return; }
+	if (!m_UI->useMMB) { return; }
 	float dd = static_cast<float>(m_mouse.GetWheelDelta(wParam));
 	m_camera.Zoom(dd);
 	m_camera.cameraChanged = true;
@@ -362,7 +370,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 			m_mouse.isLMBDown_flag = true;
 			Object* clicked = nullptr;
 			if (clicked = HandleSelectionOnMouseClick(msg.lParam)) {
-				m_UI.SelectObjectOnMouseClick(clicked);
+				m_UI->SelectObjectOnMouseClick(clicked);
 			}
 			m_mouse.UpdatePos(msg.lParam);
 			break;
@@ -434,7 +442,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 }
 
 Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
-	if (m_UI.numOfPointObjects == 0) { return nullptr; }
+	if (m_UI->numOfPointObjects == 0) { return nullptr; }
 	const float x = static_cast<float>(Mouse::GetXPos(lParam));
 	const float y = static_cast<float>(Mouse::GetYPos(lParam));
 	const float nx = (2.0f * x) / m_winWidth - 1.0f;
@@ -453,7 +461,7 @@ Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
 	const gmod::vector3<double> direction(rayDir.x(), rayDir.y(), rayDir.z());
 
 	Object* closestPoint = nullptr;
-	for (auto& obj : m_UI.objects) {
+	for (auto& obj : m_UI->objects) {
 		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
 		const gmod::vector3<double> vecToPoint = obj->position() - origin;
 		const gmod::vector3<double> crossProd = gmod::cross(vecToPoint, direction);

@@ -6,6 +6,8 @@
 #include "ObjectGroup.h"
 #include <memory>
 
+class Application;
+
 class UI {
 public:
 	// TRANSFORMS

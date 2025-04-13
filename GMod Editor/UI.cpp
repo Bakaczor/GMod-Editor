@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "Application.h"
 #include "../gmod/utility.h"
 #include "Torus.h"
 #include "Cube.h"
@@ -141,7 +142,7 @@ void UI::RenderCursor() {
 		auto pos = cursor.transform.position();
 		switch (m_objectTypes.at(m_selectedObjType)) {
 			case ObjectType::Cube: {
-				auto obj = std::make_unique<Cube>();
+				auto obj = std::make_unique<Cube>(Application::m_cubeModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
 				break;
@@ -153,7 +154,7 @@ void UI::RenderCursor() {
 				break;
 			}
 			case ObjectType::Point: {
-				auto obj = std::make_unique<Point>();
+				auto obj = std::make_unique<Point>(Application::m_pointModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				objects.push_back(std::move(obj));
 				numOfPointObjects++;
