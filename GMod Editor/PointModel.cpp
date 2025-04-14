@@ -2,6 +2,8 @@
 #include "Data.h"
 #include <cmath>
 
+using namespace app;
+
 PointModel::PointModel() : m_mesh() {}
 
 void PointModel::Initialize(const Device& device) {

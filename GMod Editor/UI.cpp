@@ -5,6 +5,14 @@
 #include "Cube.h"
 #include "Point.h"
 #include "Polyline.h"
+#include <unordered_set>
+
+using namespace app;
+
+const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
+const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point" };
+const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve };
+const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve" };
 
 void UI::Render(bool firstPass) {
 	RenderRightPanel(firstPass);
@@ -29,7 +37,7 @@ void UI::RenderRightPanel(bool firstPass) {
 		}
 		if (ImGui::BeginTabItem("Objects")) {
 			RenderObjectTable(firstPass);
-			RenderSelection(firstPass);
+			//RenderSelection(firstPass);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Properties")) {
@@ -45,7 +53,6 @@ void UI::RenderTransforms() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::PushStyleColor(ImGuiCol_Header, style.Colors[ImGuiCol_Header]);
 	ImGui::BeginChild("TransformsWindow", ImVec2(0, 200), true, ImGuiWindowFlags_NoBackground);
-	ImGui::BeginGroup();
 
 	const float padx = style.WindowPadding.x / 2;
 	const float pady = style.WindowPadding.y / 2;
@@ -64,13 +71,14 @@ void UI::RenderTransforms() {
 	if (currentMode != Mode::Neutral) {
 		ImGui::Columns(2, "ModeAndAxisColumns", false);
 	}
+	ImGui::BeginGroup();
 	if (ImGui::RadioButton("Neutral", currentMode == Mode::Neutral)) {
 		currentMode = Mode::Neutral;
 	}
 	if (ImGui::RadioButton("Translate", currentMode == Mode::Translate)) {
 		currentMode = Mode::Translate;
 	}
-	if (!noObjectSelected() && !(currentOrientation == Orientation::Selection && selection.Contains(objects_selectedObjId))) {
+	if (!selection.Empty()) {
 		if (ImGui::RadioButton("Rotate", currentMode == Mode::Rotate)) {
 			currentMode = Mode::Rotate;
 		}
@@ -78,8 +86,10 @@ void UI::RenderTransforms() {
 			currentMode = Mode::Scale;
 		}
 	}
+	ImGui::EndGroup();
 	if (currentMode != Mode::Neutral) {
 		ImGui::NextColumn();
+		ImGui::BeginGroup();
 		if (ImGui::RadioButton("X", currentAxis == Axis::X)) {
 			currentAxis = Axis::X;
 		}
@@ -94,9 +104,9 @@ void UI::RenderTransforms() {
 				currentAxis = Axis::All;
 			}
 		}
+		ImGui::EndGroup();
 		ImGui::Columns(1);
 	}
-	ImGui::EndGroup();
 	ImGui::PopStyleColor();
 	ImGui::Spacing();
 	if (ImGui::CollapsingHeader("Orientation")) {
@@ -106,9 +116,6 @@ void UI::RenderTransforms() {
 		}
 		if (ImGui::RadioButton("Cursor", currentOrientation == Orientation::Cursor)) {
 			currentOrientation = Orientation::Cursor;
-		}
-		if (ImGui::RadioButton("Selection", currentOrientation == Orientation::Selection)) {
-			currentOrientation = Orientation::Selection;
 		}
 		ImGui::EndGroup();
 	}
@@ -137,27 +144,27 @@ void UI::RenderCursor() {
 	ImGui::Separator();
 	ImGui::Text("Object types:");
 	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-	ImGui::Combo("##types", &m_selectedObjType, m_objectTypeNames.data(), m_objectTypeNames.size());
+	ImGui::Combo("##objtypes", &m_selectedObjType, m_objectTypeNames.data(), m_objectTypeNames.size());
 	if (ImGui::Button("Add", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		auto pos = cursor.transform.position();
 		switch (m_objectTypes.at(m_selectedObjType)) {
 			case ObjectType::Cube: {
 				auto obj = std::make_unique<Cube>(Application::m_cubeModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(std::move(obj));
+				sceneObjects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Torus: {
 				auto obj = std::make_unique<Torus>();
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(std::move(obj));
+				sceneObjects.push_back(std::move(obj));
 				break;
 			}
 			case ObjectType::Point: {
 				auto obj = std::make_unique<Point>(Application::m_pointModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
-				objects.push_back(std::move(obj));
-				numOfPointObjects++;
+				sceneObjects.push_back(std::move(obj));
+				numOfScenePoints++;
 				break;
 			}
 		}
@@ -169,153 +176,143 @@ void UI::RenderObjectTable(bool firstPass) {
 	if (firstPass) {
 		ImGui::SetNextItemOpen(false);
 	}
+
+	ImGui::Text("Object group types:");
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+	if (!selection.isPolyline()) {
+		ImGui::BeginDisabled();
+	}
+	ImGui::Combo("##grptypes", &m_selectedObjGrpType, m_objectGroupTypeNames.data(), m_objectGroupTypeNames.size());
+	if (ImGui::Button("Add", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		auto pos = cursor.transform.position();
+		switch (m_objectGroupTypes.at(m_selectedObjGrpType)) {
+			case ObjectGroupType::Polyline: {
+				auto obj = std::make_unique<Polyline>(selection.objects);
+				sceneObjects.push_back(std::move(obj));
+				break;
+			}
+			case ObjectGroupType::Curve: {
+				break;
+			}
+		}
+	}
+	if (!selection.isPolyline()) {
+		ImGui::EndDisabled();
+	}
 	ImGui::Spacing();
-	if (ImGui::CollapsingHeader("List of objects")) {
-		if (ImGui::Button("Add to selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			if (objects_selectedRowIdx != -1) {
-				selection.AddObject(objects[objects_selectedRowIdx].get());
-			}
-		}
-		if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			if (objects_selectedRowIdx != -1) {
-				auto obj = objects[objects_selectedRowIdx].get();
-				selection.RemoveObject(obj);
+	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		if (!selection.Empty()) {
+			std::unordered_set<int> toDelete;
+			toDelete.reserve(selection.objects.size());
+
+			for (auto& obj : selection.objects) {
+				toDelete.insert(obj->id);
 				if (nullptr != dynamic_cast<Point*>(obj)) {
-					numOfPointObjects--;
+					numOfScenePoints--;
 				}
-				objects.erase(objects.begin() + objects_selectedRowIdx);
-
-				objects_selectedRowIdx = -1;
-				objects_selectedObjId = -1;
-
-				selection_selectedRowIdx = -1;
-				selection_selectedObjId = -1;
 			}
-		}
-		ImGui::BeginChild("ObjectTableWindow", ImVec2(0, tableHeight(objects.size())), false, ImGuiWindowFlags_None);
-		if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
-			ImGui::TableSetupColumn("Name");
-			ImGui::TableSetupColumn("Type");
-			ImGui::TableHeadersRow();
 
-			for (auto& obj : objects) {
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				bool selected = selection.Contains(obj->id);
-				if (ImGui::Selectable(obj->name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (ImGui::GetIO().KeyCtrl) {
-						if (selected) {
-							selection.RemoveObject(obj.get());
-						} else {
-							selection.AddObject(obj.get());
-						}
+			std::erase_if(sceneObjects, [&toDelete](const auto& o) {
+				return toDelete.contains(o->id);
+			});
+		}
+	}
+	ImGui::Spacing();
+	ImGui::BeginChild("ObjectTableWindow", ImVec2(0, tableHeight(sceneObjects.size())), false, ImGuiWindowFlags_None);
+	if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
+		ImGui::TableSetupColumn("Name");
+		ImGui::TableSetupColumn("Type");
+		ImGui::TableHeadersRow();
+
+		for (auto& obj : sceneObjects) {
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			bool selected = selection.Contains(obj->id);
+			if (ImGui::Selectable(obj->name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns)) {
+				if (ImGui::GetIO().KeyCtrl) {
+					if (selected) {
+						selection.RemoveObject(obj.get());
 					} else {
-						selection.Clear();
 						selection.AddObject(obj.get());
 					}
+				} else {
+					selection.Clear();
+					selection.AddObject(obj.get());
 				}
-				ImGui::TableNextColumn();
-				ImGui::Text(obj->type().c_str());
 			}
-
-			/*for (int i = 0; i < objects.size(); i++) {
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				if (ImGui::Selectable(objects[i]->name.c_str(), objects_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (objects_selectedRowIdx == i) {
-						objects_selectedRowIdx = -1;
-						objects_selectedObjId = -1;
-					} else {
-						objects_selectedRowIdx = i;
-						objects_selectedObjId = objects[i]->id;
-					}
-				}
-				ImGui::TableNextColumn();
-				ImGui::Text(objects[i]->type().c_str());
-			}*/
-			ImGui::EndTable();
+			ImGui::TableNextColumn();
+			ImGui::Text(obj->type().c_str());
 		}
-		ImGui::EndChild();
+		ImGui::EndTable();
 	}
+	ImGui::EndChild();
 }
 
 void UI::SelectObjectOnMouseClick(Object* obj) {
-	int i;
-	objects_selectedObjId = obj->id;
-	selection_selectedObjId = obj->id;
 	selection.AddObject(obj);
-
-	for (i = 0; i < objects.size(); i++) {
-		if (objects[i]->id == objects_selectedObjId) { break; }
-	}
-	objects_selectedRowIdx = i;
-
-	for (i = 0; i < selection.objects.size(); i++) {
-		if (selection.objects[i]->id == selection_selectedObjId) { break; }
-	}
-	selection_selectedRowIdx = i;
 }
 
-void UI::RenderSelection(bool firstPass) {
-	if (firstPass) {
-		ImGui::SetNextItemOpen(false);
-	}
-	ImGui::Spacing();
-	if (ImGui::CollapsingHeader("Selection")) {
-		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			if (selection_selectedRowIdx != -1) {
-				selection.RemoveObject(selection.objects[selection_selectedRowIdx]);
-				selection_selectedRowIdx = -1;
-				selection_selectedObjId = -1;
-			}
-		}
-		if (ImGui::Button("Clear selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			selection.Clear();
-			selection_selectedRowIdx = -1;
-			selection_selectedObjId = -1;
-		}
-		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.objects.size())), false, ImGuiWindowFlags_None);
-		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
-			ImGui::TableSetupColumn("Name");
-			ImGui::TableSetupColumn("Type");
-			ImGui::TableHeadersRow();
-
-			for (int i = 0; i < selection.objects.size(); i++) {
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				if (ImGui::Selectable(selection.objects[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-					if (selection_selectedRowIdx == i) {
-						selection_selectedRowIdx = -1;
-						selection_selectedObjId = -1;
-					} else {
-						selection_selectedRowIdx = i;
-						selection_selectedObjId = selection.objects[i]->id;
-					}
-				}
-				ImGui::TableNextColumn();
-				ImGui::Text(selection.objects[i]->type().c_str());
-			}
-			ImGui::EndTable();
-		}
-		ImGui::EndChild();
-		if (!selection.IsPolyline()) {
-			ImGui::BeginDisabled();
-		}
-		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-			auto obj = std::make_unique<Polyline>(selection.objects);
-			objects.push_back(std::move(obj));
-		}
-		if (!selection.IsPolyline()) {
-			ImGui::EndDisabled();
-		}
-	}
-}
+//void UI::RenderSelection(bool firstPass) {
+//	if (firstPass) {
+//		ImGui::SetNextItemOpen(false);
+//	}
+//	ImGui::Spacing();
+//	if (ImGui::CollapsingHeader("Selection")) {
+//		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+//			if (selection_selectedRowIdx != -1) {
+//				selection.RemoveObject(selection.objects[selection_selectedRowIdx]);
+//				selection_selectedRowIdx = -1;
+//				selection_selectedObjId = -1;
+//			}
+//		}
+//		if (ImGui::Button("Clear selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+//			selection.Clear();
+//			selection_selectedRowIdx = -1;
+//			selection_selectedObjId = -1;
+//		}
+//		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.objects.size())), false, ImGuiWindowFlags_None);
+//		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
+//			ImGui::TableSetupColumn("Name");
+//			ImGui::TableSetupColumn("Type");
+//			ImGui::TableHeadersRow();
+//
+//			for (int i = 0; i < selection.objects.size(); i++) {
+//				ImGui::TableNextRow();
+//				ImGui::TableNextColumn();
+//				if (ImGui::Selectable(selection.objects[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
+//					if (selection_selectedRowIdx == i) {
+//						selection_selectedRowIdx = -1;
+//						selection_selectedObjId = -1;
+//					} else {
+//						selection_selectedRowIdx = i;
+//						selection_selectedObjId = selection.objects[i]->id;
+//					}
+//				}
+//				ImGui::TableNextColumn();
+//				ImGui::Text(selection.objects[i]->type().c_str());
+//			}
+//			ImGui::EndTable();
+//		}
+//		ImGui::EndChild();
+//		if (!selection.isPolyline()) {
+//			ImGui::BeginDisabled();
+//		}
+//		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+//			auto obj = std::make_unique<Polyline>(selection.objects);
+//			sceneObjects.push_back(std::move(obj));
+//		}
+//		if (!selection.isPolyline()) {
+//			ImGui::EndDisabled();
+//		}
+//	}
+//}
 
 void UI::RenderSelectedObject() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
-	if (objects_selectedRowIdx != -1) {
-		Object* selectedObj = objects[objects_selectedRowIdx].get();
+	std::optional<Object*> obj = selection.Single();
+	if (obj.has_value()) {
+		auto& selectedObj = obj.value();
 		double step = 0.001f;
 		double stepFast = 0.1f;
 		bool flag = true;
@@ -365,43 +362,38 @@ void UI::RenderSelectedObject() {
 					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
 					break;
 				}
-				case Orientation::Selection: {
-					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), selection.UpdateMidpoint());
-					break;
-				}
 			}
 		}
 
-		ImGui::Text("Scale");
-		gmod::vector3<double> scale = selectedObj->scale();
-		flag = false;
-		if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
+		if (nullptr == dynamic_cast<Point*>(selectedObj)) {
+			ImGui::Text("Scale");
+			gmod::vector3<double> scale = selectedObj->scale();
+			flag = false;
+			if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
+			if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
+			if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
 
-		if (flag) {
-			switch (currentOrientation) {
-				case Orientation::World: {
-					selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
-					break;
-				}
-				case Orientation::Cursor: {
-					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
-					break;
-				}
-				case Orientation::Selection: {
-					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), selection.UpdateMidpoint());
-					break;
+			if (flag) {
+				switch (currentOrientation) {
+					case Orientation::World:
+					{
+						selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
+						break;
+					}
+					case Orientation::Cursor:
+					{
+						selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+						break;
+					}
 				}
 			}
 		}
-
 		ImGui::Spacing();
 		ImGui::Separator();
 		selectedObj->RenderProperties();

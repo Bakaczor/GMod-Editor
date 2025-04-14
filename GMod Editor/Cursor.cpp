@@ -1,5 +1,7 @@
 #include "Cursor.h"
 
+using namespace app;
+
 Cursor::Cursor(AxesModel* model) : transform(), m_model(model) {}
 
 void Cursor::SetModel(AxesModel* model) {

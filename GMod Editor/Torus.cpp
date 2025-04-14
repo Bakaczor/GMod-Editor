@@ -1,6 +1,8 @@
 #include "Torus.h"
 #include "Data.h"
 
+using namespace app;
+
 unsigned short Torus::m_globalTorusNum = 0;
 
 Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R(R), m_r(r), m_uParts(uParts), m_vParts(vParts) {

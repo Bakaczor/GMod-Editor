@@ -1,31 +1,31 @@
 #include "Polyline.h"
 #include <numeric>
 
-unsigned short Polyline::m_globalPointlineNum = 0;
+using namespace app;
+
+unsigned short Polyline::m_globalPolylineNum = 0;
 
 Polyline::Polyline(std::vector<Object*> objects) {
 	m_type = "Polyline";
 	std::ostringstream os;
-	os << "pointline_" << m_globalPointlineNum;
+	os << "polyline_" << m_globalPolylineNum;
 	name = os.str();
-	m_globalPointlineNum += 1;
+	m_globalPolylineNum += 1;
 
-	objects = objects;
-	for (auto& obj : objects) {
-		auto point = dynamic_cast<Point*>(obj);
-		point->AddParent(this);
+	this->objects = objects;
+	for (auto& obj : this->objects) {
+		obj->AddParent(this);
 	}
 	geometryChanged = true;
 }
 
-Polyline::~Polyline() {
-	for (auto& obj : objects) {
-		obj->RemoveParent(this);
-	}
+void app::Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+	m_mesh.Render(context);
 }
 
 void Polyline::UpdateMesh(const Device& device) {
-	std::vector<Vertex_Po> verts(objects.size());
+	std::vector<Vertex_Po> verts;
+	verts.reserve(objects.size());
 	std::vector<USHORT> idxs(objects.size());
 	std::iota(idxs.begin(), idxs.end(), 0);
 
@@ -49,4 +49,8 @@ void Polyline::RenderProperties() {
 		}
 		ImGui::EndTable();
 	}
+}
+
+gmod::matrix4<double> app::Polyline::modelMatrix() const {
+	return gmod::matrix4<double>::identity();
 }

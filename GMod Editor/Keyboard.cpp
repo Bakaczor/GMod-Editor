@@ -1,6 +1,8 @@
 #include "Keyboard.h"
 #include <windowsx.h>
 
+using namespace app;
+
 bool Keyboard::isCtrlDown(WPARAM wParam) {
 	return wParam == VK_CONTROL;
 }

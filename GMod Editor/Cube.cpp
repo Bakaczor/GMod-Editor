@@ -1,5 +1,7 @@
 #include "Cube.h"
 
+using namespace app;
+
 unsigned short Cube::m_globalCubeNum = 0;
 
 Cube::Cube(CubeModel* model) : m_model(model) {

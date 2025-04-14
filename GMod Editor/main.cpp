@@ -7,7 +7,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     auto exitCode = EXIT_FAILURE;
     //try {
-        Application app(hInstance);
+        app::Application app(hInstance);
         exitCode = app.Run();
     //} catch (mini::Exception& e) {
     //    std::wcerr << L"Wyst¹pi³ b³¹d: mini::Exception" << std::endl;

@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+using namespace app;
+
 Mesh::Mesh() : m_indexCount(0), m_primitiveType(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED) {}
 
 Mesh::Mesh(mini::dx_ptr_vector<ID3D11Buffer>&& vbuffers, std::vector<UINT>&& vstrides, std::vector<UINT>&& voffsets, 

@@ -2,6 +2,8 @@
 #include "../mini/exceptions.h"
 #include <fstream>
 
+using namespace app;
+
 Device::Device(const mini::Window& window) {
 	SwapChainDescription desc{ window.getHandle(), window.getClientSize() };
 	ID3D11Device* device = nullptr;

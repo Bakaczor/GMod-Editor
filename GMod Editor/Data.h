@@ -3,26 +3,28 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 
-struct VERTEX {
-	double x, y, z;
-};
-struct EDGE {
-	USHORT v1;
-	USHORT v2;
-};
-struct FACE {
-	USHORT v1;
-	USHORT v2;
-	USHORT v3;
-};
+namespace app {
+	struct VERTEX {
+		double x, y, z;
+	};
+	struct EDGE {
+		USHORT v1;
+		USHORT v2;
+	};
+	struct FACE {
+		USHORT v1;
+		USHORT v2;
+		USHORT v3;
+	};
 
-struct Vertex_PoCo {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 color;
-	static const D3D11_INPUT_ELEMENT_DESC layout[2];
-};
+	struct Vertex_PoCo {
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 color;
+		static const D3D11_INPUT_ELEMENT_DESC layout[2];
+	};
 
-struct Vertex_Po {
-	DirectX::XMFLOAT3 position;
-	static const D3D11_INPUT_ELEMENT_DESC layout[1];
-};
+	struct Vertex_Po {
+		DirectX::XMFLOAT3 position;
+		static const D3D11_INPUT_ELEMENT_DESC layout[1];
+	};
+}

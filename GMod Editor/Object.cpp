@@ -1,5 +1,8 @@
 #include "Object.h"
+#include "ObjectGroup.h"
 #include "../imgui/misc/cpp/imgui_stdlib.h"
+
+using namespace app;
 
 int Object::m_globalObjectId = 1;
 unsigned short Object::m_globalObjectNum = 0;
@@ -12,6 +15,16 @@ Object::Object() : m_transform(), m_type("Object") {
 
 	id = m_globalObjectId;
 	m_globalObjectId += 1;
+}
+
+Object::~Object() {
+	for (auto& obj : m_parents) {
+		auto selection = dynamic_cast<ObjectGroup*>(obj);
+		if (selection != nullptr) {
+			selection->geometryChanged = true;
+			std::erase_if(selection->objects, [this](const auto& o) { return o->id == id; });
+		}
+	}
 }
 
 void Object::RenderProperties() {

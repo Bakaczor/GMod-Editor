@@ -1,6 +1,8 @@
 #include "Mouse.h"
 #include <windowsx.h>
 
+using namespace app;
+
 void Mouse::UpdatePos(LPARAM lParam) {
 	prevCursorPos = {
 		GetXPos(lParam),

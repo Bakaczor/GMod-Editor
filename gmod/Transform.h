@@ -75,6 +75,11 @@ namespace gmod {
 		}
 
 		void SetScalingAroundPoint(T sx, T sy, T sz, const vector3<T>& p) {
+			auto scales = AssertedScales(sx, sy, sz);
+			sx = scales.x();
+			sy = scales.y();
+			sz = scales.z();
+
 			auto offset = position() - p;
 			offset.x() *= 1 / m_sx;
 			offset.y() *= 1 / m_sy;
@@ -134,6 +139,11 @@ namespace gmod {
 		}
 
 		void UpdateScalingAroundPoint(T dsx, T dsy, T dsz, const vector3<T>& p) {
+			auto scales = AssertedScales(dsx, dsy, dsz);
+			dsx = scales.x();
+			dsy = scales.y();
+			dsz = scales.z();
+
 			auto pos = position() - p;
 			pos.x() *= 1 / m_sx;
 			pos.y() *= 1 / m_sy;
@@ -169,6 +179,19 @@ namespace gmod {
 			if (std::fabs(m_sz) < m_minScale) {
 				m_sx = std::copysign(m_minScale, m_sz);
 			}
+		}
+
+		vector3<T> AssertedScales(T sx, T sy, T sz) const {
+			if (std::fabs(sx) < m_minScale) {
+				sx = std::copysign(m_minScale, sx);
+			}
+			if (std::fabs(sy) < m_minScale) {
+				sy = std::copysign(m_minScale, sy);
+			}
+			if (std::fabs(sz) < m_minScale) {
+				sz = std::copysign(m_minScale, sz);
+			}
+			return vector3<T>(sx, sy, sz);
 		}
 
 		void ResetAxes() {

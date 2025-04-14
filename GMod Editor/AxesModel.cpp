@@ -1,6 +1,8 @@
 #include "AxesModel.h"
 #include "Data.h"
 
+using namespace app;
+
 AxesModel::AxesModel() : m_meshX(), m_meshY(), m_meshZ() {}
 
 void AxesModel::Initialize(const Device& device) {

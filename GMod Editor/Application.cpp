@@ -2,6 +2,8 @@
 #include "UI.h"
 #include "../gmod/utility.h"
 
+using namespace app;
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 const float Application::selectionRadius = 0.05f;
@@ -27,7 +29,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
 {
 	m_UI = std::make_unique<UI>();
-	m_UI->objects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
+	m_UI->sceneObjects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -222,14 +224,14 @@ void Application::Render() {
 		m_axes.RenderMesh(m_device, m_constBuffColor);
 	}
 
-	for (auto& object : m_UI->objects) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(object->modelMatrix()));
-		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(object->color.data()));
-		if (object->geometryChanged || m_firstPass) {
-			object->geometryChanged = false;
-			object->UpdateMesh(m_device);
+	for (auto& obj : m_UI->sceneObjects) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
+		if (obj->geometryChanged || m_firstPass) {
+			obj->geometryChanged = false;
+			obj->UpdateMesh(m_device);
 		}
-		object->RenderMesh(m_device.deviceContext());
+		obj->RenderMesh(m_device.deviceContext());
 	}
 }
 
@@ -238,13 +240,13 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 	float dx = static_cast<float>(Mouse::GetXPos(lParam) - m_mouse.prevCursorPos.x);
 	float dy = static_cast<float>(Mouse::GetYPos(lParam) - m_mouse.prevCursorPos.y);
 	gmod::vector3<float> trans;
-	if (m_UI->currentMode != UI::Mode::Rotate) {
+	if (m_UI->currentMode == UI::Mode::Rotate) {
 		std::swap(dx, dy);
 		dx = -dx;
 	}
 	switch (m_UI->currentAxis) {
 		case UI::Axis::X: {
-			trans = { dy, 0.0f, 0.0f };
+			trans = { dx, 0.0f, 0.0f };
 			break;
 		}
 		case UI::Axis::Y: {
@@ -252,7 +254,7 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			break;
 		}
 		case UI::Axis::Z: {
-			trans = { 0.0f, 0.0f, -dy };
+			trans = { 0.0f, 0.0f, dx };
 			break;
 		}
 		case UI::Axis::All: {
@@ -264,55 +266,62 @@ void Application::HandleTransformsOnMouseMove(LPARAM lParam) {
 			break;
 		}
 	}
+
+	auto applyTransformation = [&](auto transformFunc) -> void {
+		std::optional<Object*> selectedObj = m_UI->selection.Single();
+		if (selectedObj.has_value()) {
+			transformFunc(*selectedObj.value());
+			selectedObj.value()->InformParents();
+		} else {
+			transformFunc(m_UI->selection);
+		}
+	};
+
 	switch (m_UI->currentMode) {
 		case UI::Mode::Translate: {
 			trans = trans * traSensitivity;
-			if (m_UI->noObjectSelected()) {
+			if (m_UI->selection.Empty()) {
 				m_UI->cursor.transform.UpdateTranslation(trans.x(), trans.y(), trans.z());
 			} else {
-				auto& selectedObj = m_UI->objects.at(m_UI->objects_selectedRowIdx);
-				selectedObj->UpdateTranslation(trans.x(), trans.y(), trans.z());
-				selectedObj->InformParents();
+				applyTransformation([&](auto& target) {
+					target.UpdateTranslation(trans.x(), trans.y(), trans.z());
+				});
 			}
 			break;
 		}
 		case UI::Mode::Rotate: {
-			if (m_UI->noObjectSelected()) { return; }
+			if (m_UI->selection.Empty()) { return; }
 			trans = trans * rotSensitivity;
 			switch (m_UI->currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					applyTransformation([&](auto& target) {
+						target.UpdateRotation_Quaternion(trans.x(), trans.y(), trans.z());
+					});
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
-						m_UI->cursor.transform.position());
-					break;
-				}
-				case UI::Orientation::Selection:{
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(),
-						m_UI->selection.UpdateMidpoint());
+					applyTransformation([&](auto& target) {
+						target.UpdateRotationAroundPoint_Quaternion(trans.x(), trans.y(), trans.z(), m_UI->cursor.transform.position());
+					});
 					break;
 				}
 			}
 			break;
 		}
 		case UI::Mode::Scale: {
-			if (m_UI->noObjectSelected()) { return; }
+			if (m_UI->selection.Empty()) { return; }
 			trans = trans * scaSensitivity;
 			switch (m_UI->currentOrientation) {
 				case UI::Orientation::World: {
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScaling(trans.x(), trans.y(), trans.z());
+					applyTransformation([&](auto& target) {
+						target.UpdateScaling(trans.x(), trans.y(), trans.z());
+					});
 					break;
 				}
 				case UI::Orientation::Cursor: {
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
-						m_UI->cursor.transform.position());
-					break;
-				}
-				case UI::Orientation::Selection: {
-					m_UI->objects.at(m_UI->objects_selectedRowIdx)->UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(),
-						m_UI->selection.UpdateMidpoint());
+					applyTransformation([&](auto& target) {
+						target.UpdateScalingAroundPoint(trans.x(), trans.y(), trans.z(), m_UI->cursor.transform.position());
+					});
 					break;
 				}
 			}
@@ -442,7 +451,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 }
 
 Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
-	if (m_UI->numOfPointObjects == 0) { return nullptr; }
+	if (m_UI->numOfScenePoints == 0) { return nullptr; }
 	const float x = static_cast<float>(Mouse::GetXPos(lParam));
 	const float y = static_cast<float>(Mouse::GetYPos(lParam));
 	const float nx = (2.0f * x) / m_winWidth - 1.0f;
@@ -461,7 +470,7 @@ Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
 	const gmod::vector3<double> direction(rayDir.x(), rayDir.y(), rayDir.z());
 
 	Object* closestPoint = nullptr;
-	for (auto& obj : m_UI->objects) {
+	for (auto& obj : m_UI->sceneObjects) {
 		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
 		const gmod::vector3<double> vecToPoint = obj->position() - origin;
 		const gmod::vector3<double> crossProd = gmod::cross(vecToPoint, direction);

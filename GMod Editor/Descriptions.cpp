@@ -1,5 +1,7 @@
 #include "Descriptions.h"
 
+using namespace app;
+
 SwapChainDescription::SwapChainDescription(HWND wndHwnd, SIZE wndSize) {
 	ZeroMemory(this, sizeof(SwapChainDescription));
 	BufferDesc.Width = wndSize.cx;

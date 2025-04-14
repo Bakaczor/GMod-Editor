@@ -1,6 +1,8 @@
 #include "Camera.h"
 #include <numbers>
 
+using namespace app;
+
 Camera::Camera(gmod::Transform<float> target, float dist, float minDist, float maxDist) : m_target(target), m_dist(dist) {
 	SetDistanceRange(minDist, maxDist);
 }

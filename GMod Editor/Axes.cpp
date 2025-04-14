@@ -1,5 +1,7 @@
 #include "Axes.h"
 
+using namespace app;
+
 Axes::Axes(AxesModel* model) : m_model(model) {}
 
 gmod::matrix4<float> Axes::modelMatrix(const Camera& camera, float f, float a) const {

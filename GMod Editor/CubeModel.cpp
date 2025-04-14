@@ -1,6 +1,8 @@
 #include "CubeModel.h"
 #include "Data.h"
 
+using namespace app;
+
 CubeModel::CubeModel() : m_mesh() {}
 
 void CubeModel::Initialize(const Device& device) {
