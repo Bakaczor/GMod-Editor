@@ -14,10 +14,11 @@ Point::Point(PointModel* model) : m_model(model) {
 	color = { 1.0f, 0.0f, 0.0f, 1.0f };
 }
 
-void Point::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+void Point::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_model == nullptr) {
 		std::cerr << "[Point] : Uninitialized model.";
 	} else {
+		map.at(ShaderType::Regular).Set(context);
 		m_model->Render(context);
 	}
 }

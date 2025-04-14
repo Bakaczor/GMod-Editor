@@ -45,6 +45,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		const auto psBytes_r = Device::LoadByteCode(L"ps_r.cso");
 		m_shaders.insert(std::make_pair(ShaderType::Regular, Shaders{
 				m_device.CreateVertexShader(vsBytes_r),
+				nullptr, // domain
+				nullptr, // hull
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_r)
 			}
@@ -54,12 +56,25 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		const auto psBytes_rwc = Device::LoadByteCode(L"ps_rwc.cso");
 		m_shaders.insert(std::make_pair(ShaderType::RegularWithColors, Shaders{
 				m_device.CreateVertexShader(vsBytes_rwc),
+				nullptr, // domain
+				nullptr, // hull
 				m_device.CreatePixelShader(psBytes_rwc),
 				m_device.CreateInputLayout<Vertex_PoCo>(vsBytes_rwc)
 			}
 		));
 		// RegularWithTesselation
-		// TODO
+		const auto vsBytes_rwt = Device::LoadByteCode(L"vs_rwt.cso");
+		const auto hsBytes_rwt = Device::LoadByteCode(L"hs_rwt.cso");
+		const auto dsBytes_rwt = Device::LoadByteCode(L"ds_rwt.cso");
+		const auto psBytes_rwt = Device::LoadByteCode(L"ps_rwt.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselation, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwt),
+				m_device.CreateDomainShader(dsBytes_rwt),
+				m_device.CreatePixelShader(psBytes_rwt),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
 	}
 
 	// CONSTANT BUFFERS
@@ -107,10 +122,6 @@ void Application::Initialize() {
 	// VIEWPORT
 	Viewport viewport{ size };
 	m_device.deviceContext()->RSSetViewports(1, &viewport);
-}
-
-void app::Application::SetShaders(ShaderType shaderType) {
-	m_shaders.at(shaderType).Set(m_device.deviceContext());
 }
 
 Application::~Application() {
@@ -222,32 +233,28 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
-	SetShaders(m_UI->cursor.shaderType());
 	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
-	m_UI->cursor.RenderMesh(m_device.deviceContext());
+	m_UI->cursor.RenderMesh(m_device.deviceContext(), m_shaders);
 
 	if (!m_UI->selection.Empty()) {
-		SetShaders(m_UI->selection.shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->selection.modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->selection.color.data()));
-		m_UI->selection.RenderMesh(m_device.deviceContext());
+		m_UI->selection.RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 
 	if (m_UI->showAxes) {
-		SetShaders(m_axes.shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera, m_far, m_FOV)));
-		m_axes.RenderMesh(m_device.deviceContext());
+		m_axes.RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 
 	for (auto& obj : m_UI->sceneObjects) {
-		SetShaders(obj->shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
 		if (obj->geometryChanged || m_firstPass) {
 			obj->geometryChanged = false;
 			obj->UpdateMesh(m_device);
 		}
-		obj->RenderMesh(m_device.deviceContext());
+		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 }
 

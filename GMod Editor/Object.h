@@ -3,6 +3,7 @@
 #include <array>
 #include <algorithm>
 #include <sstream>
+#include <unordered_map>
 #include "../imgui/imgui.h"
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
@@ -15,13 +16,12 @@ namespace app {
 		int id;
 		std::string name;
 		std::string type() const { return m_type; }
-		ShaderType shaderType() const { return m_shaderType; }
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
 
 		Object();
 		virtual ~Object();
-		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const = 0;
+		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const = 0;
 		virtual void UpdateMesh(const Device& device) { return; };
 		virtual void RenderProperties();
 #pragma region PARENTS
@@ -53,7 +53,6 @@ namespace app {
 	protected:
 		static int m_globalObjectId;
 		std::string m_type;
-		ShaderType m_shaderType = ShaderType::Regular;
 		std::vector<Object*> m_parents;
 	private:
 		static unsigned short m_globalObjectNum;

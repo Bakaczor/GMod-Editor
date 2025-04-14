@@ -11,7 +11,7 @@ namespace app {
 
 		ObjectGroup(PointModel* model = nullptr);
 		virtual ~ObjectGroup() override;
-		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
+		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 
 		void SetModel(PointModel* model);
 		void AddObject(Object* obj);

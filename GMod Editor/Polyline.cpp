@@ -5,6 +5,16 @@ using namespace app;
 
 unsigned short Polyline::m_globalPolylineNum = 0;
 
+Polyline::Polyline(bool increment) {
+	m_type = "Polyline";
+	std::ostringstream os;
+	os << "polyline_" << m_globalPolylineNum;
+	name = os.str();
+	if (increment) {
+		m_globalPolylineNum += 1;
+	}
+}
+
 Polyline::Polyline(std::vector<Object*> objects) {
 	m_type = "Polyline";
 	std::ostringstream os;
@@ -19,8 +29,9 @@ Polyline::Polyline(std::vector<Object*> objects) {
 	geometryChanged = true;
 }
 
-void app::Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
-	m_mesh.Render(context);
+void app::Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+	map.at(ShaderType::Regular).Set(context);
+	m_polylineMesh.Render(context);
 }
 
 void Polyline::UpdateMesh(const Device& device) {
@@ -34,7 +45,7 @@ void Polyline::UpdateMesh(const Device& device) {
 		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
 
-	m_mesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 }
 
 void Polyline::RenderProperties() {

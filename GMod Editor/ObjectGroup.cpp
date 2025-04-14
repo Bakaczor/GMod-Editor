@@ -18,7 +18,8 @@ void ObjectGroup::SetModel(PointModel* model) {
 	m_model = model;
 }
 
-void ObjectGroup::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+void ObjectGroup::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+	map.at(ShaderType::Regular).Set(context);
 	m_model->Render(context);
 }
 

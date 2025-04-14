@@ -6,6 +6,7 @@
 #include "Point.h"
 #include "Polyline.h"
 #include <unordered_set>
+#include "Curve.h"
 
 using namespace app;
 
@@ -201,6 +202,8 @@ void UI::RenderObjectTable(bool firstPass) {
 				break;
 			}
 			case ObjectGroupType::Curve: {
+				auto obj = std::make_unique<Curve>(selection.objects);
+				sceneObjects.push_back(std::move(obj));
 				break;
 			}
 		}

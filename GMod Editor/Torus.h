@@ -18,7 +18,7 @@ namespace app {
 		int Get_vParts() const;
 		void Set_vParts(int vParts);
 
-		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
+		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 		virtual void UpdateMesh(const Device& device) override;
 		virtual void RenderProperties() override;
 	private:

@@ -50,7 +50,8 @@ void Torus::Set_vParts(int vParts) {
 	RecalculateGeometry();
 }
 
-void Torus::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+void Torus::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+	map.at(ShaderType::Regular).Set(context);
 	m_mesh.Render(context);
 }
 

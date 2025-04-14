@@ -44,8 +44,6 @@ namespace app {
 		Axes m_axes;
 
 		void Initialize();
-		void SetShaders(ShaderType shaderType);
-
 		void RenderUI();
 		void Update();
 		void Render();

@@ -43,6 +43,15 @@
     <Filter Include="Pliki nagłówkowe\models">
       <UniqueIdentifier>{8ac115aa-221a-4eb1-a48d-4fec3683776c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegularWithColor">
+      <UniqueIdentifier>{9684a7bd-eeff-4fa3-8864-93c876f4074d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\Regular">
+      <UniqueIdentifier>{2f638ed5-f43c-4136-a897-af0bf6c1eccd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselation">
+      <UniqueIdentifier>{132632fc-3270-4a10-9775-6788ce75d354}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -110,6 +119,9 @@
     </ClInclude>
     <ClInclude Include="Shaders.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
+    <ClInclude Include="Curve.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -179,19 +191,34 @@
     <ClCompile Include="Shaders.cpp">
       <Filter>Pliki źródłowe\d3dx</Filter>
     </ClCompile>
+    <ClCompile Include="Curve.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ps_r.hlsl">
-      <Filter>Pliki zasobów</Filter>
-    </FxCompile>
-    <FxCompile Include="vs_r.hlsl">
-      <Filter>Pliki zasobów</Filter>
-    </FxCompile>
     <FxCompile Include="vs_rwc.hlsl">
-      <Filter>Pliki zasobów</Filter>
+      <Filter>Pliki zasobów\RegularWithColor</Filter>
     </FxCompile>
     <FxCompile Include="ps_rwc.hlsl">
-      <Filter>Pliki zasobów</Filter>
+      <Filter>Pliki zasobów\RegularWithColor</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_r.hlsl">
+      <Filter>Pliki zasobów\Regular</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_r.hlsl">
+      <Filter>Pliki zasobów\Regular</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwt.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselation</Filter>
+    </FxCompile>
+    <FxCompile Include="hs_rwt.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselation</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_rwt.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselation</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_rwt.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselation</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

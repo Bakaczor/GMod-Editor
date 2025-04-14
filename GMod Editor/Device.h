@@ -63,6 +63,10 @@ namespace app {
 #pragma region SHADERS
 		mini::dx_ptr<ID3D11VertexShader> CreateVertexShader(std::vector<BYTE> vsCode) const;
 
+		mini::dx_ptr<ID3D11HullShader> CreateHullShader(std::vector<BYTE> hsCode) const;
+
+		mini::dx_ptr<ID3D11DomainShader> CreateDomainShader(std::vector<BYTE> dsCode) const;
+
 		mini::dx_ptr<ID3D11PixelShader> CreatePixelShader(std::vector<BYTE> psCode) const;
 
 		static std::vector<BYTE> LoadByteCode(const std::wstring& filename);
