@@ -64,8 +64,7 @@ namespace app {
 		void RenderTransforms();
 		void RenderCursor();
 		void RenderObjectTable(bool firstPass);
-		//void RenderSelection(bool firstPass);
-		void RenderSelectedObject();
+		void RenderProperties();
 		void RenderSettings(bool firstPass);
 
 		inline int tableHeight(int rows) const {

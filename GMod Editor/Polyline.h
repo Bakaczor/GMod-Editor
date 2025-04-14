@@ -10,8 +10,10 @@ namespace app {
 		virtual void UpdateMesh(const Device& device) override;
 		virtual void RenderProperties() override;
 		virtual gmod::matrix4<double> modelMatrix() const override;
+	protected:
+		Mesh m_mesh;
 	private:
 		static unsigned short m_globalPolylineNum;
-		Mesh m_mesh;
+		int m_selectedIdx = -1;
 	};
 }

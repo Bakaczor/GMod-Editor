@@ -45,6 +45,7 @@ void ObjectGroup::AddObject(Object* obj) {
 	if (Contains(obj->id)) { return; }
 	objects.push_back(obj);
 	obj->AddParent(this);
+	geometryChanged = true;
 	UpdateMidpoint();
 	if (nullptr != dynamic_cast<Point*>(obj)) {
 		m_numOfPoints++;
@@ -57,6 +58,7 @@ void ObjectGroup::RemoveObject(Object* obj) {
 	});
 	if (erased > 0) {
 		obj->RemoveParent(this);
+		geometryChanged = true;
 		UpdateMidpoint();
 		if (nullptr != dynamic_cast<Point*>(obj)) {
 			m_numOfPoints--;
@@ -69,6 +71,7 @@ void ObjectGroup::Clear() {
 		obj->RemoveParent(this);
 	}
 	objects.clear();
+	geometryChanged = true;
 	UpdateMidpoint();
 }
 
@@ -92,13 +95,16 @@ gmod::matrix4<double> ObjectGroup::modelMatrix() const {
 		gmod::matrix4<double>::scaling(m_modelScale, m_modelScale, m_modelScale);
 }
 void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
+	Object::SetTranslation(tx, ty, tz);
+	auto diff = gmod::vector3<double>(tx, ty, tz) - m_midpoint;
 	for (auto& obj : objects) {
-		obj->SetTranslation(tx, ty, tz);
+		obj->UpdateTranslation(diff.x(), diff.y(), diff.z());
 		obj->InformParents();
 	}
 	UpdateMidpoint();
 }
 void ObjectGroup::SetRotation(double rx, double ry, double rz) {
+	Object::SetRotation(rx, ry, rz);
 	for (auto& obj : objects) {
 		obj->SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 		obj->InformParents();
@@ -106,6 +112,7 @@ void ObjectGroup::SetRotation(double rx, double ry, double rz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) {
+	Object::SetRotationAroundPoint(rx, ry, rz, p);
 	for (auto& obj : objects) {
 		obj->SetRotationAroundPoint(rx, ry, rz, p);
 		obj->InformParents();
@@ -113,6 +120,7 @@ void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const 
 	UpdateMidpoint();
 }
 void ObjectGroup::SetScaling(double sx, double sy, double sz) {
+	Object::SetScaling(sx, sy, sz);
 	for (auto& obj : objects) {
 		obj->SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 		obj->InformParents();
@@ -120,6 +128,7 @@ void ObjectGroup::SetScaling(double sx, double sy, double sz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) {
+	Object::SetScalingAroundPoint(sx, sy, sz, p);
 	for (auto& obj : objects) {
 		obj->SetScalingAroundPoint(sx, sy, sz, p);
 		obj->InformParents();
@@ -127,6 +136,7 @@ void ObjectGroup::SetScalingAroundPoint(double sx, double sy, double sz, const g
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
+	Object::UpdateTranslation(dtx, dty, dtz);
 	for (auto& obj : objects) {
 		obj->UpdateTranslation(dtx, dty, dtz);
 		obj->InformParents();
@@ -134,6 +144,7 @@ void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) {
+	Object::UpdateRotation_Quaternion(drx, dry, drz);
 	for (auto& obj : objects) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 		obj->InformParents();
@@ -141,6 +152,7 @@ void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) 
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) {
+	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
 	for (auto& obj : objects) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
 		obj->InformParents();
@@ -148,6 +160,7 @@ void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, d
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
+	Object::UpdateScaling(dsx, dsy, dsz);
 	for (auto& obj : objects) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 		obj->InformParents();
@@ -155,6 +168,7 @@ void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
 	UpdateMidpoint();
 }
 void ObjectGroup::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) {
+	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 	for (auto& obj : objects) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 		obj->InformParents();

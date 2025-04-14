@@ -8,6 +8,7 @@ namespace app {
 		Point(PointModel* model);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const override;
 #pragma region TRANSFORM
+		virtual gmod::matrix4<double> modelMatrix() const override;
 		// disable direct rotation and scaling for points
 		virtual void SetRotation(double rx, double ry, double rz) override { return; }
 		virtual void SetScaling(double sx, double sy, double sz) override { return; }

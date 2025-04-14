@@ -39,13 +39,24 @@ void Polyline::UpdateMesh(const Device& device) {
 
 void Polyline::RenderProperties() {
 	Object::RenderProperties();
+	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		if (-1 != m_selectedIdx) {
+			RemoveObject(objects.at(m_selectedIdx));
+		}
+	}
 	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
 		ImGui::TableSetupColumn("Name");
 		ImGui::TableHeadersRow();
 		for (int i = 0; i < objects.size(); i++) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::Selectable(objects[i]->name.c_str(), false, ImGuiSelectableFlags_Disabled);
+			if(ImGui::Selectable(objects[i]->name.c_str(), i == m_selectedIdx, ImGuiSelectableFlags_SpanAllColumns)) {
+				if (m_selectedIdx == i) {
+					m_selectedIdx = -1;
+				} else {
+					m_selectedIdx = i;
+				}
+			}
 		}
 		ImGui::EndTable();
 	}

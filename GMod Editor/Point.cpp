@@ -12,11 +12,15 @@ Point::Point(PointModel* model) : m_model(model) {
 	name = os.str();
 	m_globalPointNum += 1;
 	color = { 1.0f, 0.0f, 0.0f, 1.0f };
-
-	Object::SetScaling(m_modelScale, m_modelScale, m_modelScale);
 }
 
 void Point::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
 	m_model->Render(context);
+}
+
+gmod::matrix4<double> app::Point::modelMatrix() const {
+	auto pos = position();
+	return gmod::matrix4<double>::translation(pos.x(), pos.y(), pos.z()) * 
+		gmod::matrix4<double>::scaling(m_modelScale, m_modelScale, m_modelScale);
 }
 

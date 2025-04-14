@@ -37,11 +37,10 @@ void UI::RenderRightPanel(bool firstPass) {
 		}
 		if (ImGui::BeginTabItem("Objects")) {
 			RenderObjectTable(firstPass);
-			//RenderSelection(firstPass);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Properties")) {
-			RenderSelectedObject();
+			RenderProperties();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -165,6 +164,16 @@ void UI::RenderCursor() {
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				sceneObjects.push_back(std::move(obj));
 				numOfScenePoints++;
+
+				// if objectgroup is selected, add to that group
+				std::optional<Object*> opt = selection.Single();
+				if (opt.has_value()) {
+					ObjectGroup* grp = dynamic_cast<ObjectGroup*>(opt.value());
+					if (nullptr != grp) {
+						Object* added = sceneObjects.back().get();
+						grp->AddObject(added);
+					}
+				}
 				break;
 			}
 		}
@@ -235,6 +244,12 @@ void UI::RenderObjectTable(bool firstPass) {
 					} else {
 						selection.AddObject(obj.get());
 					}
+				} else if (ImGui::GetIO().KeyAlt && nullptr != dynamic_cast<Point*>(obj.get())) {
+					std::optional<Object*> opt = selection.Single();
+					ObjectGroup* selectedGrp = dynamic_cast<ObjectGroup*>(opt.has_value() ? opt.value() : nullptr);
+					if (nullptr != selectedGrp) {
+						selectedGrp->AddObject(obj.get());
+					}
 				} else {
 					selection.Clear();
 					selection.AddObject(obj.get());
@@ -252,152 +267,113 @@ void UI::SelectObjectOnMouseClick(Object* obj) {
 	selection.AddObject(obj);
 }
 
-//void UI::RenderSelection(bool firstPass) {
-//	if (firstPass) {
-//		ImGui::SetNextItemOpen(false);
-//	}
-//	ImGui::Spacing();
-//	if (ImGui::CollapsingHeader("Selection")) {
-//		if (ImGui::Button("Remove from selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-//			if (selection_selectedRowIdx != -1) {
-//				selection.RemoveObject(selection.objects[selection_selectedRowIdx]);
-//				selection_selectedRowIdx = -1;
-//				selection_selectedObjId = -1;
-//			}
-//		}
-//		if (ImGui::Button("Clear selection", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-//			selection.Clear();
-//			selection_selectedRowIdx = -1;
-//			selection_selectedObjId = -1;
-//		}
-//		ImGui::BeginChild("SelectionWindow", ImVec2(0, tableHeight(selection.objects.size())), false, ImGuiWindowFlags_None);
-//		if (ImGui::BeginTable("Selected", 2, ImGuiTableFlags_ScrollY)) {
-//			ImGui::TableSetupColumn("Name");
-//			ImGui::TableSetupColumn("Type");
-//			ImGui::TableHeadersRow();
-//
-//			for (int i = 0; i < selection.objects.size(); i++) {
-//				ImGui::TableNextRow();
-//				ImGui::TableNextColumn();
-//				if (ImGui::Selectable(selection.objects[i]->name.c_str(), selection_selectedRowIdx == i, ImGuiSelectableFlags_SpanAllColumns)) {
-//					if (selection_selectedRowIdx == i) {
-//						selection_selectedRowIdx = -1;
-//						selection_selectedObjId = -1;
-//					} else {
-//						selection_selectedRowIdx = i;
-//						selection_selectedObjId = selection.objects[i]->id;
-//					}
-//				}
-//				ImGui::TableNextColumn();
-//				ImGui::Text(selection.objects[i]->type().c_str());
-//			}
-//			ImGui::EndTable();
-//		}
-//		ImGui::EndChild();
-//		if (!selection.isPolyline()) {
-//			ImGui::BeginDisabled();
-//		}
-//		if (ImGui::Button("Create polyline", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-//			auto obj = std::make_unique<Polyline>(selection.objects);
-//			sceneObjects.push_back(std::move(obj));
-//		}
-//		if (!selection.isPolyline()) {
-//			ImGui::EndDisabled();
-//		}
-//	}
-//}
+void UI::RenderProperties() {
+	std::optional<Object*> obj = selection.Single();
+	Object* selectedObj = nullptr;
+	if (obj.has_value()) {
+		selectedObj = obj.value();
+	} else {
+		if (selection.Empty()) { return; }
+		selectedObj = &selection;
+	}
 
-void UI::RenderSelectedObject() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
-	std::optional<Object*> obj = selection.Single();
-	if (obj.has_value()) {
-		auto& selectedObj = obj.value();
-		double step = 0.001f;
-		double stepFast = 0.1f;
-		bool flag = true;
+	double step = 0.001f;
+	double stepFast = 0.1f;
+	bool flag = true;
+	ImGui::Text("Position");
+	gmod::vector3<double> position = selectedObj->position();
+	flag = false;
+	if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
+	if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
+	if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
 
-		ImGui::Text("Position");
-		gmod::vector3<double> position = selectedObj->position();
+	if (flag) {
+		selectedObj->SetTranslation(position.x(), position.y(), position.z());
+		selectedObj->InformParents();
+	}
+
+	ImGui::Text("Euler Angles");
+	gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();
+	flag = false;
+	auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
+	if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		eulerAngles = gmod::vector3<double>(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
+		flag = true;
+	}
+	if (ImGui::InputDouble("Y##Euler Angles", &eulerAnglesDeg.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		eulerAngles = gmod::vector3<double>(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
+		flag = true;
+	}
+	if (ImGui::InputDouble("Z##Euler Angles", &eulerAnglesDeg.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		eulerAngles = gmod::vector3<double>(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
+		flag = true;
+	}
+
+	if (flag) {
+		switch (currentOrientation) {
+			case Orientation::World: {
+				selectedObj->SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+				break;
+			}
+			case Orientation::Cursor: {
+				selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
+				break;
+			}
+		}
+	}
+
+	if (nullptr == dynamic_cast<Point*>(selectedObj)) {
+		ImGui::Text("Scale");
+		gmod::vector3<double> scale = selectedObj->scale();
 		flag = false;
-		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
 		}
-		if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
 		}
-		if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-
-		if (flag) {
-			selectedObj->SetTranslation(position.x(), position.y(), position.z());
-			selectedObj->InformParents();
-		}
-
-		ImGui::Text("Euler Angles");
-		gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();
-		flag = false;
-		auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
-		if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			eulerAngles = gmod::vector3<double>(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
-			flag = true;
-		}
-		if (ImGui::InputDouble("Y##Euler Angles", &eulerAnglesDeg.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			eulerAngles = gmod::vector3<double>(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
-			flag = true;
-		}
-		if (ImGui::InputDouble("Z##Euler Angles", &eulerAnglesDeg.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			eulerAngles = gmod::vector3<double>(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
+		if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
 		}
 
 		if (flag) {
 			switch (currentOrientation) {
-				case Orientation::World: {
-					selectedObj->SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
+				case Orientation::World:
+				{
+					selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
 					break;
 				}
-				case Orientation::Cursor: {
-					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
+				case Orientation::Cursor:
+				{
+					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
 					break;
 				}
 			}
 		}
-
-		if (nullptr == dynamic_cast<Point*>(selectedObj)) {
-			ImGui::Text("Scale");
-			gmod::vector3<double> scale = selectedObj->scale();
-			flag = false;
-			if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-				flag = true;
-			}
-			if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-				flag = true;
-			}
-			if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-				flag = true;
-			}
-
-			if (flag) {
-				switch (currentOrientation) {
-					case Orientation::World:
-					{
-						selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
-						break;
-					}
-					case Orientation::Cursor:
-					{
-						selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
-						break;
-					}
-				}
-			}
-		}
-		ImGui::Spacing();
-		ImGui::Separator();
-		selectedObj->RenderProperties();
 	}
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	selectedObj->RenderProperties();
+
+	auto grp = dynamic_cast<ObjectGroup*>(selectedObj);
+	// if objectgroup, but not selection
+	if (nullptr != grp && grp->id != selection.id) {
+		if (grp->Empty()) {
+			std::erase_if(sceneObjects, [&grp](const auto& o) {
+				return grp->id == o->id;
+			});
+		}
+	}
+
 	ImGui::EndChild();
 	selection.UpdateMidpoint();
 }
