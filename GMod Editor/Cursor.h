@@ -1,6 +1,7 @@
 #pragma once
 #include "../gmod/Transform.h"
 #include "AxesModel.h"
+#include "Shaders.h"
 
 namespace app {
 	class Cursor {
@@ -8,9 +9,11 @@ namespace app {
 		gmod::Transform<double> transform;
 
 		Cursor(AxesModel* model = nullptr);
+		ShaderType shaderType() const { return m_shaderType; }
 		void SetModel(AxesModel* model);
 		void RenderMesh(Device& device, mini::dx_ptr<ID3D11Buffer>& constBuffColor) const;
 	private:
 		AxesModel* m_model;
+		ShaderType m_shaderType = ShaderType::Regular;
 	};
 }

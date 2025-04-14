@@ -108,6 +108,9 @@
     <ClInclude Include="PointModel.h">
       <Filter>Pliki nagłówkowe\models</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders.h">
+      <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -173,12 +176,21 @@
     <ClCompile Include="PointModel.cpp">
       <Filter>Pliki źródłowe\models</Filter>
     </ClCompile>
+    <ClCompile Include="Shaders.cpp">
+      <Filter>Pliki źródłowe\d3dx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ps.hlsl">
+    <FxCompile Include="ps_r.hlsl">
       <Filter>Pliki zasobów</Filter>
     </FxCompile>
-    <FxCompile Include="vs.hlsl">
+    <FxCompile Include="vs_r.hlsl">
+      <Filter>Pliki zasobów</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_rwc.hlsl">
+      <Filter>Pliki zasobów</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_rwc.hlsl">
       <Filter>Pliki zasobów</Filter>
     </FxCompile>
   </ItemGroup>

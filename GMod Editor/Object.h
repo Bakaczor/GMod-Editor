@@ -7,6 +7,7 @@
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
 #include "Mesh.h"
+#include "Shaders.h"
 
 namespace app {
 	class Object {
@@ -14,9 +15,9 @@ namespace app {
 		int id;
 		std::string name;
 		std::string type() const { return m_type; }
+		ShaderType shaderType() const { return m_shaderType; }
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
-		bool selected = false; // to be used
 
 		Object();
 		virtual ~Object();
@@ -52,6 +53,7 @@ namespace app {
 	protected:
 		static int m_globalObjectId;
 		std::string m_type;
+		ShaderType m_shaderType = ShaderType::Regular;
 		std::vector<Object*> m_parents;
 	private:
 		static unsigned short m_globalObjectNum;

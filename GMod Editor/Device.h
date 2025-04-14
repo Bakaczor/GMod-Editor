@@ -1,10 +1,10 @@
 #pragma once
 #include "framework.h"
-#include <vector>
-#include <string>
 #include "../mini/dxptr.h"
 #include "../mini/window.h"
 #include "Descriptions.h"
+#include <string>
+#include <vector>
 
 namespace app {
 	class Device {

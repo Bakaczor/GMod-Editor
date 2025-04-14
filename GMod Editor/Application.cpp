@@ -1,6 +1,7 @@
-﻿#include "Application.h"
+﻿#include "../gmod/utility.h"
+#include "Application.h"
 #include "UI.h"
-#include "../gmod/utility.h"
+#include <utility>
 
 using namespace app;
 
@@ -38,14 +39,28 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	Initialize();
 
 	// SHADERS
-	const auto vsBytes = Device::LoadByteCode(L"vs.cso");
-	const auto psBytes = Device::LoadByteCode(L"ps.cso");
-	m_vertexShader = m_device.CreateVertexShader(vsBytes);
-	m_pixelShader = m_device.CreatePixelShader(psBytes);
-
-	// LAYOUT
-	m_layout = m_device.CreateInputLayout<Vertex_Po>(vsBytes);
-	SetShadersAndLayout();
+	{
+		// Regular
+		const auto vsBytes_r = Device::LoadByteCode(L"vs_r.cso");
+		const auto psBytes_r = Device::LoadByteCode(L"ps_r.cso");
+		m_shaders.insert(std::make_pair(ShaderType::Regular, Shaders{
+				m_device.CreateVertexShader(vsBytes_r),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_r)
+			}
+		));
+		// RegularWithColors
+		const auto vsBytes_rwc = Device::LoadByteCode(L"vs_rwc.cso");
+		const auto psBytes_rwc = Device::LoadByteCode(L"ps_rwc.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithColors, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwc),
+				m_device.CreatePixelShader(psBytes_rwc),
+				m_device.CreateInputLayout<Vertex_PoCo>(vsBytes_rwc)
+			}
+		));
+		// RegularWithTesselation
+		// TODO
+	}
 
 	// CONSTANT BUFFERS
 	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
@@ -94,6 +109,10 @@ void Application::Initialize() {
 	m_device.deviceContext()->RSSetViewports(1, &viewport);
 }
 
+void app::Application::SetShaders(ShaderType shaderType) {
+	m_shaders.at(shaderType).Set(m_device.deviceContext());
+}
+
 Application::~Application() {
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -134,13 +153,6 @@ int Application::MainLoop() {
 		}
 	} while (msg.message != WM_QUIT);
 	return static_cast<int>(msg.wParam);
-}
-
-void Application::SetShadersAndLayout() {
-	m_device.deviceContext()->VSSetShader(m_vertexShader.get(), nullptr, 0);
-	m_device.deviceContext()->PSSetShader(m_pixelShader.get(), nullptr, 0);
-	m_device.deviceContext()->IASetInputLayout(m_layout.get());
-	m_device.deviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
 void Application::ResizeWnd() {
@@ -210,21 +222,25 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
+	SetShaders(m_UI->cursor.shaderType());
 	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
 	m_UI->cursor.RenderMesh(m_device, m_constBuffColor);
 
 	if (!m_UI->selection.Empty()) {
+		SetShaders(m_UI->selection.shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->selection.modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->selection.color.data()));
 		m_UI->selection.RenderMesh(m_device.deviceContext());
 	}
 
 	if (m_UI->showAxes) {
+		SetShaders(m_axes.shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera, m_far, m_FOV)));
 		m_axes.RenderMesh(m_device, m_constBuffColor);
 	}
 
 	for (auto& obj : m_UI->sceneObjects) {
+		SetShaders(obj->shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
 		if (obj->geometryChanged || m_firstPass) {

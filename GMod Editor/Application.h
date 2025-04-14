@@ -18,6 +18,8 @@
 #include "CubeModel.h"
 #include "AxesModel.h"
 #include "PointModel.h"
+#include "Shaders.h"
+#include <unordered_map>
 
 namespace app {
 	class UI;
@@ -42,7 +44,7 @@ namespace app {
 		Axes m_axes;
 
 		void Initialize();
-		void SetShadersAndLayout();
+		void SetShaders(ShaderType shaderType);
 
 		void RenderUI();
 		void Update();
@@ -87,10 +89,8 @@ namespace app {
 		Device m_device;
 		mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
 		mini::dx_ptr<ID3D11DepthStencilView> m_depthBuffer;
-		mini::dx_ptr<ID3D11VertexShader> m_vertexShader;
-		mini::dx_ptr<ID3D11PixelShader> m_pixelShader;
-		mini::dx_ptr<ID3D11InputLayout> m_layout;
 		mini::dx_ptr<ID3D11RasterizerState> m_rastState;
+		std::unordered_map<ShaderType, Shaders> m_shaders;
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffView;
