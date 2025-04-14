@@ -1,3 +1,13 @@
+cbuffer cbView : register(b0)
+{
+    matrix viewMatrix;
+};
+
+cbuffer cbProj : register(b1)
+{
+    matrix projMatrix;
+};
+
 struct HSInput
 {
     float3 wPosition : WORLDPOS;
@@ -10,29 +20,43 @@ struct DSInput
 
 struct HSConstOutput
 {
-    float edges[4]  : SV_TessFactor;
-    float inside[2] : SV_InsideTessFactor;
+    float EdgeTess[2] : SV_TessFactor;
 };
 
 #define NUM_CONTROL_POINTS 4
+#define OFFSET 64
 
-HSConstOutput HSDeg3Bezier(InputPatch<HSInput, NUM_CONTROL_POINTS> ip, uint PatchID : SV_PrimitiveID)
+float TessFactor(InputPatch<HSInput, NUM_CONTROL_POINTS> patch)
+{
+    float sum = 0.0f;
+    for (int i = 0; i < NUM_CONTROL_POINTS - 1; i++)
+    {
+        float4 u = mul(projMatrix, mul(viewMatrix, float4(patch[i].wPosition, 1.0f)));
+        u /= u.w;
+        float4 v = mul(projMatrix, mul(viewMatrix, float4(patch[i + 1].wPosition, 1.0f)));
+        v /= v.w;
+        sum += sqrt(pow(u.x - v.x, 2) + pow(u.y - v.y, 2));
+    }
+    return clamp(sum * OFFSET / 3.0f, 2.0f, 64.0f);
+}
+
+HSConstOutput ConstantHS(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint patchID : SV_PrimitiveID)
 {
     HSConstOutput output;
-    output.edges[0] = output.edges[1] =
-    output.edges[2] = output.edges[3] = 16;
-    output.inside[0] = output.inside[1] = 16;
+    output.EdgeTess[0] = 1;
+    output.EdgeTess[1] = TessFactor(patch);
     return output;
 }
 
 [domain("isoline")]
 [partitioning("integer")]
 [outputtopology("line")]
-[outputcontrolpoints(4)]
-[patchconstantfunc("HSDeg3Bezier")]
-DSInput main(InputPatch<HSInput, NUM_CONTROL_POINTS> ip, uint i : SV_OutputControlPointID, uint PatchID : SV_PrimitiveID)
+[outputcontrolpoints(NUM_CONTROL_POINTS)]
+[patchconstantfunc("ConstantHS")]
+[maxtessfactor(64.0f)]
+DSInput main(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint i : SV_OutputControlPointID, uint patchID : SV_PrimitiveID)
 {
     DSInput output;
-    output.wPosition = ip[i].wPosition;
+    output.wPosition = patch[i].wPosition;
 	return output;
 }

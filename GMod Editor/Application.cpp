@@ -78,10 +78,16 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	}
 
 	// CONSTANT BUFFERS
-	ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
-	m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
-	ID3D11Buffer* psb[] = { m_constBuffColor.get() };
-	m_device.deviceContext()->PSSetConstantBuffers(0, 1, psb);
+	{
+		ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
+		m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
+		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
+		m_device.deviceContext()->HSSetConstantBuffers(0, 2, hsb);
+		ID3D11Buffer* dsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
+		m_device.deviceContext()->DSSetConstantBuffers(0, 2, dsb);
+		ID3D11Buffer* psb[] = { m_constBuffColor.get() };
+		m_device.deviceContext()->PSSetConstantBuffers(0, 1, psb);
+	}
 
 	// STATES
 	RasterizerDescription rsdesc;
