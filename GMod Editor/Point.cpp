@@ -15,7 +15,11 @@ Point::Point(PointModel* model) : m_model(model) {
 }
 
 void Point::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
-	m_model->Render(context);
+	if (m_model == nullptr) {
+		std::cerr << "[Point] : Uninitialized model.";
+	} else {
+		m_model->Render(context);
+	}
 }
 
 gmod::matrix4<double> app::Point::modelMatrix() const {

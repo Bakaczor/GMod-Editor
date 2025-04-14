@@ -224,7 +224,7 @@ void Application::RenderUI() {
 void Application::Render() {
 	SetShaders(m_UI->cursor.shaderType());
 	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
-	m_UI->cursor.RenderMesh(m_device, m_constBuffColor);
+	m_UI->cursor.RenderMesh(m_device.deviceContext());
 
 	if (!m_UI->selection.Empty()) {
 		SetShaders(m_UI->selection.shaderType());
@@ -236,7 +236,7 @@ void Application::Render() {
 	if (m_UI->showAxes) {
 		SetShaders(m_axes.shaderType());
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_axes.modelMatrix(m_camera, m_far, m_FOV)));
-		m_axes.RenderMesh(m_device, m_constBuffColor);
+		m_axes.RenderMesh(m_device.deviceContext());
 	}
 
 	for (auto& obj : m_UI->sceneObjects) {

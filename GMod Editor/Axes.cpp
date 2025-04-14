@@ -16,10 +16,10 @@ void Axes::SetModel(AxesModel* model) {
 	m_model = model;
 }
 
-void Axes::RenderMesh(Device& device, mini::dx_ptr<ID3D11Buffer>& constBuffColor) const {
+void Axes::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
 	if (m_model == nullptr) {
 		std::cerr << "[Axes] : Uninitialized model.";
 	} else {
-		m_model->Render(device, constBuffColor);
+		m_model->Render(context);
 	}
 }

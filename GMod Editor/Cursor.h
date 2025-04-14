@@ -11,9 +11,9 @@ namespace app {
 		Cursor(AxesModel* model = nullptr);
 		ShaderType shaderType() const { return m_shaderType; }
 		void SetModel(AxesModel* model);
-		void RenderMesh(Device& device, mini::dx_ptr<ID3D11Buffer>& constBuffColor) const;
+		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
 	private:
 		AxesModel* m_model;
-		ShaderType m_shaderType = ShaderType::Regular;
+		ShaderType m_shaderType = ShaderType::RegularWithColors;
 	};
 }
