@@ -1,12 +1,12 @@
-#include "UI.h"
-#include "Application.h"
 #include "../gmod/utility.h"
-#include "Torus.h"
+#include "Application.h"
 #include "Cube.h"
+#include "Curve.h"
 #include "Point.h"
 #include "Polyline.h"
+#include "Torus.h"
+#include "UI.h"
 #include <unordered_set>
-#include "Curve.h"
 
 using namespace app;
 
@@ -15,12 +15,12 @@ const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve" };
 
-void UI::Render(bool firstPass) {
-	RenderRightPanel(firstPass);
+void UI::Render(bool firstPass, Camera& camera) {
+	RenderRightPanel(firstPass, camera);
 	RenderSettings(firstPass);
 }
 
-void UI::RenderRightPanel(bool firstPass) {
+void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
 	const float width = 250.0f;
 	const float height = viewportSize.y;
@@ -37,7 +37,7 @@ void UI::RenderRightPanel(bool firstPass) {
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Objects")) {
-			RenderObjectTable(firstPass);
+			RenderObjectTable();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Properties")) {
@@ -45,6 +45,13 @@ void UI::RenderRightPanel(bool firstPass) {
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
+	}
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.y);
+	if (ImGui::Button("Focus", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		std::optional<Object*> opt = selection.Single();
+		gmod::vector3<double> pos = opt.has_value() ? opt.value()->position() : cursor.transform.position();
+		camera.SetTargetPosition(gmod::vector3<float>(pos.x(), pos.y(), pos.z()));
+		camera.cameraChanged = true;
 	}
 	ImGui::End();
 }
@@ -123,8 +130,7 @@ void UI::RenderTransforms() {
 }
 
 void UI::RenderCursor() {
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_NoBackground);
 	double step = 0.001f;
 	double stepFast = 0.1f;
 
@@ -182,11 +188,7 @@ void UI::RenderCursor() {
 	ImGui::EndChild();
 }
 
-void UI::RenderObjectTable(bool firstPass) {
-	if (firstPass) {
-		ImGui::SetNextItemOpen(false);
-	}
-
+void UI::RenderObjectTable() {
 	ImGui::Text("Object group types:");
 	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 	if (!selection.isPolyline()) {
@@ -268,7 +270,9 @@ void UI::RenderObjectTable(bool firstPass) {
 
 void UI::SelectObjectOnMouseClick(Object* obj) {
 	if (obj == nullptr) {
-		selection.Clear();
+		if (ImGui::GetIO().KeyShift) {
+			selection.Clear();
+		}
 	} else {
 		if (!ImGui::GetIO().KeyCtrl) {
 			selection.Clear();
@@ -397,8 +401,9 @@ void UI::RenderSettings(bool firstPass) {
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
 		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 130.0f), ImGuiCond_Always);
+		ImGui::SetWindowSize(ImVec2(size.x, 150.0f), ImGuiCond_Always);
 		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
+		ImGui::ColorEdit3("Selected", reinterpret_cast<float*>(&slctdColor));
 		ImGui::Checkbox("Show Grid", &showGrid);
 		ImGui::Checkbox("Show Axes", &showAxes);
 		ImGui::Checkbox("Use MMB", &useMMB);

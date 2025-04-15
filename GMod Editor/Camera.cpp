@@ -5,6 +5,7 @@ using namespace app;
 
 Camera::Camera(gmod::Transform<float> target, float dist, float minDist, float maxDist) : m_target(target), m_dist(dist) {
 	SetDistanceRange(minDist, maxDist);
+	m_target.SetRotation(-0.5f, 0.5f, 0.0f);
 }
 
 Camera::Camera(float dist, float minDist, float maxDist) : Camera(gmod::Transform<float>(), dist, minDist, maxDist) {}
@@ -24,6 +25,10 @@ void Camera::SetDistanceRange(float minDist, float maxDist) {
 	m_minDist = minDist;
 	m_maxDist = maxDist;
 	ClampDistance();
+}
+
+void app::Camera::SetTargetPosition(gmod::vector3<float> pos) {
+	m_target.SetTranslation(pos.x(), pos.y(), pos.z());
 }
 
 void Camera::ClampDistance() {

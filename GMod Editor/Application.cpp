@@ -23,7 +23,7 @@ std::unique_ptr<CubeModel> Application::m_cubeModel = std::make_unique<CubeModel
 std::unique_ptr<PointModel> Application::m_pointModel = std::make_unique<PointModel>();
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_camera(0.0f), 
+	m_device(m_window), m_camera(-2.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
@@ -234,7 +234,7 @@ void Application::RenderUI() {
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	m_UI->Render(m_firstPass);
+	m_UI->Render(m_firstPass, m_camera);
 	ImGui::Render();
 }
 
@@ -255,7 +255,12 @@ void Application::Render() {
 
 	for (auto& obj : m_UI->sceneObjects) {
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
-		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
+		// TODO : to improve performance, change internals of Contains
+		if (m_UI->selection.Contains(obj->id)) {
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(reinterpret_cast<float*>(&m_UI->slctdColor)));
+		} else {
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
+		}
 		if (obj->geometryChanged || m_firstPass) {
 			obj->geometryChanged = false;
 			obj->UpdateMesh(m_device);
@@ -379,7 +384,7 @@ void Application::HandleCameraOnMouseMove(LPARAM lParam) {
 	} else if (RMB) {
 		if (m_mouse.isShiftDown_flag) {
 			if (m_mouse.isCtrlDown_flag) {
-				m_camera.Zoom(-dy);
+				m_camera.Zoom(-dy * 10.0f);
 			} else {
 				m_camera.Move(dx, dy);
 			}

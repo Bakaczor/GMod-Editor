@@ -49,9 +49,10 @@ namespace app {
 		bool useMMB = true;
 		bool showGrid = false;
 		bool showAxes = false;
-		ImVec4 bkgdColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+		ImVec4 bkgdColor = ImVec4(0.33f, 0.33f, 0.33f, 1.0f);
+		ImVec4 slctdColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
 
-		void Render(bool firstPass);
+		void Render(bool firstPass, Camera& camera);
 	private:
 		int m_selectedObjType = 0;
 		const static std::vector<ObjectType> m_objectTypes;
@@ -60,10 +61,10 @@ namespace app {
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
 
-		void RenderRightPanel(bool firstPass);
+		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
-		void RenderObjectTable(bool firstPass);
+		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);
 
@@ -71,7 +72,7 @@ namespace app {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
 			const float headerHeight = ImGui::GetFrameHeightWithSpacing();
 			const float tableHeight = (rows * rowHeight) + headerHeight;
-			const float maxHeight = ImGui::GetContentRegionAvail().y * 0.5f;
+			const float maxHeight = ImGui::GetContentRegionAvail().y * 0.75f;
 			return std::min(tableHeight, maxHeight);
 		}
 	};

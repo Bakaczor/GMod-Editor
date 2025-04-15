@@ -74,6 +74,7 @@ void ObjectGroup::Clear() {
 	objects.clear();
 	geometryChanged = true;
 	UpdateMidpoint();
+	m_numOfPoints = 0;
 }
 
 bool ObjectGroup::Contains(int id) const {

@@ -25,6 +25,7 @@ namespace app {
 		void Rotate(float dx, float dy);
 		void Zoom(float dd);
 		void SetDistanceRange(float minDist, float maxDist);
+		void SetTargetPosition(gmod::vector3<float> pos);
 
 		float distance() const;
 		gmod::Transform<float> target() const;
