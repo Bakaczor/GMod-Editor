@@ -267,7 +267,14 @@ void UI::RenderObjectTable(bool firstPass) {
 }
 
 void UI::SelectObjectOnMouseClick(Object* obj) {
-	selection.AddObject(obj);
+	if (obj == nullptr) {
+		selection.Clear();
+	} else {
+		if (!ImGui::GetIO().KeyCtrl) {
+			selection.Clear();
+		}
+		selection.AddObject(obj);
+	}
 }
 
 void UI::RenderProperties() {

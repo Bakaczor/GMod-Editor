@@ -406,10 +406,7 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 	switch (msg.message) {
 		case WM_LBUTTONDOWN: {
 			m_mouse.isLMBDown_flag = true;
-			Object* clicked = nullptr;
-			if (clicked = HandleSelectionOnMouseClick(msg.lParam)) {
-				m_UI->SelectObjectOnMouseClick(clicked);
-			}
+			m_UI->SelectObjectOnMouseClick(HandleSelectionOnMouseClick(msg.lParam));
 			m_mouse.UpdatePos(msg.lParam);
 			break;
 		}
