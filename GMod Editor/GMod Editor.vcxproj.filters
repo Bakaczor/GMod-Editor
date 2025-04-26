@@ -49,6 +49,9 @@
     <Filter Include="Pliki zasobów\Regular">
       <UniqueIdentifier>{2f638ed5-f43c-4136-a897-af0bf6c1eccd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselationBSpline">
+      <UniqueIdentifier>{79605c1a-7d17-4d1a-a16b-f4ce4cad74fb}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Pliki zasobów\RegularWithTesselation">
       <UniqueIdentifier>{132632fc-3270-4a10-9775-6788ce75d354}</UniqueIdentifier>
     </Filter>
@@ -123,6 +126,9 @@
     <ClInclude Include="Curve.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="BSpline.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -194,6 +200,9 @@
     <ClCompile Include="Curve.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
+    <ClCompile Include="BSpline.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">
@@ -219,6 +228,9 @@
     </FxCompile>
     <FxCompile Include="vs_rwt.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselation</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwtbs.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationBSpline</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

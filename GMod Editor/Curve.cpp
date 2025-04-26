@@ -5,6 +5,16 @@ using namespace app;
 
 unsigned short Curve::m_globalCurveNum = 0;
 
+Curve::Curve(bool increment) {
+	m_type = "Curve";
+	std::ostringstream os;
+	os << "curve_" << m_globalCurveNum;
+	name = os.str();
+	if (increment) {
+		m_globalCurveNum += 1;
+	}
+}
+
 Curve::Curve(std::vector<Object*> objects) : m_curveMesh() {
 	m_type = "Curve";
 	std::ostringstream os;

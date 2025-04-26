@@ -1,18 +1,18 @@
 #pragma once
-#include "Polyline.h"
+#include "Curve.h"
 
 namespace app {
-	class Curve : public Polyline {
+	class BSpline : public Curve {
 	public:
-		explicit Curve(bool increment = false);
-		Curve(std::vector<Object*> objects);
+		bool showBernstein = false;
+		std::vector<Point*> bernsteinPoints;
+
+		BSpline(std::vector<Object*> objects);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 		virtual void UpdateMesh(const Device& device) override;
 		virtual void RenderProperties() override;
-	protected:
-		bool m_showPolyline = true;
-		Mesh m_curveMesh;
 	private:
-		static unsigned short m_globalCurveNum;
+		static unsigned short m_globalBSplineNum;
+		Mesh m_bernsteinMesh;
 	};
 }

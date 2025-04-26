@@ -75,6 +75,16 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
+		// RegularWithTesselationBSpline
+		const auto dsBytes_rwtbs = Device::LoadByteCode(L"ds_rwtbs.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationBSpline , Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwt),
+				m_device.CreateDomainShader(dsBytes_rwtbs),
+				m_device.CreatePixelShader(psBytes_rwt),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
 	}
 
 	// CONSTANT BUFFERS
@@ -501,6 +511,7 @@ Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
 	const gmod::vector3<double> direction(rayDir.x(), rayDir.y(), rayDir.z());
 
 	Object* closestPoint = nullptr;
+	// TODO : collect Bernstein BSplines and also check their points
 	for (auto& obj : m_UI->sceneObjects) {
 		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
 		const gmod::vector3<double> vecToPoint = obj->position() - origin;
