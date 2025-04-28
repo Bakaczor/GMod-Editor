@@ -1,5 +1,5 @@
-#include "BSpline.h"
 #include "Application.h"
+#include "BSpline.h"
 #include <numeric>
 
 using namespace app;
@@ -162,8 +162,82 @@ void BSpline::RecalculateDeBoore() {
 void BSpline::RecalculateBernstein(Object* sender) {
 	if (sender) {
 		// recalculate Bernstein polygons, after Bernstein polygon was changed
+		if (bernsteinPoints.size() < 4) { return; }
 
+		auto it = std::find_if(bernsteinPoints.begin(), bernsteinPoints.end(), [sender](const auto& p) { return p.get() == sender; });
+		if (it == bernsteinPoints.end()) return;
 
+		const int globalIdx = std::distance(bernsteinPoints.begin(), it);
+		const int localIdx = globalIdx % 3;
+
+		int leftStartIdx = -1;
+		int leftStartRule = -1;
+		int rightStartIdx = -1;
+		int rightStartRule = -1;
+
+		switch (localIdx) {
+			case 0: {
+				if (globalIdx == 0 || globalIdx == bernsteinPoints.size() - 1) {
+					return;
+				}
+				auto vec = (bernsteinPoints[globalIdx + 1]->position() - bernsteinPoints[globalIdx - 1]->position()) * 0.5;
+				auto next = bernsteinPoints[globalIdx]->position() + vec;
+				auto prev = bernsteinPoints[globalIdx]->position() - vec;
+				bernsteinPoints[globalIdx + 1]->SetTranslation(next.x(), next.y(), next.z());
+				bernsteinPoints[globalIdx - 1]->SetTranslation(prev.x(), prev.y(), prev.z());
+				leftStartIdx = globalIdx - 5;
+				rightStartIdx = globalIdx + 5;
+				leftStartRule = 2;
+				rightStartRule = 2;
+				break;
+			}
+			case 1: {
+				leftStartIdx = globalIdx - 2;
+				rightStartIdx = globalIdx + 4;
+				leftStartRule = 1;
+				rightStartRule = 2;
+				break;
+			}
+			case 2: {
+				leftStartIdx = globalIdx - 4;
+				rightStartIdx = globalIdx + 2;
+				leftStartRule = 2;
+				rightStartRule = 1;
+				break;
+			}
+		}
+
+		// left propagation (leftStart to begin)
+		for (int i = leftStartIdx, r = leftStartRule; i > 0; --i) {
+			if (r == 1) {
+				auto vec = bernsteinPoints[i + 1]->position() - bernsteinPoints[i + 2]->position();
+				auto prev = bernsteinPoints[i + 1]->position() + vec;
+				bernsteinPoints[i]->SetTranslation(prev.x(), prev.y(), prev.z());
+			} else if (r == 2) {
+				auto vec = bernsteinPoints[i + 2]->position() - bernsteinPoints[i + 3]->position();
+				auto prev = bernsteinPoints[i + 4]->position() + 4 * vec;
+				bernsteinPoints[i]->SetTranslation(prev.x(), prev.y(), prev.z());
+			}
+
+			// switch to next rule
+			r = (r + 1) % 3;
+		}
+
+		// right propagation (rightStart to end)
+		for (int i = rightStartIdx, r = rightStartRule; i < bernsteinPoints.size(); ++i) {
+			if (r == 1) {
+				auto vec = bernsteinPoints[i - 1]->position() - bernsteinPoints[i - 2]->position();
+				auto next = bernsteinPoints[i - 1]->position() + vec;
+				bernsteinPoints[i]->SetTranslation(next.x(), next.y(), next.z());
+			} else if (r == 2) {
+				auto vec = bernsteinPoints[i - 2]->position() - bernsteinPoints[i - 3]->position();
+				auto next = bernsteinPoints[i - 4]->position() + 4 * vec;
+				bernsteinPoints[i]->SetTranslation(next.x(), next.y(), next.z());
+			}
+
+			// switch to next rule
+			r = (r + 1) % 3;
+		}
 	} else {
 		// recalculate Bernstein polygons, after de Boore point was changed
 		bernsteinPoints.clear();
@@ -181,21 +255,21 @@ void BSpline::RecalculateBernstein(Object* sender) {
 			if (i == 0) {
 				// first segment includes all points
 				auto b0 = f0 * Mbs(0, 0) + f1 * Mbs(0, 1) + f2 * Mbs(0, 2) + f3 * Mbs(0, 3);
-				bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f));
+				bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
 				bernsteinPoints.back()->SetTranslation(b0.x(), b0.y(), b0.z());
 				bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 				bernsteinPoints.back()->AddParent(this);
 			} 
 			// for the next segements b0 == bernsteinPoints.back()
-			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f));
+			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
 			bernsteinPoints.back()->SetTranslation(b1.x(), b1.y(), b1.z());
 			bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 			bernsteinPoints.back()->AddParent(this);
-			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f));
+			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
 			bernsteinPoints.back()->SetTranslation(b2.x(), b2.y(), b2.z());
 			bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 			bernsteinPoints.back()->AddParent(this);
-			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f));
+			bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
 			bernsteinPoints.back()->SetTranslation(b3.x(), b3.y(), b3.z());
 			bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 			bernsteinPoints.back()->AddParent(this);
