@@ -5,7 +5,7 @@ using namespace app;
 
 unsigned short Point::m_globalPointNum = 0;
 
-Point::Point(PointModel* model) : m_model(model) {
+Point::Point(PointModel* model, float modelScale) : m_model(model), m_modelScale(modelScale) {
 	m_type = "Point";
 	std::ostringstream os;
 	os << "point_" << m_globalPointNum;

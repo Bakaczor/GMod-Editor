@@ -3,6 +3,7 @@
 #include <array>
 #include <algorithm>
 #include <sstream>
+#include <optional>
 #include <unordered_map>
 #include "../imgui/imgui.h"
 #include "../gmod/Transform.h"
@@ -18,12 +19,14 @@ namespace app {
 		std::string type() const { return m_type; }
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
+		Object* sender = nullptr;
 
 		Object();
 		virtual ~Object();
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const = 0;
-		virtual void UpdateMesh(const Device& device) { return; };
+		virtual void UpdateMesh(const Device& device);
 		virtual void RenderProperties();
+		virtual std::optional<std::vector<std::unique_ptr<Object>>*> GetSubObjects();
 #pragma region PARENTS
 		virtual void AddParent(Object* obj);
 		virtual void RemoveParent(Object* obj);

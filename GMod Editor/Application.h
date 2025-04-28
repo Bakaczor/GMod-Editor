@@ -31,6 +31,21 @@ namespace app {
 		~Application();
 		int Run(int cmdShow = SW_SHOWNORMAL) override;
 
+#pragma region STATIC_MODELS
+		static std::unique_ptr<AxesModel> m_axesModel;
+		static std::unique_ptr<CubeModel> m_cubeModel;
+		static std::unique_ptr<PointModel> m_pointModel;
+#pragma endregion
+		template<typename T>
+		static DirectX::XMFLOAT4X4 matrix4_to_XMFLOAT4X4(const gmod::matrix4<T>& M) {
+			DirectX::XMFLOAT4X4 result;
+			for (int i = 0; i < 4; ++i) {
+				for (int j = 0; j < 4; ++j) {
+					result(i, j) = static_cast<float>(M(j, i));
+				}
+			}
+			return result;
+		}
 	protected:
 		int MainLoop() override;
 		bool ProcessMessage(mini::WindowMessage& msg) override;
@@ -77,12 +92,6 @@ namespace app {
 		gmod::matrix4<float> projMatrix_inv() const;
 #pragma endregion
 
-#pragma region STATIC_MODELS
-		static std::unique_ptr<AxesModel> m_axesModel;
-		static std::unique_ptr<CubeModel> m_cubeModel;
-		static std::unique_ptr<PointModel> m_pointModel;
-#pragma endregion
-
 #pragma region DEVICE
 		Device m_device;
 		mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
@@ -95,16 +104,5 @@ namespace app {
 		mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
 #pragma endregion
-
-		template<typename T>
-		static DirectX::XMFLOAT4X4 matrix4_to_XMFLOAT4X4(const gmod::matrix4<T>& M) {
-			DirectX::XMFLOAT4X4 result;
-			for (int i = 0; i < 4; ++i) {
-				for (int j = 0; j < 4; ++j) {
-					result(i, j) = static_cast<float>(M(j, i));
-				}
-			}
-			return result;
-		}
 	};
 }

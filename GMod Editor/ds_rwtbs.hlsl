@@ -29,19 +29,20 @@ struct HSConstOutput
 PSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, const OutputPatch<DSInput, NUM_CONTROL_POINTS> patch)
 {
     float t = uv.x;
-    float N[4] =
+    float3 d1[3] =
     {
-        (1 - t) * (1 - t) * (1 - t),
-        3 * t * (1 - t) * (1 - t),
-        3 * t * t * (1 - t),
-        t * t * t
+        (1 - (t + 2) / 3) * patch[0].wPosition + (t + 2) / 3 * patch[1].wPosition,
+        (1 - (t + 1) / 3) * patch[1].wPosition + (t + 1) / 3 * patch[2].wPosition,
+        (1 - (t + 0) / 3) * patch[2].wPosition + (t + 0) / 3 * patch[3].wPosition
     };
-    PSInput output;
-    float3 pos = float3(0, 0, 0);
-    for (int i = 0; i < NUM_CONTROL_POINTS; i++)
+    float3 d2[2] =
     {
-        pos += N[i] * patch[i].wPosition;
-    }
+        (1 - (t + 1) / 2) * d1[0] + (t + 1) / 2 * d1[1],
+        (1 - (t + 0) / 2) * d1[1] + (t + 0) / 2 * d1[2]
+    };
+    
+    PSInput output;
+    float3 pos = (1 - t) * d2[0] + t * d2[1];
     output.position = mul(projMatrix, mul(viewMatrix, float4(pos, 1.0f)));
     return output;
 }

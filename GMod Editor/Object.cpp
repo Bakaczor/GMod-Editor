@@ -27,12 +27,21 @@ Object::~Object() {
 	}
 }
 
+void Object::UpdateMesh(const Device& device) {
+	geometryChanged = false;
+	sender = nullptr;
+}
+
 void Object::RenderProperties() {
 	ImGui::Spacing();
 	std::string text = "Properties of " + m_type + ":";
 	ImGui::Text(text.c_str());
 	ImGui::InputText("Name", &name);
 	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&color));
+}
+
+std::optional<std::vector<std::unique_ptr<Object>>*> app::Object::GetSubObjects() {
+	return std::nullopt;
 }
 
 #pragma region PARENTS
@@ -48,6 +57,7 @@ void Object::RemoveParent(Object* obj) {
 void Object::InformParents() {
 	for (auto& obj : m_parents) {
 		obj->geometryChanged = true;
+		obj->sender = this;
 	}
 }
 #pragma endregion

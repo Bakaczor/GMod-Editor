@@ -7,13 +7,14 @@
 #include "Torus.h"
 #include "UI.h"
 #include <unordered_set>
+#include "BSpline.h"
 
 using namespace app;
 
 const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
 const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point" };
-const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve };
-const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve" };
+const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve, ObjectGroupType::BSpline };
+const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve", "BSpline" };
 
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
@@ -208,6 +209,11 @@ void UI::RenderObjectTable() {
 				sceneObjects.push_back(std::move(obj));
 				break;
 			}
+			case ObjectGroupType::BSpline: {
+				auto obj = std::make_unique<BSpline>(selection.objects);
+				sceneObjects.push_back(std::move(obj));
+				break;
+			}
 		}
 	}
 	if (!selection.isPolyline()) {
@@ -344,7 +350,7 @@ void UI::RenderProperties() {
 		}
 	}
 
-	if (nullptr == dynamic_cast<Point*>(selectedObj)) {
+	if (typeid(Point) != typeid(*selectedObj)) {
 		ImGui::Text("Scale");
 		gmod::vector3<double> scale = selectedObj->scale();
 		flag = false;

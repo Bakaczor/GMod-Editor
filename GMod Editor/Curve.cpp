@@ -81,6 +81,8 @@ void app::Curve::UpdateMesh(const Device& device) {
         }
     }
 	m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+
+	Object::UpdateMesh(device);
 }
 
 void app::Curve::RenderProperties() {

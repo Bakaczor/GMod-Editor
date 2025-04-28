@@ -80,6 +80,8 @@ void Torus::UpdateMesh(const Device& device) {
 	m_mesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	m_vertices.clear();
 	m_edges.clear();
+
+	Object::UpdateMesh(device);
 }
 
 void Torus::RenderProperties() {

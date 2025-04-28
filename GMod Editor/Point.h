@@ -5,7 +5,7 @@
 namespace app {
 	class Point : public Object {
 	public:
-		Point(PointModel* model);
+		Point(PointModel* model, float modelScale = 0.75f);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 #pragma region TRANSFORM
 		virtual gmod::matrix4<double> modelMatrix() const override;
@@ -17,7 +17,7 @@ namespace app {
 #pragma endregion
 	private:
 		static unsigned short m_globalPointNum;
-		const float m_modelScale = 0.75f;
+		float m_modelScale;
 		PointModel* m_model;
 	};
 }

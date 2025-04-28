@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "UI.h"
 #include <utility>
+#include "BSpline.h"
 
 using namespace app;
 
@@ -272,10 +273,19 @@ void Application::Render() {
 			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(obj->color.data()));
 		}
 		if (obj->geometryChanged || m_firstPass) {
-			obj->geometryChanged = false;
 			obj->UpdateMesh(m_device);
 		}
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
+
+		auto opt = obj->GetSubObjects();
+		if (opt.has_value()) {
+			for (auto& subObj : *opt.value()) {
+				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
+				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
+				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
+			}
+		}
+
 	}
 }
 
@@ -511,17 +521,33 @@ Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
 	const gmod::vector3<double> direction(rayDir.x(), rayDir.y(), rayDir.z());
 
 	Object* closestPoint = nullptr;
-	// TODO : collect Bernstein BSplines and also check their points
-	for (auto& obj : m_UI->sceneObjects) {
-		if (nullptr == dynamic_cast<Point*>(obj.get())) { continue; }
+	auto getClosest = [&origin, &direction, &closestPoint](std::unique_ptr<Object>& obj) -> bool {
 		const gmod::vector3<double> vecToPoint = obj->position() - origin;
 		const gmod::vector3<double> crossProd = gmod::cross(vecToPoint, direction);
 
 		if (crossProd.length() < selectionRadius) {
 			closestPoint = obj.get();
+			return true;
+		}
+		return false;
+	};
+
+	for (auto& obj : m_UI->sceneObjects) {
+		auto opt = obj->GetSubObjects();
+		if (opt.has_value()) {
+			for (auto& subObj : *opt.value()) {
+				if (getClosest(subObj)) {
+					break;
+				}
+			}
+		}
+		if (nullptr != closestPoint) { break; }
+		if (typeid(Point) != typeid(*obj.get())) { continue; }
+		if (getClosest(obj)) {
 			break;
 		}
 	}
+
 	return closestPoint;
 }
 
