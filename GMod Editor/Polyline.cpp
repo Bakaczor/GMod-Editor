@@ -45,7 +45,9 @@ void Polyline::UpdateMesh(const Device& device) {
 		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
 
-	m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	if (objects.size() > 0) {
+		m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	}
 
 	Object::UpdateMesh(device);
 }
