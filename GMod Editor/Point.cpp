@@ -5,12 +5,14 @@ using namespace app;
 
 unsigned short Point::m_globalPointNum = 0;
 
-Point::Point(PointModel* model) : m_model(model) {
+Point::Point(PointModel* model, float modelScale, bool increment) : m_model(model), m_modelScale(modelScale) {
 	m_type = "Point";
 	std::ostringstream os;
 	os << "point_" << m_globalPointNum;
 	name = os.str();
-	m_globalPointNum += 1;
+	if (increment) {
+		m_globalPointNum += 1;
+	}
 	color = { 1.0f, 0.0f, 0.0f, 1.0f };
 }
 

@@ -46,6 +46,8 @@ void Polyline::UpdateMesh(const Device& device) {
 	}
 
 	m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+
+	Object::UpdateMesh(device);
 }
 
 void Polyline::RenderProperties() {
