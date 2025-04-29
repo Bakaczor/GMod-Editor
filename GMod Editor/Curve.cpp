@@ -24,8 +24,10 @@ void app::Curve::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, co
 		map.at(ShaderType::Regular).Set(context);
 		m_polylineMesh.Render(context);
 	}
-	map.at(ShaderType::RegularWithTesselation).Set(context);
-	m_curveMesh.Render(context);
+	if (objects.size() > 1) {
+		map.at(ShaderType::RegularWithTesselation).Set(context);
+		m_curveMesh.Render(context);
+	}
 }
 
 void app::Curve::UpdateMesh(const Device& device) {
@@ -41,36 +43,38 @@ void app::Curve::UpdateMesh(const Device& device) {
 
 	m_polylineMesh.Update(device, verts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 
-	std::vector<USHORT> curveIdxs;
-	curveIdxs.reserve(objects.size());
+	if (objects.size() > 1) {
+		std::vector<USHORT> curveIdxs;
+		curveIdxs.reserve(objects.size());
 
-    for (int i = 0; i < objects.size(); ) {
-		curveIdxs.push_back(static_cast<USHORT>(i));
+		for (int i = 0; i < objects.size(); ) {
+			curveIdxs.push_back(static_cast<USHORT>(i));
 
-        // adjust for full 4-point patches
-        if (i + 1 >= objects.size()) {
-			// remove the patch if it consists only from one point
-			curveIdxs.erase(curveIdxs.end() - 1);
-            break;
-        } else if (i + 2 >= objects.size()) {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(curveIdxs.back());
-			curveIdxs.push_back(curveIdxs.back());
-            break;
-        } else if (i + 3 >= objects.size()) {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(static_cast<USHORT>(i + 2));
-			curveIdxs.push_back(curveIdxs.back());
-            break;
-        } else {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(static_cast<USHORT>(i + 2));
-			curveIdxs.push_back(static_cast<USHORT>(i + 3));
-            // next segment starts at current end point
-            i += 3;
-        }
-    }
-	m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+			// adjust for full 4-point patches
+			if (i + 1 >= objects.size()) {
+				// remove the patch if it consists only from one point
+				curveIdxs.erase(curveIdxs.end() - 1);
+				break;
+			} else if (i + 2 >= objects.size()) {
+				curveIdxs.push_back(static_cast<USHORT>(i + 1));
+				curveIdxs.push_back(curveIdxs.back());
+				curveIdxs.push_back(curveIdxs.back());
+				break;
+			} else if (i + 3 >= objects.size()) {
+				curveIdxs.push_back(static_cast<USHORT>(i + 1));
+				curveIdxs.push_back(static_cast<USHORT>(i + 2));
+				curveIdxs.push_back(curveIdxs.back());
+				break;
+			} else {
+				curveIdxs.push_back(static_cast<USHORT>(i + 1));
+				curveIdxs.push_back(static_cast<USHORT>(i + 2));
+				curveIdxs.push_back(static_cast<USHORT>(i + 3));
+				// next segment starts at current end point
+				i += 3;
+			}
+		}
+		m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+	}
 }
 
 void app::Curve::RenderProperties() {

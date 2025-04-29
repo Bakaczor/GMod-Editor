@@ -53,6 +53,7 @@ void Polyline::RenderProperties() {
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (-1 != m_selectedIdx) {
 			RemoveObject(objects.at(m_selectedIdx));
+			m_selectedIdx = -1;
 		}
 	}
 	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
