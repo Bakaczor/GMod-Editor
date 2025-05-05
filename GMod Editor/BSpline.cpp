@@ -43,7 +43,7 @@ void BSpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const
 	map.at(ShaderType::RegularWithTesselationBSpline).Set(context);
 	m_curveMesh.Render(context);
 	
-	if (showBernstein) {
+	if (showBernstein && !bernsteinPoints.empty()) {
 		map.at(ShaderType::Regular).Set(context);
 		m_bernsteinMesh.Render(context);
 	}
@@ -75,7 +75,9 @@ void BSpline::UpdateMesh(const Device& device) {
 		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
 
-	m_polylineMesh.Update(device, verts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	if (objects.size() > 0) {
+		m_polylineMesh.Update(device, verts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	}
 
 	std::vector<USHORT> curveIdxs;
 	curveIdxs.reserve(objects.size());
@@ -92,9 +94,11 @@ void BSpline::UpdateMesh(const Device& device) {
 			curveIdxs.push_back(static_cast<USHORT>(i + 3));
 		}
 	}
-	m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+	if (objects.size() > 1) {
+		m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+	}
 
-	if (showBernstein) {
+	if (showBernstein && !bernsteinPoints.empty()) {
 		std::vector<Vertex_Po> bernVerts;
 		bernVerts.reserve(bernsteinPoints.size());
 		std::vector<USHORT> bernIdxs(bernsteinPoints.size());

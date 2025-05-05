@@ -45,7 +45,9 @@ void Polyline::UpdateMesh(const Device& device) {
 		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
 
-	m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	if (objects.size() > 0) {
+		m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	}
 
 	Object::UpdateMesh(device);
 }
@@ -55,6 +57,7 @@ void Polyline::RenderProperties() {
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (-1 != m_selectedIdx) {
 			RemoveObject(objects.at(m_selectedIdx));
+			m_selectedIdx = -1;
 		}
 	}
 	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
