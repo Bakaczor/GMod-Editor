@@ -169,6 +169,6 @@ namespace gmod {
         const T diffX = p.x() - q.x();
         const T diffY = p.y() - q.y();
         const T diffZ = p.z() - q.z();
-        return std::sqrt(diffX * diffX + diffY * diffY + diffZ  * diffZ)
+        return std::sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
     }
 }
