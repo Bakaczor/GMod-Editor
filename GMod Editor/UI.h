@@ -36,7 +36,7 @@ namespace app {
 			Cube, Torus, Point
 		};
 		enum class ObjectGroupType {
-			Polyline, Curve, BSpline
+			Polyline, Curve, BSpline, CISpline
 		};
 
 		// ORIENTATION

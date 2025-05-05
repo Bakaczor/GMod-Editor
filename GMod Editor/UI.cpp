@@ -1,5 +1,7 @@
 #include "../gmod/utility.h"
 #include "Application.h"
+#include "BSpline.h"
+#include "CISpline.h"
 #include "Cube.h"
 #include "Curve.h"
 #include "Point.h"
@@ -7,14 +9,13 @@
 #include "Torus.h"
 #include "UI.h"
 #include <unordered_set>
-#include "BSpline.h"
 
 using namespace app;
 
 const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
 const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point" };
-const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve, ObjectGroupType::BSpline };
-const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve", "BSpline" };
+const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
+const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve", "BSpline", "CISpline" };
 
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
@@ -211,6 +212,11 @@ void UI::RenderObjectTable() {
 			}
 			case ObjectGroupType::BSpline: {
 				auto obj = std::make_unique<BSpline>(selection.objects);
+				sceneObjects.push_back(std::move(obj));
+				break;
+			}
+			case ObjectGroupType::CISpline: {
+				auto obj = std::make_unique<CISpline>(selection.objects);
 				sceneObjects.push_back(std::move(obj));
 				break;
 			}

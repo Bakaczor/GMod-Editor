@@ -19,7 +19,6 @@ namespace app {
 		std::string type() const { return m_type; }
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
-		Object* sender = nullptr;
 
 		Object();
 		virtual ~Object();
@@ -57,6 +56,7 @@ namespace app {
 		static int m_globalObjectId;
 		std::string m_type;
 		std::vector<Object*> m_parents;
+		Object* m_sender = nullptr;
 	private:
 		static unsigned short m_globalObjectNum;
 		gmod::Transform<double> m_transform;

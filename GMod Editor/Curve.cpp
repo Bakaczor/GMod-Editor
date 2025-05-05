@@ -29,16 +29,16 @@ Curve::Curve(std::vector<Object*> objects) : m_curveMesh() {
 	geometryChanged = true;
 }
 
-void app::Curve::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+void Curve::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_showPolyline) {
 		map.at(ShaderType::Regular).Set(context);
 		m_polylineMesh.Render(context);
 	}
-	map.at(ShaderType::RegularWithTesselation).Set(context);
+	map.at(ShaderType::RegularWithTesselationCISpline).Set(context);
 	m_curveMesh.Render(context);
 }
 
-void app::Curve::UpdateMesh(const Device& device) {
+void Curve::UpdateMesh(const Device& device) {
 	std::vector<Vertex_Po> verts;
 	verts.reserve(objects.size());
 	std::vector<USHORT> polyIdxs(objects.size());
@@ -85,7 +85,7 @@ void app::Curve::UpdateMesh(const Device& device) {
 	Object::UpdateMesh(device);
 }
 
-void app::Curve::RenderProperties() {
+void Curve::RenderProperties() {
 	ImGui::Checkbox("Show polyline", &m_showPolyline);
 	ImGui::Separator();
 	Polyline::RenderProperties();

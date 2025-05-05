@@ -67,12 +67,11 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		const auto vsBytes_rwt = Device::LoadByteCode(L"vs_rwt.cso");
 		const auto hsBytes_rwt = Device::LoadByteCode(L"hs_rwt.cso");
 		const auto dsBytes_rwt = Device::LoadByteCode(L"ds_rwt.cso");
-		const auto psBytes_rwt = Device::LoadByteCode(L"ps_rwt.cso");
 		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselation, Shaders{
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwt),
-				m_device.CreatePixelShader(psBytes_rwt),
+				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
@@ -82,8 +81,20 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwtbs),
-				m_device.CreatePixelShader(psBytes_rwt),
+				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
+		// RegularWithTesselationCISpline
+		const auto vsBytes_rwtcis = Device::LoadByteCode(L"vs_rwtcis.cso");
+		const auto hsBytes_rwtcis = Device::LoadByteCode(L"hs_rwtcis.cso");
+		const auto dsBytes_rwtcis = Device::LoadByteCode(L"ds_rwtcis.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationCISpline, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwtcis),
+				m_device.CreateHullShader(hsBytes_rwtcis),
+				m_device.CreateDomainShader(dsBytes_rwtcis),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_PoCoef>(vsBytes_rwtcis)
 			}
 		));
 	}

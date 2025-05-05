@@ -29,7 +29,7 @@ Object::~Object() {
 
 void Object::UpdateMesh(const Device& device) {
 	geometryChanged = false;
-	sender = nullptr;
+	m_sender = nullptr;
 }
 
 void Object::RenderProperties() {
@@ -57,7 +57,7 @@ void Object::RemoveParent(Object* obj) {
 void Object::InformParents() {
 	for (auto& obj : m_parents) {
 		obj->geometryChanged = true;
-		obj->sender = this;
+		obj->m_sender = this;
 	}
 }
 #pragma endregion

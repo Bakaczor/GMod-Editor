@@ -27,4 +27,10 @@ namespace app {
 		DirectX::XMFLOAT3 position;
 		static const D3D11_INPUT_ELEMENT_DESC layout[1];
 	};
+
+	struct Vertex_PoCoef {
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 coefficient;
+		static const D3D11_INPUT_ELEMENT_DESC layout[2];
+	};
 }

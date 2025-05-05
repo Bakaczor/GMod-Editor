@@ -52,13 +52,13 @@ void BSpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const
 void BSpline::UpdateMesh(const Device& device) {
 	if (showBernstein) {
 		bool senderIsBernstein = false;
-		if (nullptr != sender) {
-			int senderId = sender->id;
+		if (nullptr != m_sender) {
+			int senderId = m_sender->id;
 			senderIsBernstein = std::find_if(bernsteinPoints.begin(), bernsteinPoints.end(), [&senderId](const auto& o) { return o->id == senderId; }) != bernsteinPoints.end();
 		}
 		
 		if (senderIsBernstein) {
-			RecalculateBernstein(sender);
+			RecalculateBernstein(m_sender);
 			RecalculateDeBoore();
 		} else {
 			RecalculateBernstein(nullptr);

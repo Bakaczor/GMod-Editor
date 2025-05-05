@@ -55,6 +55,9 @@
     <Filter Include="Pliki zasobów\RegularWithTesselation">
       <UniqueIdentifier>{132632fc-3270-4a10-9775-6788ce75d354}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegulatWithTesselationCISpline">
+      <UniqueIdentifier>{7b404e89-2b04-4f5c-8a00-675d61d3c7c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -127,6 +130,9 @@
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="BSpline.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="CISpline.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
   </ItemGroup>
@@ -203,6 +209,9 @@
     <ClCompile Include="BSpline.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
+    <ClCompile Include="CISpline.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">
@@ -223,14 +232,20 @@
     <FxCompile Include="hs_rwt.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselation</Filter>
     </FxCompile>
-    <FxCompile Include="ps_rwt.hlsl">
-      <Filter>Pliki zasobów\RegularWithTesselation</Filter>
-    </FxCompile>
     <FxCompile Include="vs_rwt.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselation</Filter>
     </FxCompile>
     <FxCompile Include="ds_rwtbs.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationBSpline</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwtcis.hlsl">
+      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+    </FxCompile>
+    <FxCompile Include="hs_rwtcis.hlsl">
+      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_rwtcis.hlsl">
+      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

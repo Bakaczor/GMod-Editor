@@ -29,7 +29,7 @@ Polyline::Polyline(std::vector<Object*> objects) {
 	geometryChanged = true;
 }
 
-void app::Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+void Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	map.at(ShaderType::Regular).Set(context);
 	m_polylineMesh.Render(context);
 }
@@ -75,6 +75,6 @@ void Polyline::RenderProperties() {
 	}
 }
 
-gmod::matrix4<double> app::Polyline::modelMatrix() const {
+gmod::matrix4<double> Polyline::modelMatrix() const {
 	return gmod::matrix4<double>::identity();
 }
