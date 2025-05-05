@@ -35,17 +35,17 @@ void Polyline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, cons
 }
 
 void Polyline::UpdateMesh(const Device& device) {
-	std::vector<Vertex_Po> verts;
-	verts.reserve(objects.size());
-	std::vector<USHORT> idxs(objects.size());
-	std::iota(idxs.begin(), idxs.end(), 0);
-
-	for (const auto& obj : objects) {
-		const auto& pos = obj->position();
-		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
-	}
-
 	if (objects.size() > 0) {
+		std::vector<Vertex_Po> verts;
+		verts.reserve(objects.size());
+		std::vector<USHORT> idxs(objects.size());
+		std::iota(idxs.begin(), idxs.end(), 0);
+
+		for (const auto& obj : objects) {
+			const auto& pos = obj->position();
+			verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
+		}
+
 		m_polylineMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 	}
 

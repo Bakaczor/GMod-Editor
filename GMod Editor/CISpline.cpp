@@ -17,6 +17,7 @@ CISpline::CISpline(std::vector<Object*> objects) {
 		obj->AddParent(this);
 	}
 	geometryChanged = true;
+	m_showPolyline = false;
 }
 
 void CISpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
@@ -31,41 +32,40 @@ void CISpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, cons
 }
 
 void CISpline::UpdateMesh(const Device& device) {
-	std::vector<Vertex_Po> polyVerts;
-	polyVerts.reserve(objects.size());
-	std::vector<USHORT> polyIdxs(objects.size());
-	std::iota(polyIdxs.begin(), polyIdxs.end(), 0);
-
-	for (const auto& obj : objects) {
-		const auto& pos = obj->position();
-		polyVerts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
-	}
-
 	if (objects.size() > 0) {
+		std::vector<Vertex_Po> polyVerts;
+		polyVerts.reserve(objects.size());
+		std::vector<USHORT> polyIdxs(objects.size());
+		std::iota(polyIdxs.begin(), polyIdxs.end(), 0);
+
+		for (const auto& obj : objects) {
+			const auto& pos = obj->position();
+			polyVerts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
+		}
 		m_polylineMesh.Update(device, polyVerts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 	}
 
-	std::vector<Vertex_PoCoef> curveVerts;
-	curveVerts.reserve(objects.size());
-	std::vector<USHORT> curveIdxs;
-	curveIdxs.reserve(2 * (objects.size() - 1));
-
-	auto coefficients = ComputeCoefficients();
-	for (int i = 0; i < objects.size(); ++i) {
-		const auto& pos = objects[i]->position();
-		const auto& coef = coefficients[i];
-		curveVerts.push_back(Vertex_PoCoef(
-			{ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) },
-			{ DirectX::XMFLOAT3(coef.x(), coef.y(), coef.z()) }
-		));
-	}
-
-	for (int i = 0; i < objects.size() - 1; ++i) {
-		curveIdxs.push_back(static_cast<USHORT>(i));
-		curveIdxs.push_back(static_cast<USHORT>(i + 1));
-	}
-
 	if (objects.size() > 1) {
+		std::vector<Vertex_PoCoef> curveVerts;
+		curveVerts.reserve(objects.size());
+		std::vector<USHORT> curveIdxs;
+		curveIdxs.reserve(2 * (objects.size() - 1));
+
+		auto coefficients = ComputeCoefficients();
+		for (int i = 0; i < objects.size(); ++i) {
+			const auto& pos = objects[i]->position();
+			const auto& coef = coefficients[i];
+			curveVerts.push_back(Vertex_PoCoef({ 
+				DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()),
+				DirectX::XMFLOAT3(coef.x(), coef.y(), coef.z())
+			}));
+		}
+
+		for (int i = 0; i < objects.size() - 1; ++i) {
+			curveIdxs.push_back(static_cast<USHORT>(i));
+			curveIdxs.push_back(static_cast<USHORT>(i + 1));
+		}
+
 		m_curveMesh.Update(device, curveVerts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST);
 	}
 
@@ -118,8 +118,6 @@ std::vector<gmod::vector3<double>> CISpline::ComputeCoefficients() const {
 
 	// [c_0 c_1 ... c_n-1 c_n]
 	std::vector<gmod::vector3<double>> coefficients(objects.size());
-	coefficients[0] = 0;
-	coefficients[n] = 0;
 
 	coefficients[n - 1] = R[n - 2] * (1.0 / beta[n - 2]);
 	for (int i = n - 2, j = n - 3; i >= 1; --i, --j) {

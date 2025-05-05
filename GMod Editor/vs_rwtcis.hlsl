@@ -1,13 +1,13 @@
 struct VSInput
 {
-    float3 position : POSITION0;
-    float3 coefficient : POSITION1;
+    float3 position : POSITION;
+    float3 coefficient : COEFFICIENT;
 };
 
 struct HSInput
 {
-    float3 wPosition : WORLDPOS0;
-    float3 wCoefficient : WORLDPOS1;
+    float3 wPosition : WORLDPOS;
+    float3 wCoefficient : WORLDCOEF;
 };
 
 HSInput main(VSInput input)

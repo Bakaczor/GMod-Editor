@@ -10,14 +10,14 @@ cbuffer cbProj : register(b1)
 
 struct HSInput
 {
-    float3 wPosition : WORLDPOS0;
-    float3 wCoefficient : WORLDPOS1;
+    float3 wPosition : WORLDPOS;
+    float3 wCoefficient : WORLDCOEF;
 };
 
 struct DSInput
 {
-    float3 wPosition : WORLDPOS0;
-    float3 wCoefficient : WORLDPOS1;
+    float3 wPosition : WORLDPOS;
+    float3 wCoefficient : WORLDCOEF;
 };
 
 struct HSConstOutput
