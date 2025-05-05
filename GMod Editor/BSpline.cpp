@@ -40,8 +40,10 @@ void BSpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const
 		m_polylineMesh.Render(context);
 	}
 
-	map.at(ShaderType::RegularWithTesselationBSpline).Set(context);
-	m_curveMesh.Render(context);
+	if (objects.size() > 1) {
+		map.at(ShaderType::RegularWithTesselationBSpline).Set(context);
+		m_curveMesh.Render(context);
+	}
 	
 	if (showBernstein && !bernsteinPoints.empty()) {
 		map.at(ShaderType::Regular).Set(context);
@@ -94,6 +96,7 @@ void BSpline::UpdateMesh(const Device& device) {
 			curveIdxs.push_back(static_cast<USHORT>(i + 3));
 		}
 	}
+
 	if (objects.size() > 1) {
 		m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 	}

@@ -138,4 +138,13 @@ namespace gmod {
     vector4<T> project(const vector4<T>& u, const vector4<T>& v) {
         return ((v * u) / (u * u)) * u;
     }
+
+    template<floating_point T>
+    T distance(const vector4<T>& p, const vector4<T>& q) {
+        const T diffX = p.x() - q.x();
+        const T diffY = p.y() - q.y();
+        const T diffZ = p.z() - q.z();
+        const T diffW = p.w() - q.w();
+        return std::sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ + diffW * diffW)
+    }
 }

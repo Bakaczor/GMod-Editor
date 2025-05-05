@@ -24,8 +24,10 @@ void CISpline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, cons
 		map.at(ShaderType::Regular).Set(context);
 		m_polylineMesh.Render(context);
 	}
-	map.at(ShaderType::RegularWithTesselationCISpline).Set(context);
-	m_curveMesh.Render(context);
+	if (objects.size() > 1) {
+		map.at(ShaderType::RegularWithTesselationCISpline).Set(context);
+		m_curveMesh.Render(context);
+	}
 }
 
 void CISpline::UpdateMesh(const Device& device) {
@@ -39,41 +41,90 @@ void CISpline::UpdateMesh(const Device& device) {
 		polyVerts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
 
-	m_polylineMesh.Update(device, polyVerts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
-
+	if (objects.size() > 0) {
+		m_polylineMesh.Update(device, polyVerts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	}
 
 	std::vector<Vertex_PoCoef> curveVerts;
 	curveVerts.reserve(objects.size());
 	std::vector<USHORT> curveIdxs;
 	curveIdxs.reserve(2 * (objects.size() - 1));
 
-	for (int i = 0; i < objects.size(); ) {
-		curveIdxs.push_back(static_cast<USHORT>(i));
-
-		// adjust for full 4-point patches
-		if (i + 1 >= objects.size()) {
-			// remove the patch if it consists only from one point
-			curveIdxs.erase(curveIdxs.end() - 1);
-			break;
-		} else if (i + 2 >= objects.size()) {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(curveIdxs.back());
-			curveIdxs.push_back(curveIdxs.back());
-			break;
-		} else if (i + 3 >= objects.size()) {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(static_cast<USHORT>(i + 2));
-			curveIdxs.push_back(curveIdxs.back());
-			break;
-		} else {
-			curveIdxs.push_back(static_cast<USHORT>(i + 1));
-			curveIdxs.push_back(static_cast<USHORT>(i + 2));
-			curveIdxs.push_back(static_cast<USHORT>(i + 3));
-			// next segment starts at current end point
-			i += 3;
-		}
+	auto coefficients = ComputeCoefficients();
+	for (int i = 0; i < objects.size(); ++i) {
+		const auto& pos = objects[i]->position();
+		const auto& coef = coefficients[i];
+		curveVerts.push_back(Vertex_PoCoef(
+			{ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) },
+			{ DirectX::XMFLOAT3(coef.x(), coef.y(), coef.z()) }
+		));
 	}
-	m_curveMesh.Update(device, polyVerts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+
+	for (int i = 0; i < objects.size() - 1; ++i) {
+		curveIdxs.push_back(static_cast<USHORT>(i));
+		curveIdxs.push_back(static_cast<USHORT>(i + 1));
+	}
+
+	if (objects.size() > 1) {
+		m_curveMesh.Update(device, curveVerts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST);
+	}
 
 	Object::UpdateMesh(device);
+}
+
+std::vector<gmod::vector3<double>> app::CISpline::ComputeCoefficients() const {
+	const int n = objects.size() - 1;
+	if (n == 1) {
+		return std::vector<gmod::vector3<double>>(2);
+	}
+
+	// [h_0 ... h_n-1]
+	std::vector<double> h(n);
+	for (int i = 0; i < n; ++i) {
+		const auto& pi = objects[i]->position();
+		const auto& pip1 = objects[i + 1]->position();
+		h[i] = gmod::distance(pip1, pi);
+	}
+
+	// [alpha_1 ... alpha_n-1]
+	std::vector<double> alpha(n - 1);
+	// [beta_1 ... beta_n-1]
+	std::vector<double> beta(n - 1);
+	// [gamma_1 ... gamma_n-1]
+	std::vector<double> gamma(n - 1);
+	// [R_1 ... R_n-1]
+	std::vector<gmod::vector3<double>> R(n - 1);
+	for (int i = 1, j = 0; i < n; ++i, ++j) {
+		const auto& pim1 = objects[i - 1]->position();
+		const auto& pi = objects[i]->position();
+		const auto& pip1 = objects[i + 1]->position();
+
+		const double& him1 = h[i - 1];
+		const double& hi = h[i];
+
+		alpha[j] = him1;
+		beta[j] = 2 * (him1 + hi);
+		gamma[j] = hi;
+		R[j] = 3 * (((pip1 - pi) * (1.0 / hi)) - ((pi - pim1) * (1.0 / him1)));
+	}
+
+	// trójdiagonalna -> trójk¹tna górna
+	for (int j = 1; j < n - 1; ++j) {
+		const double mi = alpha[j] / beta[j - 1];
+		alpha[j] = 0;
+		beta[j] = beta[j] - mi * gamma[j - 1];
+		R[j] = R[j] - mi * R[j - 1];
+	}
+
+	// [c_0 c_1 ... c_n-1 c_n]
+	std::vector<gmod::vector3<double>> coefficients(objects.size());
+	coefficients[0] = 0;
+	coefficients[n] = 0;
+
+	coefficients[n - 1] = R.back() * (1.0 / beta.back());
+	for (int i = n - 2, j = n - 3; i >= 1; --i, --j) {
+		coefficients[i] = (R[j] - gamma[j] * coefficients[j + 1]) * (1.0 / beta[j]);
+	}
+
+	return coefficients;
 }

@@ -50,6 +50,7 @@ void Curve::UpdateMesh(const Device& device) {
 		const auto& pos = obj->position();
 		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
 	}
+
 	if (objects.size() > 0) {
 		m_polylineMesh.Update(device, verts, polyIdxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 	}
@@ -82,6 +83,7 @@ void Curve::UpdateMesh(const Device& device) {
 			i += 3;
 		}
 	}
+
 	if (objects.size() > 1) {
 		m_curveMesh.Update(device, verts, curveIdxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 	}
