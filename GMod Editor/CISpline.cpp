@@ -72,7 +72,7 @@ void CISpline::UpdateMesh(const Device& device) {
 	Object::UpdateMesh(device);
 }
 
-std::vector<gmod::vector3<double>> app::CISpline::ComputeCoefficients() const {
+std::vector<gmod::vector3<double>> CISpline::ComputeCoefficients() const {
 	const int n = objects.size() - 1;
 	if (n == 1) {
 		return std::vector<gmod::vector3<double>>(2);
@@ -121,9 +121,9 @@ std::vector<gmod::vector3<double>> app::CISpline::ComputeCoefficients() const {
 	coefficients[0] = 0;
 	coefficients[n] = 0;
 
-	coefficients[n - 1] = R.back() * (1.0 / beta.back());
+	coefficients[n - 1] = R[n - 2] * (1.0 / beta[n - 2]);
 	for (int i = n - 2, j = n - 3; i >= 1; --i, --j) {
-		coefficients[i] = (R[j] - gamma[j] * coefficients[j + 1]) * (1.0 / beta[j]);
+		coefficients[i] = (R[j] - gamma[j] * coefficients[i + 1]) * (1.0 / beta[j]);
 	}
 
 	return coefficients;

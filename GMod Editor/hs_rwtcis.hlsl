@@ -30,16 +30,16 @@ struct HSConstOutput
 
 float TessFactor(InputPatch<HSInput, NUM_CONTROL_POINTS> patch)
 {
-    float sum = 0.0f;
-    for (int i = 0; i < NUM_CONTROL_POINTS - 1; i++)
-    {
-        float4 u = mul(projMatrix, mul(viewMatrix, float4(patch[i].wPosition, 1.0f)));
-        u /= u.w;
-        float4 v = mul(projMatrix, mul(viewMatrix, float4(patch[i + 1].wPosition, 1.0f)));
-        v /= v.w;
-        sum += sqrt(pow(u.x - v.x, 2) + pow(u.y - v.y, 2));
-    }
-    return clamp(sum * OFFSET / 3.0f, 2.0f, 64.0f);
+    float4 u = mul(projMatrix, mul(viewMatrix, float4(patch[0].wPosition, 1.0f)));
+    u /= u.w;
+    float4 v = mul(projMatrix, mul(viewMatrix, float4(patch[1].wPosition, 1.0f)));
+    v /= v.w;
+    
+    float diffX = u.x - v.x;
+    float diffY = u.y - v.y;
+    float dist = sqrt(diffX * diffX + diffY * diffY);
+    
+    return clamp(dist * OFFSET / 3.0f, 2.0f, 64.0f);
 }
 
 HSConstOutput ConstantHS(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint patchID : SV_PrimitiveID)

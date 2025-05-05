@@ -233,7 +233,7 @@ void UI::RenderObjectTable() {
 
 			for (auto& obj : selection.objects) {
 				toDelete.insert(obj->id);
-				if (nullptr != dynamic_cast<Point*>(obj)) {
+				if (typeid(Point) == typeid(*obj)) {
 					numOfScenePoints--;
 				}
 			}
@@ -261,7 +261,7 @@ void UI::RenderObjectTable() {
 					} else {
 						selection.AddObject(obj.get());
 					}
-				} else if (ImGui::GetIO().KeyAlt && nullptr != dynamic_cast<Point*>(obj.get())) {
+				} else if (ImGui::GetIO().KeyAlt && typeid(Point) == typeid(*obj.get())) {
 					std::optional<Object*> opt = selection.Single();
 					ObjectGroup* selectedGrp = dynamic_cast<ObjectGroup*>(opt.has_value() ? opt.value() : nullptr);
 					if (nullptr != selectedGrp) {
