@@ -5,6 +5,7 @@ namespace app {
 	class BSpline : public Curve {
 	public:
 		bool showBernstein = false;
+		bool localChanges = true;
 		std::vector<std::unique_ptr<Object>> bernsteinPoints;
 
 		BSpline(std::vector<Object*> objects);
@@ -18,7 +19,8 @@ namespace app {
 		static gmod::matrix4<double> Mbs_inv;
 		Mesh m_bernsteinMesh;
 
+		void MoveDeBoore(Object* sender);
 		void RecalculateDeBoore();
-		void RecalculateBernstein(Object* sender);
+		void RecalculateBernstein(Object* sender, bool remake = true);
 	};
 }

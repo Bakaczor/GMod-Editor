@@ -24,7 +24,7 @@ struct HSConstOutput
 };
 
 #define NUM_CONTROL_POINTS 4
-#define OFFSET 64
+#define OFFSET 256
 
 float TessFactor(InputPatch<HSInput, NUM_CONTROL_POINTS> patch)
 {
@@ -37,7 +37,7 @@ float TessFactor(InputPatch<HSInput, NUM_CONTROL_POINTS> patch)
         v /= v.w;
         sum += sqrt(pow(u.x - v.x, 2) + pow(u.y - v.y, 2));
     }
-    return clamp(sum * OFFSET / 3.0f, 2.0f, 64.0f);
+    return clamp(sum * (OFFSET / NUM_CONTROL_POINTS) / 3.0f, 2.0f, 64.0f);
 }
 
 HSConstOutput ConstantHS(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint patchID : SV_PrimitiveID)

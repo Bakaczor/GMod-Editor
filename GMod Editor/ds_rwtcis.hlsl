@@ -43,7 +43,7 @@ PSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, const OutputPat
     
     float3 ai = Pi;
     float3 bi = (Pip1 - Pi) / h - h * (2 * ci + cip1) / 3;
-    float3 di = (cip1 + ci) / (3 * h);
+    float3 di = (cip1 - ci) / (3 * h);
     
     PSInput output;
     float3 pos = ai + t * (bi + t * (ci + t * di));
