@@ -155,47 +155,55 @@ void BSpline::MoveDeBoore(Object* sender) {
 	switch (localIdx) {
 		case 0: {
 			const int deBooreIdx = globalIdx / 3 + 1;
-			gmod::vector3<double> nextBern, prevBern;
-			if (globalIdx == 0) {
-				nextBern = bernsteinPoints[globalIdx + 1]->position();
-				auto vec = bernsteinPoints[globalIdx]->position() - nextBern;
-				prevBern = bernsteinPoints[globalIdx]->position() + vec;
-			} else if (globalIdx == bernsteinPoints.size() - 1) {
-				prevBern = bernsteinPoints[globalIdx - 1]->position();
-				auto vec = bernsteinPoints[globalIdx]->position() - prevBern;
-				nextBern = bernsteinPoints[globalIdx]->position() + vec;
-			} else {
-				auto vec = (bernsteinPoints[globalIdx + 1]->position() - bernsteinPoints[globalIdx - 1]->position()) * 0.5;
-				nextBern = bernsteinPoints[globalIdx]->position() + vec;
-				prevBern = bernsteinPoints[globalIdx]->position() - vec;
-			}
+			auto newPos = (
+				6 * bernsteinPoints[globalIdx]->position()
+				- objects[deBooreIdx - 1]->position()
+				- objects[deBooreIdx + 1]->position()
+				) * (1 / 4.0);
 
-			auto pointPrev = objects[deBooreIdx - 1]->position();
-			auto dirPrev = gmod::normalize(prevBern - pointPrev);
-			auto pointNext = objects[deBooreIdx + 1]->position();
-			auto dirNext = gmod::normalize(nextBern - pointNext);
-
-			auto crossDir = gmod::cross(dirPrev, dirNext);
-			double det = gmod::dot(crossDir, crossDir);
-
-			auto diff = pointNext - pointPrev;
-			double t1 = gmod::dot(gmod::cross(diff, dirNext), crossDir) / det;
-			double t2 = gmod::dot(gmod::cross(diff, dirPrev), crossDir) / det;
-			auto intersection = 0.5 * (pointPrev + t1 * dirPrev + pointNext + t2 * dirNext);
-
-			objects[deBooreIdx]->SetTranslation(intersection.x(), intersection.y(), intersection.z());
+			objects[deBooreIdx]->SetTranslation(newPos.x(), newPos.y(), newPos.z());
 			break;
 		}
 		case 1: {
 			const int deBooreLeftIdx = globalIdx / 3 + 1;
 			const int deBooreRightIdx = globalIdx / 3 + 2;
-			// TODO
+			
+			auto bern = bernsteinPoints[globalIdx]->position();
+			auto pointPrev = objects[deBooreLeftIdx]->position();
+			auto pointNext = objects[deBooreRightIdx]->position();
+			auto delta = bern - (2 * pointPrev + pointNext) * (1 / 3.0);
+
+			objects[deBooreLeftIdx]->SetTranslation(
+				pointPrev.x() + delta.x() * (4 / 3.0),
+				pointPrev.y() + delta.y() * (4 / 3.0),
+				pointPrev.z() + delta.z() * (4 / 3.0)
+			);
+			objects[deBooreRightIdx]->SetTranslation(
+				pointNext.x() + delta.x() * (2 / 3.0),
+				pointNext.y() + delta.y() * (2 / 3.0),
+				pointNext.z() + delta.z() * (2 / 3.0)
+			);
 			break;
 		}
 		case 2: {
 			const int deBooreLeftIdx = globalIdx / 3 + 1;
 			const int deBooreRightIdx = globalIdx / 3 + 2;
-			// TODO
+
+			auto bern = bernsteinPoints[globalIdx]->position();
+			auto pointPrev = objects[deBooreLeftIdx]->position();
+			auto pointNext = objects[deBooreRightIdx]->position();
+			auto delta = bern - (pointPrev + 2 * pointNext) * (1 / 3.0);
+
+			objects[deBooreLeftIdx]->SetTranslation(  
+				pointPrev.x() + delta.x() * (2 / 3.0),
+				pointPrev.y() + delta.y() * (2 / 3.0),
+				pointPrev.z() + delta.z() * (2 / 3.0)
+			);
+			objects[deBooreRightIdx]->SetTranslation(  
+				pointNext.x() + delta.x() * (4 / 3.0),
+				pointNext.y() + delta.y() * (4 / 3.0),
+				pointNext.z() + delta.z() * (4 / 3.0)
+			);
 			break;
 		}
 	}

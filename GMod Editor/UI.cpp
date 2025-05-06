@@ -48,20 +48,20 @@ void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 		}
 		ImGui::EndTabBar();
 	}
-	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.y);
+	/*ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.y);
 	if (ImGui::Button("Focus", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		std::optional<Object*> opt = selection.Single();
 		gmod::vector3<double> pos = opt.has_value() ? opt.value()->position() : cursor.transform.position();
 		camera.SetTargetPosition(gmod::vector3<float>(pos.x(), pos.y(), pos.z()));
 		camera.cameraChanged = true;
-	}
+	}*/
 	ImGui::End();
 }
 
 void UI::RenderTransforms() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::PushStyleColor(ImGuiCol_Header, style.Colors[ImGuiCol_Header]);
-	ImGui::BeginChild("TransformsWindow", ImVec2(0, 200), true, ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild("TransformsWindow", ImVec2(0, 160), true, ImGuiWindowFlags_NoBackground);
 
 	const float padx = style.WindowPadding.x / 2;
 	const float pady = style.WindowPadding.y / 2;
@@ -304,69 +304,44 @@ void UI::RenderProperties() {
 	}
 
 	ImGuiStyle& style = ImGui::GetStyle();
-	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y), true, ImGuiWindowFlags_NoBackground);
-	double step = 0.001f;
-	double stepFast = 0.1f;
-	bool flag = true;
-	ImGui::Text("Position");
-	gmod::vector3<double> position = selectedObj->position();
-	flag = false;
-	if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		flag = true;
-	}
-	if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		flag = true;
-	}
-	if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		flag = true;
-	}
-
-	if (flag) {
-		selectedObj->SetTranslation(position.x(), position.y(), position.z());
-		selectedObj->InformParents();
-	}
-
-	ImGui::Text("Euler Angles");
-	gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();
-	flag = false;
-	auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
-	if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		eulerAngles = gmod::vector3<double>(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
-		flag = true;
-	}
-	if (ImGui::InputDouble("Y##Euler Angles", &eulerAnglesDeg.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		eulerAngles = gmod::vector3<double>(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
-		flag = true;
-	}
-	if (ImGui::InputDouble("Z##Euler Angles", &eulerAnglesDeg.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-		eulerAngles = gmod::vector3<double>(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
-		flag = true;
-	}
-
-	if (flag) {
-		switch (currentOrientation) {
-			case Orientation::World: {
-				selectedObj->SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
-				break;
-			}
-			case Orientation::Cursor: {
-				selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
-				break;
-			}
-		}
-	}
-
-	if (typeid(Point) != typeid(*selectedObj)) {
-		ImGui::Text("Scale");
-		gmod::vector3<double> scale = selectedObj->scale();
+	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y),
+		true, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_HorizontalScrollbar);
+	if (ImGui::CollapsingHeader("Transform")) {
+		double step = 0.001f;
+		double stepFast = 0.1f;
+		bool flag = true;
+		ImGui::Text("Position");
+		gmod::vector3<double> position = selectedObj->position();
 		flag = false;
-		if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
 		}
-		if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
 			flag = true;
 		}
-		if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+			flag = true;
+		}
+
+		if (flag) {
+			selectedObj->SetTranslation(position.x(), position.y(), position.z());
+			selectedObj->InformParents();
+		}
+
+		ImGui::Text("Euler Angles");
+		gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();
+		flag = false;
+		auto eulerAnglesDeg = gmod::vector3<double>(gmod::rad2deg(eulerAngles.x()), gmod::rad2deg(eulerAngles.y()), gmod::rad2deg(eulerAngles.z()));
+		if (ImGui::InputDouble("X##Euler Angles", &eulerAnglesDeg.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+			eulerAngles = gmod::vector3<double>(gmod::deg2rad(eulerAnglesDeg.x()), eulerAngles.y(), eulerAngles.z());
+			flag = true;
+		}
+		if (ImGui::InputDouble("Y##Euler Angles", &eulerAnglesDeg.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+			eulerAngles = gmod::vector3<double>(eulerAngles.x(), gmod::deg2rad(eulerAnglesDeg.y()), eulerAngles.z());
+			flag = true;
+		}
+		if (ImGui::InputDouble("Z##Euler Angles", &eulerAnglesDeg.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+			eulerAngles = gmod::vector3<double>(eulerAngles.x(), eulerAngles.y(), gmod::deg2rad(eulerAnglesDeg.z()));
 			flag = true;
 		}
 
@@ -374,13 +349,43 @@ void UI::RenderProperties() {
 			switch (currentOrientation) {
 				case Orientation::World:
 				{
-					selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
+					selectedObj->SetRotation(eulerAngles.x(), eulerAngles.y(), eulerAngles.z());
 					break;
 				}
 				case Orientation::Cursor:
 				{
-					selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+					selectedObj->SetRotationAroundPoint(eulerAngles.x(), eulerAngles.y(), eulerAngles.z(), cursor.transform.position());
 					break;
+				}
+			}
+		}
+
+		if (typeid(Point) != typeid(*selectedObj)) {
+			ImGui::Text("Scale");
+			gmod::vector3<double> scale = selectedObj->scale();
+			flag = false;
+			if (ImGui::InputDouble("X##Scale", &scale.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
+			if (ImGui::InputDouble("Y##Scale", &scale.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
+			if (ImGui::InputDouble("Z##Scale", &scale.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+				flag = true;
+			}
+
+			if (flag) {
+				switch (currentOrientation) {
+					case Orientation::World:
+					{
+						selectedObj->SetScaling(scale.x(), scale.y(), scale.z());
+						break;
+					}
+					case Orientation::Cursor:
+					{
+						selectedObj->SetScalingAroundPoint(scale.x(), scale.y(), scale.z(), cursor.transform.position());
+						break;
+					}
 				}
 			}
 		}
