@@ -9,6 +9,7 @@ namespace app {
 		virtual void UpdateMesh(const Device& device) override;
 	private:
 		static unsigned short m_globalCISplineNum;
-		std::vector<gmod::vector3<double>> ComputeCoefficients() const;
+		std::vector<gmod::vector3<double>> ComputeCoefficients(const std::vector<Object*>& points) const;
+		std::vector<Object*> FilteredPoints(double tol = 1e-6) const;
 	};
 }
