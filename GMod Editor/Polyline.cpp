@@ -60,6 +60,14 @@ void Polyline::RenderProperties() {
 			m_selectedIdx = -1;
 		}
 	}
+
+	if (m_selectedIdx != -1) {
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Selected point")) {
+			objects[m_selectedIdx]->RenderPosition();
+		}
+	}
+
 	if (ImGui::BeginTable("Points", 1, ImGuiTableFlags_ScrollY)) {
 		ImGui::TableSetupColumn("Name");
 		ImGui::TableHeadersRow();

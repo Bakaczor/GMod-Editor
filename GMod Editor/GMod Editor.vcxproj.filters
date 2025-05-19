@@ -233,6 +233,9 @@
     <ClCompile Include="SurfaceBuilder.cpp">
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
+    <ClCompile Include="BSurface.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">

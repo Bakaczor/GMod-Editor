@@ -178,7 +178,6 @@ void UI::RenderCursor() {
 				auto obj = std::make_unique<Point>(Application::m_pointModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				sceneObjects.push_back(std::move(obj));
-				numOfScenePoints++;
 
 				// if objectgroup is selected, add to that group
 				std::optional<Object*> opt = selection.Single();
@@ -261,9 +260,6 @@ void UI::RenderObjectTable() {
 
 			for (auto& obj : selection.objects) {
 				toDelete.insert(obj->id);
-				if (typeid(Point) == typeid(*obj)) {
-					numOfScenePoints--;
-				}
 			}
 
 			std::erase_if(sceneObjects, [&toDelete](const auto& o) {
@@ -335,26 +331,11 @@ void UI::RenderProperties() {
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y),
 		true, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_HorizontalScrollbar);
 	if (ImGui::CollapsingHeader("Transform")) {
-		double step = 0.001f;
-		double stepFast = 0.1f;
-		bool flag = true;
-		ImGui::Text("Position");
-		gmod::vector3<double> position = selectedObj->position();
-		flag = false;
-		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
+		float step = 0.001f;
+		float stepFast = 0.1f;
+		bool flag = false;
 
-		if (flag) {
-			selectedObj->SetTranslation(position.x(), position.y(), position.z());
-			selectedObj->InformParents();
-		}
+		selectedObj->RenderPosition(step, stepFast);
 
 		ImGui::Text("Euler Angles");
 		gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();

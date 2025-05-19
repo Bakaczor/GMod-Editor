@@ -38,6 +38,7 @@ namespace app {
 		std::vector<Patch> m_patches;
 		Mesh m_surfaceMesh;
 	private:
+		int m_selectedIdx = -1;
 		static unsigned short m_globalSurfaceNum;
 		gmod::vector3<double> m_midpoint;
 		gmod::vector3<double> UpdateMidpoint();

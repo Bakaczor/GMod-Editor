@@ -29,7 +29,6 @@ namespace app {
 		// OBJECTS
 		std::vector<std::unique_ptr<Object>> sceneObjects;
 		ObjectGroup selection;
-		int numOfScenePoints = 0;
 		void SelectObjectOnMouseClick(Object* obj);
 
 		Cursor cursor;

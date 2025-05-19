@@ -513,7 +513,6 @@ bool Application::ProcessMessage(mini::WindowMessage& msg) {
 }
 
 Object* Application::HandleSelectionOnMouseClick(LPARAM lParam) {
-	if (m_UI->numOfScenePoints == 0) { return nullptr; }
 	const float x = static_cast<float>(Mouse::GetXPos(lParam));
 	const float y = static_cast<float>(Mouse::GetYPos(lParam));
 	const float nx = (2.0f * x) / m_winWidth - 1.0f;

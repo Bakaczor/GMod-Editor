@@ -1,4 +1,7 @@
+#include "Application.h"
+#include "Point.h"
 #include "Surface.h"
+#include <numbers>
 
 using namespace app;
 
@@ -10,10 +13,83 @@ Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsign
 	os << "surface_" << m_globalSurfaceNum;
 	name = os.str();
 	m_globalSurfaceNum += 1;
-
 	m_patches.reserve(aPatch * bPatch);
 
-	// CREATE CONTROL POINTS
+	if (type == SurfaceType::Flat) {
+		unsigned int aPoints = aPatch * (Patch::rowSize - 1) + 1;
+		unsigned int bPoints = bPatch * (Patch::rowSize - 1) + 1;
+		m_controlPoints.reserve(aPoints * bPoints);
+
+		for (unsigned int i = 0; i < aPoints; ++i) {
+			for (unsigned int j = 0; j < bPoints; ++j) {
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+
+				float x = (a * i) / (aPoints - 1) - a / 2.0f;
+				float z = (b * j) / (bPoints - 1) - b / 2.0f;
+				point->SetTranslation(x, 0.0f, z);
+				m_controlPoints.push_back(std::move(point));
+			}
+		}
+
+		for (unsigned int i = 0; i < aPatch; ++i) {
+			for (unsigned int j = 0; j < bPatch; ++j) {
+				std::array<Object*, Patch::patchSize> patchPoints;
+
+				unsigned int step = Patch::rowSize - 1;
+				for (unsigned int u = 0; u < Patch::rowSize; ++u) {
+					for (unsigned int v = 0; v < Patch::rowSize; ++v) {
+						unsigned int index = (i * step + u) * bPoints + (j * step + v);
+						patchPoints[u * Patch::rowSize + v] = m_controlPoints[index].get();
+					}
+				}
+
+				m_patches.emplace_back();
+				m_patches.back().AddRow({ patchPoints[0], patchPoints[1], patchPoints[2], patchPoints[3] });
+				m_patches.back().AddRow({ patchPoints[4], patchPoints[5], patchPoints[6], patchPoints[7] });
+				m_patches.back().AddRow({ patchPoints[8], patchPoints[9], patchPoints[10], patchPoints[11] });
+				m_patches.back().AddRow({ patchPoints[12], patchPoints[13], patchPoints[14], patchPoints[15] });
+			}
+		}
+	} else {
+		unsigned int aPoints = aPatch * (Patch::rowSize - 1);
+		unsigned int bPoints = bPatch * (Patch::rowSize - 1) + 1;
+		m_controlPoints.reserve(aPoints * bPoints);
+
+		for (unsigned int i = 0; i < aPoints; ++i) {
+			for (unsigned int j = 0; j < bPoints; ++j) {
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+
+				float angle = (2 * std::numbers::pi_v<float> * i) / aPoints;
+				float x = a * cos(angle);
+				float y = a * sin(angle);
+				float z = (b * j) / (bPoints - 1) - b / 2.0f;
+				point->SetTranslation(x, y, z);
+				m_controlPoints.push_back(std::move(point));
+			}
+		}
+
+		for (unsigned int i = 0; i < aPatch; ++i) {
+			for (unsigned int j = 0; j < bPatch; ++j) {
+				std::array<Object*, Patch::patchSize> patchPoints;
+
+				unsigned int step = Patch::rowSize - 1;
+				for (unsigned int u = 0; u < Patch::rowSize; ++u) {
+					for (unsigned int v = 0; v < Patch::rowSize; ++v) {
+						unsigned int wrapped_i = (i * step + u) % aPoints;
+						unsigned int index = wrapped_i * bPoints + (j * step + v);
+						patchPoints[u * Patch::rowSize + v] = m_controlPoints[index].get();
+					}
+				}
+
+				m_patches.emplace_back();
+				m_patches.back().AddRow({ patchPoints[0], patchPoints[1], patchPoints[2], patchPoints[3] });
+				m_patches.back().AddRow({ patchPoints[4], patchPoints[5], patchPoints[6], patchPoints[7] });
+				m_patches.back().AddRow({ patchPoints[8], patchPoints[9], patchPoints[10], patchPoints[11] });
+				m_patches.back().AddRow({ patchPoints[12], patchPoints[13], patchPoints[14], patchPoints[15] });
+			}
+		}
+	}
+	UpdateMidpoint();
 
 	for (auto& obj : m_controlPoints) {
 		obj->AddParent(this);
@@ -30,13 +106,37 @@ void app::Surface::UpdateMesh(const Device& device) {
 }
 
 void app::Surface::RenderProperties() {
-	ImGui::Checkbox("Show net", &m_showNet);
-	ImGui::Separator();
 	Object::RenderProperties();
+	ImGui::Separator();
+	ImGui::Checkbox("Show net", &m_showNet);
+
+	if (m_selectedIdx != -1) {
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Selected point")) {
+			m_controlPoints[m_selectedIdx]->RenderPosition();
+		}
+	}
+
+	if (ImGui::BeginTable("Control points", 1, ImGuiTableFlags_ScrollY)) {
+		ImGui::TableSetupColumn("Name");
+		ImGui::TableHeadersRow();
+		for (int i = 0; i < m_controlPoints.size(); i++) {
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			if (ImGui::Selectable(m_controlPoints[i]->name.c_str(), i == m_selectedIdx, ImGuiSelectableFlags_SpanAllColumns)) {
+				if (m_selectedIdx == i) {
+					m_selectedIdx = -1;
+				} else {
+					m_selectedIdx = i;
+				}
+			}
+		}
+		ImGui::EndTable();
+	}
 }
 
-std::optional<std::vector<std::unique_ptr<Object>>*> app::Surface::GetSubObjects() {
-	return std::optional<std::vector<std::unique_ptr<Object>>*>();
+std::optional<std::vector<std::unique_ptr<Object>>*> Surface::GetSubObjects() {
+	return &m_controlPoints;
 }
 
 gmod::vector3<double> Surface::UpdateMidpoint() {

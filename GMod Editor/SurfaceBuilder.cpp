@@ -1,3 +1,4 @@
+#include "BSurface.h"
 #include "SurfaceBuilder.h"
 
 using namespace app;
@@ -89,8 +90,7 @@ bool SurfaceBuilder::RenderProperties() {
 
 Surface* SurfaceBuilder::Build() const {
 	if (m_isC2) {
-        // CHANGE TO BSURFACE
-		return new Surface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
+		return new BSurface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
 	} else {
 		return new Surface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
 	}
