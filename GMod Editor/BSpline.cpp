@@ -135,7 +135,7 @@ void BSpline::RenderProperties() {
 	Polyline::RenderProperties();
 }
 
-std::optional <std::vector<std::unique_ptr<Object>>*> app::BSpline::GetSubObjects() {
+std::optional <std::vector<std::unique_ptr<Object>>*> BSpline::GetSubObjects() {
 	if (showBernstein) {
 		return &bernsteinPoints;
 	} else {

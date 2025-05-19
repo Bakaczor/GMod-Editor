@@ -1,15 +1,15 @@
 #pragma once
-#include "framework.h"
-#include <array>
-#include <algorithm>
-#include <sstream>
-#include <optional>
-#include <unordered_map>
-#include "../imgui/imgui.h"
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
+#include "../imgui/imgui.h"
+#include "framework.h"
 #include "Mesh.h"
 #include "Shaders.h"
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <sstream>
+#include <unordered_map>
 
 namespace app {
 	class Object {
