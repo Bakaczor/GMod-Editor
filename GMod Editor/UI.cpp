@@ -3,19 +3,19 @@
 #include "BSpline.h"
 #include "CISpline.h"
 #include "Cube.h"
-#include "Curve.h"
 #include "Point.h"
 #include "Polyline.h"
+#include "Spline.h"
 #include "Torus.h"
 #include "UI.h"
 #include <unordered_set>
 
 using namespace app;
 
-const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point };
-const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point" };
-const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Curve, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
-const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Curve", "BSpline", "CISpline" };
+const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, ObjectType::Torus, ObjectType::Point, ObjectType::Surface, ObjectType::BSurface };
+const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point", "Surface", "BSurface" };
+const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
+const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
 
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
@@ -61,7 +61,7 @@ void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 void UI::RenderTransforms() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGui::PushStyleColor(ImGuiCol_Header, style.Colors[ImGuiCol_Header]);
-	ImGui::BeginChild("TransformsWindow", ImVec2(0, 160), true, ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild("TransformsWindow", ImVec2(0, 125), true, ImGuiWindowFlags_NoBackground);
 
 	const float padx = style.WindowPadding.x / 2;
 	const float pady = style.WindowPadding.y / 2;
@@ -117,12 +117,15 @@ void UI::RenderTransforms() {
 		ImGui::Columns(1);
 	}
 	ImGui::PopStyleColor();
-	ImGui::Spacing();
+	ImGui::EndChild();
+
+	ImGui::BeginChild("OrientationWindow", ImVec2(0, 58), true, ImGuiWindowFlags_NoBackground);
 	if (ImGui::CollapsingHeader("Orientation")) {
 		ImGui::BeginGroup();
 		if (ImGui::RadioButton("World", currentOrientation == Orientation::World)) {
 			currentOrientation = Orientation::World;
 		}
+		ImGui::SameLine();
 		if (ImGui::RadioButton("Cursor", currentOrientation == Orientation::Cursor)) {
 			currentOrientation = Orientation::Cursor;
 		}
@@ -153,9 +156,12 @@ void UI::RenderCursor() {
 	ImGui::Text("Object types:");
 	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 	ImGui::Combo("##objtypes", &m_selectedObjType, m_objectTypeNames.data(), m_objectTypeNames.size());
+
+	auto pos = cursor.transform.position();
+	auto objType = m_objectTypes.at(m_selectedObjType);
+
 	if (ImGui::Button("Add", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
-		auto pos = cursor.transform.position();
-		switch (m_objectTypes.at(m_selectedObjType)) {
+		switch (objType) {
 			case ObjectType::Cube: {
 				auto obj = std::make_unique<Cube>(Application::m_cubeModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
@@ -172,7 +178,6 @@ void UI::RenderCursor() {
 				auto obj = std::make_unique<Point>(Application::m_pointModel.get());
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				sceneObjects.push_back(std::move(obj));
-				numOfScenePoints++;
 
 				// if objectgroup is selected, add to that group
 				std::optional<Object*> opt = selection.Single();
@@ -185,7 +190,29 @@ void UI::RenderCursor() {
 				}
 				break;
 			}
+			case ObjectType::Surface: {
+				m_showSurfaceBuilder = true;
+				break;
+			}
+			case ObjectType::BSurface: {
+				m_showSurfaceBuilder = true;
+				break;
+			}
 		}
+	}
+
+	if (m_showSurfaceBuilder) {
+		ImGui::OpenPopup("Surface Builder");
+		m_showSurfaceBuilder = false;
+	}
+
+	if (m_surfaceBuilder.RenderProperties()) {
+		if (m_surfaceBuilder.shouldBuild) {
+			std::unique_ptr<Object> surface(m_surfaceBuilder.Build());
+			surface->SetTranslation(pos.x(), pos.y(), pos.z());
+			sceneObjects.push_back(std::move(surface));
+		}
+		m_surfaceBuilder.Reset();
 	}
 	ImGui::EndChild();
 }
@@ -205,8 +232,8 @@ void UI::RenderObjectTable() {
 				sceneObjects.push_back(std::move(obj));
 				break;
 			}
-			case ObjectGroupType::Curve: {
-				auto obj = std::make_unique<Curve>(selection.objects);
+			case ObjectGroupType::Spline: {
+				auto obj = std::make_unique<Spline>(selection.objects);
 				sceneObjects.push_back(std::move(obj));
 				break;
 			}
@@ -233,9 +260,6 @@ void UI::RenderObjectTable() {
 
 			for (auto& obj : selection.objects) {
 				toDelete.insert(obj->id);
-				if (typeid(Point) == typeid(*obj)) {
-					numOfScenePoints--;
-				}
 			}
 
 			std::erase_if(sceneObjects, [&toDelete](const auto& o) {
@@ -307,26 +331,11 @@ void UI::RenderProperties() {
 	ImGui::BeginChild("PropertiesWindow", ImVec2(0, ImGui::GetWindowHeight() - ImGui::GetCursorPos().y - style.WindowPadding.y),
 		true, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_HorizontalScrollbar);
 	if (ImGui::CollapsingHeader("Transform")) {
-		double step = 0.001f;
-		double stepFast = 0.1f;
-		bool flag = true;
-		ImGui::Text("Position");
-		gmod::vector3<double> position = selectedObj->position();
-		flag = false;
-		if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
-		if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
-			flag = true;
-		}
+		float step = 0.001f;
+		float stepFast = 0.1f;
+		bool flag = false;
 
-		if (flag) {
-			selectedObj->SetTranslation(position.x(), position.y(), position.z());
-			selectedObj->InformParents();
-		}
+		selectedObj->RenderPosition(step, stepFast);
 
 		ImGui::Text("Euler Angles");
 		gmod::vector3<double> eulerAngles = selectedObj->eulerAngles();

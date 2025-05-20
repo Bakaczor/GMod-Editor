@@ -1,8 +1,8 @@
 #pragma once
-#include "Curve.h"
+#include "Spline.h"
 
 namespace app {
-	class BSpline : public Curve {
+	class BSpline : public Spline {
 	public:
 		bool showBernstein = false;
 		bool localChanges = true;

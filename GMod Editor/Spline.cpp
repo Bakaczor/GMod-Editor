@@ -1,26 +1,26 @@
-#include "Curve.h"
+#include "Spline.h"
 #include <numeric>
 
 using namespace app;
 
-unsigned short Curve::m_globalCurveNum = 0;
+unsigned short Spline::m_globalSplineNum = 0;
 
-Curve::Curve(bool increment) {
-	m_type = "Curve";
+Spline::Spline(bool increment) {
+	m_type = "Spline";
 	std::ostringstream os;
-	os << "curve_" << m_globalCurveNum;
+	os << "spline_" << m_globalSplineNum;
 	name = os.str();
 	if (increment) {
-		m_globalCurveNum += 1;
+		m_globalSplineNum += 1;
 	}
 }
 
-Curve::Curve(std::vector<Object*> objects) : m_curveMesh() {
-	m_type = "Curve";
+Spline::Spline(std::vector<Object*> objects) : m_curveMesh() {
+	m_type = "Spline";
 	std::ostringstream os;
-	os << "curve_" << m_globalCurveNum;
+	os << "spline_" << m_globalSplineNum;
 	name = os.str();
-	m_globalCurveNum += 1;
+	m_globalSplineNum += 1;
 
 	this->objects = objects;
 	for (auto& obj : this->objects) {
@@ -29,7 +29,7 @@ Curve::Curve(std::vector<Object*> objects) : m_curveMesh() {
 	geometryChanged = true;
 }
 
-void Curve::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+void Spline::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_showPolyline) {
 		map.at(ShaderType::Regular).Set(context);
 		m_polylineMesh.Render(context);
@@ -40,7 +40,7 @@ void Curve::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const s
 	}
 }
 
-void Curve::UpdateMesh(const Device& device) {
+void Spline::UpdateMesh(const Device& device) {
 	std::vector<Vertex_Po> verts;
 	verts.reserve(objects.size());
 
@@ -92,7 +92,7 @@ void Curve::UpdateMesh(const Device& device) {
 	Object::UpdateMesh(device);
 }
 
-void Curve::RenderProperties() {
+void Spline::RenderProperties() {
 	ImGui::Checkbox("Show polyline", &m_showPolyline);
 	ImGui::Separator();
 	Polyline::RenderProperties();

@@ -40,6 +40,27 @@ void Object::RenderProperties() {
 	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&color));
 }
 
+void Object::RenderPosition(float step, float stepFast) {
+	bool flag = true;
+	ImGui::Text("Position");
+	gmod::vector3<double> position = this->position();
+	flag = false;
+	if (ImGui::InputDouble("X##Position", &position.x(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
+	if (ImGui::InputDouble("Y##Position", &position.y(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
+	if (ImGui::InputDouble("Z##Position", &position.z(), step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal)) {
+		flag = true;
+	}
+
+	if (flag) {
+		this->SetTranslation(position.x(), position.y(), position.z());
+		this->InformParents();
+	}
+}
+
 std::optional<std::vector<std::unique_ptr<Object>>*> app::Object::GetSubObjects() {
 	return std::nullopt;
 }

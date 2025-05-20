@@ -126,13 +126,25 @@
     <ClInclude Include="Shaders.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
     </ClInclude>
-    <ClInclude Include="Curve.h">
+    <ClInclude Include="Spline.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="BSpline.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
     <ClInclude Include="CISpline.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="Surface.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="BSurface.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="SurfaceBuilder.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="Patch.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
   </ItemGroup>
@@ -203,13 +215,25 @@
     <ClCompile Include="Shaders.cpp">
       <Filter>Pliki źródłowe\d3dx</Filter>
     </ClCompile>
-    <ClCompile Include="Curve.cpp">
+    <ClCompile Include="Spline.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="BSpline.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="CISpline.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Surface.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Patch.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="SurfaceBuilder.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="BSurface.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>

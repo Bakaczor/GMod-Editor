@@ -1,9 +1,10 @@
 #pragma once
-#include "framework.h"
 #include "../imgui/imgui.h"
-#include "Object.h"
 #include "Cursor.h"
+#include "framework.h"
+#include "Object.h"
 #include "ObjectGroup.h"
+#include "SurfaceBuilder.h"
 #include <memory>
 
 namespace app {
@@ -28,15 +29,14 @@ namespace app {
 		// OBJECTS
 		std::vector<std::unique_ptr<Object>> sceneObjects;
 		ObjectGroup selection;
-		int numOfScenePoints = 0;
 		void SelectObjectOnMouseClick(Object* obj);
 
 		Cursor cursor;
 		enum class ObjectType {
-			Cube, Torus, Point
+			Cube, Torus, Point, Surface, BSurface
 		};
 		enum class ObjectGroupType {
-			Polyline, Curve, BSpline, CISpline
+			Polyline, Spline, BSpline, CISpline
 		};
 
 		// ORIENTATION
@@ -60,6 +60,9 @@ namespace app {
 		int m_selectedObjGrpType = 0;
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
+
+		SurfaceBuilder m_surfaceBuilder;
+		bool m_showSurfaceBuilder = false;
 
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();

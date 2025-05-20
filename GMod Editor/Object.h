@@ -1,15 +1,15 @@
 #pragma once
-#include "framework.h"
-#include <array>
-#include <algorithm>
-#include <sstream>
-#include <optional>
-#include <unordered_map>
-#include "../imgui/imgui.h"
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
+#include "../imgui/imgui.h"
+#include "framework.h"
 #include "Mesh.h"
 #include "Shaders.h"
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <sstream>
+#include <unordered_map>
 
 namespace app {
 	class Object {
@@ -25,6 +25,7 @@ namespace app {
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const = 0;
 		virtual void UpdateMesh(const Device& device);
 		virtual void RenderProperties();
+		void RenderPosition(float step = 0.001f, float stepFast = 0.1f);
 		virtual std::optional<std::vector<std::unique_ptr<Object>>*> GetSubObjects();
 #pragma region PARENTS
 		virtual void AddParent(Object* obj);

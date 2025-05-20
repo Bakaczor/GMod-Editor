@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -171,12 +171,14 @@
     <ClInclude Include="Axes.h" />
     <ClInclude Include="AxesModel.h" />
     <ClInclude Include="BSpline.h" />
+    <ClInclude Include="BSurface.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CISpline.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
-    <ClInclude Include="Curve.h" />
+    <ClInclude Include="Patch.h" />
+    <ClInclude Include="Spline.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="framework.h" />
@@ -190,6 +192,8 @@
     <ClInclude Include="ObjectGroup.h" />
     <ClInclude Include="PointModel.h" />
     <ClInclude Include="Shaders.h" />
+    <ClInclude Include="Surface.h" />
+    <ClInclude Include="SurfaceBuilder.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
@@ -198,12 +202,14 @@
     <ClCompile Include="Axes.cpp" />
     <ClCompile Include="AxesModel.cpp" />
     <ClCompile Include="BSpline.cpp" />
+    <ClCompile Include="BSurface.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CISpline.cpp" />
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="CubeModel.cpp" />
     <ClCompile Include="Cursor.cpp" />
-    <ClCompile Include="Curve.cpp" />
+    <ClCompile Include="Patch.cpp" />
+    <ClCompile Include="Spline.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -216,6 +222,8 @@
     <ClCompile Include="ObjectGroup.cpp" />
     <ClCompile Include="PointModel.cpp" />
     <ClCompile Include="Shaders.cpp" />
+    <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="SurfaceBuilder.cpp" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="UI.cpp" />
