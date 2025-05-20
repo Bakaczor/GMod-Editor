@@ -33,7 +33,7 @@ Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsign
 
 		for (unsigned int i = 0; i < m_aPoints; ++i) {
 			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
 
 				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
 				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
@@ -62,7 +62,7 @@ Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsign
 
 		for (unsigned int i = 0; i < m_aPoints; ++i) {
 			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
 
 				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
 				float x = a * cos(angle);

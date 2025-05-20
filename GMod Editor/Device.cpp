@@ -134,7 +134,7 @@ mini::dx_ptr<ID3D11VertexShader> Device::CreateVertexShader(std::vector<BYTE> vs
 	return result;
 }
 
-mini::dx_ptr<ID3D11HullShader> app::Device::CreateHullShader(std::vector<BYTE> hsCode) const {
+mini::dx_ptr<ID3D11HullShader> Device::CreateHullShader(std::vector<BYTE> hsCode) const {
 	ID3D11HullShader* temp;
 	auto hr = m_device->CreateHullShader(reinterpret_cast<const void*>(hsCode.data()), hsCode.size(), nullptr, &temp);
 	if (FAILED(hr)) {
@@ -144,13 +144,23 @@ mini::dx_ptr<ID3D11HullShader> app::Device::CreateHullShader(std::vector<BYTE> h
 	return result;
 }
 
-mini::dx_ptr<ID3D11DomainShader> app::Device::CreateDomainShader(std::vector<BYTE> dsCode) const {
+mini::dx_ptr<ID3D11DomainShader> Device::CreateDomainShader(std::vector<BYTE> dsCode) const {
 	ID3D11DomainShader* temp;
 	auto hr = m_device->CreateDomainShader(reinterpret_cast<const void*>(dsCode.data()), dsCode.size(), nullptr, &temp);
 	if (FAILED(hr)) {
 		THROW_DX(hr);
 	}
 	mini::dx_ptr<ID3D11DomainShader> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11GeometryShader> Device::CreateGeometryShader(std::vector<BYTE> gsCode) const {
+	ID3D11GeometryShader* temp;
+	auto hr = m_device->CreateGeometryShader(reinterpret_cast<const void*>(gsCode.data()), gsCode.size(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11GeometryShader> result(temp);
 	return result;
 }
 

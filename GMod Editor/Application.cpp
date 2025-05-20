@@ -49,6 +49,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_r),
 				nullptr, // domain
 				nullptr, // hull
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_r)
 			}
@@ -60,6 +61,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwc),
 				nullptr, // domain
 				nullptr, // hull
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_rwc),
 				m_device.CreateInputLayout<Vertex_PoCo>(vsBytes_rwc)
 			}
@@ -72,6 +74,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwt),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -82,6 +85,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwtbs),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -94,6 +98,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwtcis),
 				m_device.CreateHullShader(hsBytes_rwtcis),
 				m_device.CreateDomainShader(dsBytes_rwtcis),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_PoCoef>(vsBytes_rwtcis)
 			}
@@ -101,11 +106,12 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		// RegularWithTesselationSurface
 		const auto hsBytes_rwtsr = Device::LoadByteCode(L"hs_rwtsr.cso");
 		const auto dsBytes_rwtsr = Device::LoadByteCode(L"ds_rwtsr.cso");
-		// const auto psBytes_rwtsr = Device::LoadByteCode(L"ps_rwtsr.cso");
+		const auto gsBytes_rwtsr = Device::LoadByteCode(L"gs_rwtsr.cso");
 		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationSurface, Shaders{
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwtsr),
 				m_device.CreateDomainShader(dsBytes_rwtsr),
+				m_device.CreateGeometryShader(gsBytes_rwtsr),
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -116,6 +122,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwtsr),
 				m_device.CreateDomainShader(dsBytes_rwtbsr),
+				m_device.CreateGeometryShader(gsBytes_rwtsr),
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -328,9 +335,7 @@ void Application::Render() {
 		if (nullptr != surf) {
 			unsigned int divisions = surf->GetDivisions();
 			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
-			m_device.deviceContext()->RSSetState(m_rastStateWireframe.get());
 			obj->RenderMesh(m_device.deviceContext(), m_shaders);
-			m_device.deviceContext()->RSSetState(m_rastState.get());
 		} else {
 			obj->RenderMesh(m_device.deviceContext(), m_shaders);
 		}

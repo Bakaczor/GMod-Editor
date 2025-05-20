@@ -1,6 +1,6 @@
 #include "Application.h"
-#include "Point.h"
 #include "BSurface.h"
+#include "Point.h"
 #include <numbers>
 
 using namespace app;
@@ -24,7 +24,7 @@ BSurface::BSurface(SurfaceType type, float a, float b, unsigned int aPatch, unsi
 
 		for (unsigned int i = 0; i < m_aPoints; ++i) {
 			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
 				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
 				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
 				point->SetTranslation(x, 0.0f, z);
@@ -51,7 +51,7 @@ BSurface::BSurface(SurfaceType type, float a, float b, unsigned int aPatch, unsi
 
 		for (unsigned int i = 0; i < m_aPoints; ++i) {
 			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.6f);
+				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
 				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
 				float x = a * std::cos(angle);
 				float y = a * std::sin(angle);

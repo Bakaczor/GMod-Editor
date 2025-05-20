@@ -286,7 +286,7 @@
     <FxCompile Include="ds_rwtbsr.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationBSurface</Filter>
     </FxCompile>
-    <FxCompile Include="ps_rwtsr.hlsl">
+    <FxCompile Include="gs_rwtsr.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
     </FxCompile>
   </ItemGroup>

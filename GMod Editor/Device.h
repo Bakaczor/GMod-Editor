@@ -67,6 +67,8 @@ namespace app {
 
 		mini::dx_ptr<ID3D11DomainShader> CreateDomainShader(std::vector<BYTE> dsCode) const;
 
+		mini::dx_ptr<ID3D11GeometryShader> CreateGeometryShader(std::vector<BYTE> gsCode) const;
+
 		mini::dx_ptr<ID3D11PixelShader> CreatePixelShader(std::vector<BYTE> psCode) const;
 
 		static std::vector<BYTE> LoadByteCode(const std::wstring& filename);

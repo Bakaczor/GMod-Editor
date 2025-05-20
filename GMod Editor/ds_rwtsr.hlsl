@@ -8,7 +8,7 @@ cbuffer cbProj : register(b1)
     matrix projMatrix;
 };
 
-struct PSInput
+struct GSInput
 {
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD;
@@ -68,9 +68,9 @@ float3 P(OutputPatch<DSInput, NUM_CONTROL_POINTS> patch, float2 uv)
 }
 
 [domain("quad")]
-PSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, OutputPatch<DSInput, NUM_CONTROL_POINTS> patch)
+GSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, OutputPatch<DSInput, NUM_CONTROL_POINTS> patch)
 {
-    PSInput output;
+    GSInput output;
     float3 pos = P(patch, uv);
     output.position = mul(projMatrix, mul(viewMatrix, float4(pos, 1.0f)));
     output.uv = uv;

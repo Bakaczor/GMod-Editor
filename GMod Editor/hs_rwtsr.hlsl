@@ -35,8 +35,8 @@ struct HSConstOutput
 HSConstOutput ConstantHS(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint patchID : SV_PrimitiveID)
 {
     HSConstOutput output;
-    output.EdgeTess[0] = output.EdgeTess[1] = output.EdgeTess[2] = output.EdgeTess[3] = divisions;
-    output.InsideTess[0] = output.InsideTess[1] = divisions;
+    output.EdgeTess[0] = output.EdgeTess[1] = output.EdgeTess[2] = output.EdgeTess[3] = divisions - 1;
+    output.InsideTess[0] = output.InsideTess[1] = divisions - 1;
     return output;
 }
 
