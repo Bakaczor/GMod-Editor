@@ -9,11 +9,16 @@ namespace app {
 
 	class Surface : public Object {
 	public:
+		static const unsigned int minDivisions = 4;
+		static const unsigned int maxDivisions = 64;
+
+		Surface(bool increment = false);
 		Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 		virtual void UpdateMesh(const Device& device) override;
 		virtual void RenderProperties() override;
 		virtual std::optional <std::vector<std::unique_ptr<Object>>*> GetSubObjects() override;
+		unsigned int GetDivisions() const;
 
 #pragma region TRANSFORM
 		virtual gmod::vector3<double> position() const override;
@@ -32,15 +37,20 @@ namespace app {
 	protected:
 		unsigned int m_divisions;
 		bool m_showNet = false;
+		bool m_hidePoints = false;
 		Mesh m_netMesh;
 
 		std::vector<std::unique_ptr<Object>> m_controlPoints;
 		std::vector<Patch> m_patches;
 		Mesh m_surfaceMesh;
+
+		unsigned int m_aPoints;
+		unsigned int m_bPoints;
+		SurfaceType m_surfaceType;
+		gmod::vector3<double> UpdateMidpoint();
 	private:
 		int m_selectedIdx = -1;
 		static unsigned short m_globalSurfaceNum;
 		gmod::vector3<double> m_midpoint;
-		gmod::vector3<double> UpdateMidpoint();
 	};
 }

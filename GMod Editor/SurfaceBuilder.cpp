@@ -4,7 +4,7 @@
 using namespace app;
 
 SurfaceBuilder::SurfaceBuilder() : shouldBuild(false), m_type(SurfaceType::Flat), m_isC2(false),
-m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(m_minDivisions) {}
+m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(Surface::minDivisions) {}
 
 void SurfaceBuilder::Reset() {
     m_type = SurfaceType::Flat;
@@ -13,8 +13,12 @@ void SurfaceBuilder::Reset() {
     m_b = 1.0f;                     
     m_aPatch = 2;                   
     m_bPatch = 2;                    
-    m_divisions = m_minDivisions;     
+    m_divisions = Surface::minDivisions;     
     shouldBuild = false;           
+}
+
+void SurfaceBuilder::SetC2(bool isC2) {
+    m_isC2 = isC2;
 }
 
 bool SurfaceBuilder::RenderProperties() {
@@ -56,17 +60,23 @@ bool SurfaceBuilder::RenderProperties() {
         ImGui::Separator();
         ImGui::Text("Number of patches:");
 
+        int min_aPatch = 1;
+        if (m_isC2 && m_type == SurfaceType::Cylindric) {
+            // special case, where for C2 cylinder minimum number of patches in A dimension is 3
+            min_aPatch = 3;
+        }
+
         int aPatch = m_aPatch;
         ImGui::InputInt("First count", &aPatch, 1, 2);
-        m_aPatch = std::max(1, aPatch);
+        m_aPatch = std::max(min_aPatch, aPatch);
 
         int bPatch = m_bPatch;
         ImGui::InputInt("Second count", &bPatch, 1, 2);
         m_bPatch = std::max(1, bPatch);
 
         int divisions = m_divisions;
-        ImGui::InputInt("Divisions", &divisions, 1, static_cast<int>(m_minDivisions));
-        m_divisions = std::max(static_cast<int>(m_minDivisions), divisions);
+        ImGui::InputInt("Divisions", &divisions, 1, static_cast<int>(Surface::minDivisions));
+        m_divisions = std::min(std::max(static_cast<int>(Surface::minDivisions), divisions), static_cast<int>(Surface::maxDivisions));
 
         ImGui::Separator();
         ImGuiStyle& style = ImGui::GetStyle();

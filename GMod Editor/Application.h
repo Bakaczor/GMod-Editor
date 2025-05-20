@@ -22,6 +22,11 @@
 #include <unordered_map>
 
 namespace app {
+	struct TessellationConstants {
+		uint32_t divisions;  // 4 bytes
+		float padding[3];    // 12 bytes
+	};
+
 	class UI;
 
 	class Application : public mini::WindowApplication {
@@ -97,12 +102,15 @@ namespace app {
 		mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
 		mini::dx_ptr<ID3D11DepthStencilView> m_depthBuffer;
 		mini::dx_ptr<ID3D11RasterizerState> m_rastState;
+		mini::dx_ptr<ID3D11RasterizerState> m_rastStateWireframe;
+		mini::dx_ptr<ID3D11BlendState> m_blendState;
 		std::unordered_map<ShaderType, Shaders> m_shaders;
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffView;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffTessConst;
 #pragma endregion
 	};
 }

@@ -36,4 +36,11 @@ namespace app {
 	struct RasterizerDescription : D3D11_RASTERIZER_DESC {
 		RasterizerDescription();
 	};
+
+	struct BlendDescription : D3D11_BLEND_DESC {
+		BlendDescription();
+
+		static BlendDescription AlphaBlendDescription();
+	};
+
 }

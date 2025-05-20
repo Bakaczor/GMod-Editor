@@ -12,8 +12,8 @@ namespace app {
 		bool RenderProperties();
 		Surface* Build() const;
 		void Reset();
+		void SetC2(bool isC2);
 	private:
-		static const unsigned int m_minDivisions = 4;
 		SurfaceType m_type;
 		bool m_isC2;
 		float m_a;

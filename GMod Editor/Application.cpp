@@ -28,7 +28,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
-	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
+	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>()),
+	m_constBuffTessConst(m_device.CreateConstantBuffer<TessellationConstants>())
 {
 	m_UI = std::make_unique<UI>();
 	m_UI->sceneObjects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
@@ -97,14 +98,36 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateInputLayout<Vertex_PoCoef>(vsBytes_rwtcis)
 			}
 		));
+		// RegularWithTesselationSurface
+		const auto hsBytes_rwtsr = Device::LoadByteCode(L"hs_rwtsr.cso");
+		const auto dsBytes_rwtsr = Device::LoadByteCode(L"ds_rwtsr.cso");
+		// const auto psBytes_rwtsr = Device::LoadByteCode(L"ps_rwtsr.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationSurface, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwtsr),
+				m_device.CreateDomainShader(dsBytes_rwtsr),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
+		// RegularWithTesselationBSurface
+		const auto dsBytes_rwtbsr = Device::LoadByteCode(L"ds_rwtbsr.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationBSurface, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwtsr),
+				m_device.CreateDomainShader(dsBytes_rwtbsr),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
 	}
 
 	// CONSTANT BUFFERS
 	{
 		ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
 		m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
-		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
-		m_device.deviceContext()->HSSetConstantBuffers(0, 2, hsb);
+		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get(), m_constBuffTessConst.get() };
+		m_device.deviceContext()->HSSetConstantBuffers(0, 3, hsb);
 		ID3D11Buffer* dsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
 		m_device.deviceContext()->DSSetConstantBuffers(0, 2, dsb);
 		ID3D11Buffer* psb[] = { m_constBuffColor.get() };
@@ -115,6 +138,12 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	RasterizerDescription rsdesc;
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
+
+	m_blendState = m_device.CreateBlendState(BlendDescription::AlphaBlendDescription());
+	// m_device.deviceContext()->OMSetBlendState(m_blendState.get(), nullptr, UINT_MAX);
+
+	rsdesc.FillMode = D3D11_FILL_WIREFRAME;
+	m_rastStateWireframe = m_device.CreateRasterizerState(rsdesc);
 
 	// GLOBAL
 	m_axesModel->Initialize(m_device);
@@ -276,6 +305,15 @@ void Application::Render() {
 	}
 
 	for (auto& obj : m_UI->sceneObjects) {
+		auto opt = obj->GetSubObjects();
+		if (opt.has_value()) {
+			for (auto& subObj : *opt.value()) {
+				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
+				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
+				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
+			}
+		}
+
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
 		// TODO : to improve performance, change internals of Contains
 		if (m_UI->selection.Contains(obj->id)) {
@@ -286,17 +324,16 @@ void Application::Render() {
 		if (obj->geometryChanged || m_firstPass) {
 			obj->UpdateMesh(m_device);
 		}
-		obj->RenderMesh(m_device.deviceContext(), m_shaders);
-
-		auto opt = obj->GetSubObjects();
-		if (opt.has_value()) {
-			for (auto& subObj : *opt.value()) {
-				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
-				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
-				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
-			}
+		auto surf = dynamic_cast<Surface*>(obj.get());
+		if (nullptr != surf) {
+			unsigned int divisions = surf->GetDivisions();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+			m_device.deviceContext()->RSSetState(m_rastStateWireframe.get());
+			obj->RenderMesh(m_device.deviceContext(), m_shaders);
+			m_device.deviceContext()->RSSetState(m_rastState.get());
+		} else {
+			obj->RenderMesh(m_device.deviceContext(), m_shaders);
 		}
-
 	}
 }
 

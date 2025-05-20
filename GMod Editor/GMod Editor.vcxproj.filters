@@ -58,6 +58,12 @@
     <Filter Include="Pliki zasobów\RegulatWithTesselationCISpline">
       <UniqueIdentifier>{7b404e89-2b04-4f5c-8a00-675d61d3c7c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselationSurface">
+      <UniqueIdentifier>{efadf93e-3566-45f6-8109-1f8ffb070f46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselationBSurface">
+      <UniqueIdentifier>{aca6ded9-1af8-4697-9d86-8fbc7d6ceea2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -270,6 +276,18 @@
     </FxCompile>
     <FxCompile Include="vs_rwtcis.hlsl">
       <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwtsr.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
+    </FxCompile>
+    <FxCompile Include="hs_rwtsr.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwtbsr.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationBSurface</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_rwtsr.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

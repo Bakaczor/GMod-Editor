@@ -192,10 +192,12 @@ void UI::RenderCursor() {
 			}
 			case ObjectType::Surface: {
 				m_showSurfaceBuilder = true;
+				m_surfaceBuilder.SetC2(false);
 				break;
 			}
 			case ObjectType::BSurface: {
 				m_showSurfaceBuilder = true;
+				m_surfaceBuilder.SetC2(true);
 				break;
 			}
 		}
