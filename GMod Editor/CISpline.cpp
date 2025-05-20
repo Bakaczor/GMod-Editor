@@ -73,6 +73,7 @@ void CISpline::UpdateMesh(const Device& device) {
 }
 
 std::vector<gmod::vector3<double>> CISpline::ComputeCoefficients() const {
+	// TODO : filter points with same position
 	const int n = objects.size() - 1;
 	if (n == 1) {
 		return std::vector<gmod::vector3<double>>(2);
