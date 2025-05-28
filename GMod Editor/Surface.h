@@ -13,11 +13,12 @@ namespace app {
 		static const unsigned int maxDivisions = 64;
 
 		Surface(bool increment = false);
-		Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions);
+		Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, std::vector<Patch> patches);
+		//Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 		virtual void UpdateMesh(const Device& device) override;
 		virtual void RenderProperties() override;
-		virtual std::optional <std::vector<std::unique_ptr<Object>>*> GetSubObjects() override;
+		//virtual std::optional <std::vector<std::unique_ptr<Object>>*> GetSubObjects() override;
 		unsigned int GetDivisions() const;
 
 #pragma region TRANSFORM
@@ -37,10 +38,10 @@ namespace app {
 	protected:
 		unsigned int m_divisions;
 		bool m_showNet = false;
-		bool m_hidePoints = false;
+		//bool m_hidePoints = false;
 		Mesh m_netMesh;
 
-		std::vector<std::unique_ptr<Object>> m_controlPoints;
+		std::vector<Object*> m_controlPoints;
 		std::vector<Patch> m_patches;
 		Mesh m_surfaceMesh;
 

@@ -337,20 +337,24 @@ void BSpline::RecalculateBernstein(Object* sender, bool remake) {
 					// first segment includes all points
 					auto b0 = f0 * Mbs(0, 0) + f1 * Mbs(0, 1) + f2 * Mbs(0, 2) + f3 * Mbs(0, 3);
 					bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
+					bernsteinPoints.back()->deletable = false;
 					bernsteinPoints.back()->SetTranslation(b0.x(), b0.y(), b0.z());
 					bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 					bernsteinPoints.back()->AddParent(this);
 				}
 				// for the next segements b0 == bernsteinPoints.back()
 				bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
+				bernsteinPoints.back()->deletable = false;
 				bernsteinPoints.back()->SetTranslation(b1.x(), b1.y(), b1.z());
 				bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 				bernsteinPoints.back()->AddParent(this);
 				bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
+				bernsteinPoints.back()->deletable = false;
 				bernsteinPoints.back()->SetTranslation(b2.x(), b2.y(), b2.z());
 				bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 				bernsteinPoints.back()->AddParent(this);
 				bernsteinPoints.push_back(std::make_unique<Point>(Application::m_pointModel.get(), 0.6f, false));
+				bernsteinPoints.back()->deletable = false;
 				bernsteinPoints.back()->SetTranslation(b3.x(), b3.y(), b3.z());
 				bernsteinPoints.back()->color = { 0.0f, 1.0f, 0.0f, 1.0f };
 				bernsteinPoints.back()->AddParent(this);

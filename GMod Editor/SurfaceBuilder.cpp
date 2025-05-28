@@ -1,10 +1,12 @@
+#include "Application.h"
 #include "BSurface.h"
+#include "Point.h"
 #include "SurfaceBuilder.h"
 
 using namespace app;
 
-SurfaceBuilder::SurfaceBuilder() : shouldBuild(false), m_type(SurfaceType::Flat), m_isC2(false),
-m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(Surface::minDivisions) {}
+SurfaceBuilder::SurfaceBuilder(std::vector<std::unique_ptr<Object>>& sceneObjects) : m_sceneObjects(sceneObjects),
+shouldBuild(false), m_type(SurfaceType::Flat), m_isC2(false), m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(Surface::minDivisions) {}
 
 void SurfaceBuilder::Reset() {
     m_type = SurfaceType::Flat;
@@ -19,6 +21,158 @@ void SurfaceBuilder::Reset() {
 
 void SurfaceBuilder::SetC2(bool isC2) {
     m_isC2 = isC2;
+}
+
+Surface* SurfaceBuilder::BuildSurface() const {
+    unsigned int aPoints, bPoints;
+    std::vector<Object*> controlPoints;
+    std::vector<Patch> patches;
+
+    if (m_type == SurfaceType::Flat) {
+        aPoints = m_aPatch * (Patch::rowSize - 1) + 1;
+        bPoints = m_bPatch * (Patch::rowSize - 1) + 1;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, 0.0f, z);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+
+        for (unsigned int i = 0; i < m_aPatch; ++i) {
+            for (unsigned int j = 0; j < m_bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                USHORT step = Patch::rowSize - 1;
+                for (USHORT u = 0; u < Patch::rowSize; ++u) {
+                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
+                        indices[u * Patch::rowSize + v] = (i * step + u) * bPoints + (j * step + v);
+                    }
+                }
+                patches.emplace_back(indices);
+            }
+        }
+    } else {
+        aPoints = m_aPatch * (Patch::rowSize - 1);
+        bPoints = m_bPatch * (Patch::rowSize - 1) + 1;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float x = m_a * cos(angle);
+                float y = m_a * sin(angle);
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, z, y);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+
+        for (unsigned int i = 0; i < m_aPatch; ++i) {
+            for (unsigned int j = 0; j < m_bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                USHORT step = Patch::rowSize - 1;
+                for (USHORT u = 0; u < Patch::rowSize; ++u) {
+                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
+                        USHORT wrapped_i = (i * step + u) % aPoints;
+                        indices[u * Patch::rowSize + v] = wrapped_i * bPoints + (j * step + v);
+                    }
+                }
+                patches.emplace_back(indices);
+            }
+        }
+    }
+
+    return new Surface(m_type, aPoints, bPoints, m_divisions, controlPoints, patches);
+}
+
+Surface* SurfaceBuilder::BuildBSurface() const {
+    unsigned int aPoints, bPoints;
+    std::vector<Object*> controlPoints;
+    std::vector<Patch> patches;
+
+    if (m_type == SurfaceType::Flat) {
+        aPoints = m_aPatch + 3;
+        bPoints = m_bPatch + 3;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, 0.0f, z);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+
+        for (unsigned int i = 0; i < m_aPatch; ++i) {
+            for (unsigned int j = 0; j < m_bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < 4; ++u) {
+                    for (USHORT v = 0; v < 4; ++v) {
+                        indices[u * 4 + v] = (i + u) * bPoints + (j + v);
+                    }
+                }
+                patches.emplace_back(indices);
+            }
+        }
+    } else {
+        aPoints = m_aPatch;
+        bPoints = m_bPatch + 3;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float x = m_a * std::cos(angle);
+                float y = m_a * std::sin(angle);
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, z, y);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+
+        for (unsigned int i = 0; i < m_aPatch; ++i) {
+            for (unsigned int j = 0; j < m_bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < Patch::rowSize; ++u) {
+                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
+                        USHORT wrapped_i = (i + u) % aPoints;
+                        indices[u * Patch::rowSize + v] = wrapped_i * bPoints + (j + v);
+                    }
+                }
+                patches.emplace_back(indices);
+            }
+        }
+    }
+
+    return new BSurface(m_type, aPoints, bPoints, m_divisions, controlPoints, patches);
 }
 
 bool SurfaceBuilder::RenderProperties() {
@@ -100,8 +254,8 @@ bool SurfaceBuilder::RenderProperties() {
 
 Surface* SurfaceBuilder::Build() const {
 	if (m_isC2) {
-		return new BSurface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
+		return BuildBSurface();
 	} else {
-		return new Surface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
+        return BuildSurface();
 	}
 }

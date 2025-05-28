@@ -49,9 +49,11 @@ namespace app {
 		bool useMMB = true;
 		bool showGrid = false;
 		bool showAxes = false;
+		bool hideControlPoints = false;
 		ImVec4 bkgdColor = ImVec4(0.33f, 0.33f, 0.33f, 1.0f);
 		ImVec4 slctdColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
 
+		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
 		int m_selectedObjType = 0;

@@ -17,6 +17,8 @@ const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
 
+UI::UI() : m_surfaceBuilder(sceneObjects) {}
+
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
 	RenderSettings(firstPass);
@@ -258,10 +260,12 @@ void UI::RenderObjectTable() {
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (!selection.Empty()) {
 			std::unordered_set<int> toDelete;
-			toDelete.reserve(selection.objects.size());
+			// toDelete.reserve(selection.objects.size());
 
 			for (auto& obj : selection.objects) {
-				toDelete.insert(obj->id);
+				if (obj->deletable) {
+					toDelete.insert(obj->id);
+				}
 			}
 
 			std::erase_if(sceneObjects, [&toDelete](const auto& o) {
@@ -429,11 +433,12 @@ void UI::RenderSettings(bool firstPass) {
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
 		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 150.0f), ImGuiCond_Always);
+		ImGui::SetWindowSize(ImVec2(size.x, 0.0f), ImGuiCond_Always);
 		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
 		ImGui::ColorEdit3("Selected", reinterpret_cast<float*>(&slctdColor));
 		ImGui::Checkbox("Show Grid", &showGrid);
 		ImGui::Checkbox("Show Axes", &showAxes);
+		ImGui::Checkbox("Hide control points", &hideControlPoints);
 		ImGui::Checkbox("Use MMB", &useMMB);
 	}
 	ImGui::End();

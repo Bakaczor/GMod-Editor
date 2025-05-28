@@ -20,6 +20,8 @@ namespace app {
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
 
+		bool deletable = true;
+
 		Object();
 		virtual ~Object();
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const = 0;

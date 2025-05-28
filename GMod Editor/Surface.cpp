@@ -1,6 +1,4 @@
 #include "framework.h"
-#include "Application.h"
-#include "Point.h"
 #include "Surface.h"
 #include <numbers>
 
@@ -18,83 +16,101 @@ Surface::Surface(bool increment) : m_divisions(Patch::rowSize), m_aPoints(0), m_
 	}
 }
 
-Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) : m_divisions(divisions), m_surfaceType(type) {
+Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, std::vector<Patch> patches) :
+	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints), m_divisions(divisions) {
 	m_type = "Surface";
 	std::ostringstream os;
 	os << "surface_" << m_globalSurfaceNum;
 	name = os.str();
 	m_globalSurfaceNum += 1;
-	m_patches.reserve(aPatch * bPatch);
 
-	if (type == SurfaceType::Flat) {
-		m_aPoints = aPatch * (Patch::rowSize - 1) + 1;
-		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
-		m_controlPoints.reserve(m_aPoints * m_bPoints);
+	std::copy(controlPoints.begin(), controlPoints.end(), std::back_inserter(m_controlPoints));
+	std::copy(patches.begin(), patches.end(), std::back_inserter(m_patches));
 
-		for (unsigned int i = 0; i < m_aPoints; ++i) {
-			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
-
-				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
-				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
-				point->SetTranslation(x, 0.0f, z);
-				m_controlPoints.push_back(std::move(point));
-			}
-		}
-
-		for (unsigned int i = 0; i < aPatch; ++i) {
-			for (unsigned int j = 0; j < bPatch; ++j) {
-				std::array<USHORT, Patch::patchSize> indices;
-
-				USHORT step = Patch::rowSize - 1;
-				for (USHORT u = 0; u < Patch::rowSize; ++u) {
-					for (USHORT v = 0; v < Patch::rowSize; ++v) {
-						indices[u * Patch::rowSize + v] = (i * step + u) * m_bPoints + (j * step + v);
-					}
-				}
-				m_patches.emplace_back(indices);
-			}
-		}
-	} else {
-		m_aPoints = aPatch * (Patch::rowSize - 1);
-		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
-		m_controlPoints.reserve(m_aPoints * m_bPoints);
-
-		for (unsigned int i = 0; i < m_aPoints; ++i) {
-			for (unsigned int j = 0; j < m_bPoints; ++j) {
-				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
-
-				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
-				float x = a * cos(angle);
-				float y = a * sin(angle);
-				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
-				point->SetTranslation(x, z, y);
-				m_controlPoints.push_back(std::move(point));
-			}
-		}
-
-		for (unsigned int i = 0; i < aPatch; ++i) {
-			for (unsigned int j = 0; j < bPatch; ++j) {
-				std::array<USHORT, Patch::patchSize> indices;
-
-				USHORT step = Patch::rowSize - 1;
-				for (USHORT u = 0; u < Patch::rowSize; ++u) {
-					for (USHORT v = 0; v < Patch::rowSize; ++v) {
-						USHORT wrapped_i = (i * step + u) % m_aPoints;
-						indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j * step + v);
-					}
-				}
-				m_patches.emplace_back(indices);
-			}
-		}
-	}
 	UpdateMidpoint();
-
 	for (auto& obj : m_controlPoints) {
 		obj->AddParent(this);
 	}
 	geometryChanged = true;
 }
+
+//Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) : m_divisions(divisions), m_surfaceType(type) {
+//	m_type = "Surface";
+//	std::ostringstream os;
+//	os << "surface_" << m_globalSurfaceNum;
+//	name = os.str();
+//	m_globalSurfaceNum += 1;
+//	m_patches.reserve(aPatch * bPatch);
+//
+//	if (type == SurfaceType::Flat) {
+//		m_aPoints = aPatch * (Patch::rowSize - 1) + 1;
+//		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
+//		m_controlPoints.reserve(m_aPoints * m_bPoints);
+//
+//		for (unsigned int i = 0; i < m_aPoints; ++i) {
+//			for (unsigned int j = 0; j < m_bPoints; ++j) {
+//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+//
+//				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
+//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
+//				point->SetTranslation(x, 0.0f, z);
+//				m_controlPoints.push_back(std::move(point));
+//			}
+//		}
+//
+//		for (unsigned int i = 0; i < aPatch; ++i) {
+//			for (unsigned int j = 0; j < bPatch; ++j) {
+//				std::array<USHORT, Patch::patchSize> indices;
+//
+//				USHORT step = Patch::rowSize - 1;
+//				for (USHORT u = 0; u < Patch::rowSize; ++u) {
+//					for (USHORT v = 0; v < Patch::rowSize; ++v) {
+//						indices[u * Patch::rowSize + v] = (i * step + u) * m_bPoints + (j * step + v);
+//					}
+//				}
+//				m_patches.emplace_back(indices);
+//			}
+//		}
+//	} else {
+//		m_aPoints = aPatch * (Patch::rowSize - 1);
+//		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
+//		m_controlPoints.reserve(m_aPoints * m_bPoints);
+//
+//		for (unsigned int i = 0; i < m_aPoints; ++i) {
+//			for (unsigned int j = 0; j < m_bPoints; ++j) {
+//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+//
+//				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
+//				float x = a * cos(angle);
+//				float y = a * sin(angle);
+//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
+//				point->SetTranslation(x, z, y);
+//				m_controlPoints.push_back(std::move(point));
+//			}
+//		}
+//
+//		for (unsigned int i = 0; i < aPatch; ++i) {
+//			for (unsigned int j = 0; j < bPatch; ++j) {
+//				std::array<USHORT, Patch::patchSize> indices;
+//
+//				USHORT step = Patch::rowSize - 1;
+//				for (USHORT u = 0; u < Patch::rowSize; ++u) {
+//					for (USHORT v = 0; v < Patch::rowSize; ++v) {
+//						USHORT wrapped_i = (i * step + u) % m_aPoints;
+//						indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j * step + v);
+//					}
+//				}
+//				m_patches.emplace_back(indices);
+//			}
+//		}
+//	}
+//	UpdateMidpoint();
+//
+//	for (auto& obj : m_controlPoints) {
+//		obj->AddParent(this);
+//	}
+//	geometryChanged = true;
+//}
 
 void Surface::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_showNet) {
@@ -162,7 +178,7 @@ void app::Surface::RenderProperties() {
 	if (m_showNet && m_showNet != old) {
 		geometryChanged = true;
 	}
-	ImGui::Checkbox("Hide points", &m_hidePoints);
+	//ImGui::Checkbox("Hide points", &m_hidePoints);
 
 	if (m_selectedIdx != -1) {
 		ImGui::Separator();
@@ -189,12 +205,12 @@ void app::Surface::RenderProperties() {
 	}
 }
 
-std::optional<std::vector<std::unique_ptr<Object>>*> Surface::GetSubObjects() {
-	if (m_hidePoints) {
-		return std::nullopt;
-	}
-	return &m_controlPoints;
-}
+//std::optional<std::vector<std::unique_ptr<Object>>*> Surface::GetSubObjects() {
+//	if (m_hidePoints) {
+//		return std::nullopt;
+//	}
+//	return &m_controlPoints;
+//}
 
 unsigned int Surface::GetDivisions() const {
 	return m_divisions;

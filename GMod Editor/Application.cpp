@@ -32,7 +32,6 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffTessConst(m_device.CreateConstantBuffer<TessellationConstants>())
 {
 	m_UI = std::make_unique<UI>();
-	m_UI->sceneObjects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -312,9 +311,12 @@ void Application::Render() {
 	}
 
 	for (auto& obj : m_UI->sceneObjects) {
+		if (m_UI->hideControlPoints && typeid(Point) == typeid(*obj.get())) { continue; }
+
 		auto opt = obj->GetSubObjects();
 		if (opt.has_value()) {
 			for (auto& subObj : *opt.value()) {
+				if (m_UI->hideControlPoints && typeid(Point) == typeid(*subObj.get())) { continue; }
 				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
 				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
 				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
