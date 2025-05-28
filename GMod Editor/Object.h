@@ -1,7 +1,7 @@
 #pragma once
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
-#include "../imgui/imgui.h"
+#include "imgui.h"
 #include "framework.h"
 #include "Mesh.h"
 #include "Shaders.h"

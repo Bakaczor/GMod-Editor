@@ -1,6 +1,6 @@
 #include "Object.h"
 #include "ObjectGroup.h"
-#include "../imgui/misc/cpp/imgui_stdlib.h"
+#include "imgui_stdlib.h"
 
 using namespace app;
 

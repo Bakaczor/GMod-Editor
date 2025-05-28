@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(SolutionDir)imgui\;$(SolutionDir)imgui\backends\;$(SolutionDir)imgui\misc\cpp\;$(SolutionDir)imgui\misc\debuggers\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <AllProjectIncludesArePublic>false</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(SolutionDir)imgui\;$(SolutionDir)imgui\backends\;$(SolutionDir)imgui\misc\cpp\;$(SolutionDir)imgui\misc\debuggers\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <AllProjectIncludesArePublic>false</AllProjectIncludesArePublic>
   </PropertyGroup>
@@ -87,6 +87,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(SolutionDir)imgui\;$(SolutionDir)imgui\backends\;$(SolutionDir)imgui\misc\cpp\;$(SolutionDir)imgui\misc\debuggers\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -407,9 +410,6 @@
   <ItemGroup>
     <ProjectReference Include="..\gmod\gmod.vcxproj">
       <Project>{29bec669-58bd-4aff-acaa-20d05ce8836f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\imgui\imgui.vcxproj">
-      <Project>{8e992995-67e1-4dea-84e3-46995e40e0eb}</Project>
     </ProjectReference>
     <ProjectReference Include="..\mini\mini.vcxproj">
       <Project>{51351e31-5569-4507-a947-fd545dddc4a3}</Project>
