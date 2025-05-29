@@ -153,6 +153,12 @@
     <ClInclude Include="Patch.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="JsonSchemaTypes.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="SerializationManager.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -241,6 +247,9 @@
     </ClCompile>
     <ClCompile Include="BSurface.cpp">
       <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="SerializationManager.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

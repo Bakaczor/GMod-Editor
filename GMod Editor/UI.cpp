@@ -22,6 +22,7 @@ UI::UI() : m_surfaceBuilder(sceneObjects) {}
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
 	RenderSettings(firstPass);
+	RenderIO();
 }
 
 void UI::RenderRightPanel(bool firstPass, Camera& camera) {
@@ -425,7 +426,7 @@ void UI::RenderProperties() {
 }
 
 void UI::RenderSettings(bool firstPass) {
-	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
 	if (firstPass) {
@@ -433,7 +434,7 @@ void UI::RenderSettings(bool firstPass) {
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
 		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 0.0f), ImGuiCond_Always);
+		ImGui::SetWindowSize(ImVec2(size.x, 0.f), ImGuiCond_Always);
 		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
 		ImGui::ColorEdit3("Selected", reinterpret_cast<float*>(&slctdColor));
 		ImGui::Checkbox("Show Grid", &showGrid);
@@ -441,5 +442,22 @@ void UI::RenderSettings(bool firstPass) {
 		ImGui::Checkbox("Hide control points", &hideControlPoints);
 		ImGui::Checkbox("Use MMB", &useMMB);
 	}
+	ImGui::End();
+}
+
+void UI::RenderIO() {
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(0.f, viewport->Size.y - 35.f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
+	ImGui::Begin("io-buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
+
+	if (ImGui::Button("Save", ImVec2(90.f, 0.f))) {
+
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Load", ImVec2(90.f, 0.f))) {
+
+	}	
 	ImGui::End();
 }

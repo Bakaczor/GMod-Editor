@@ -1,9 +1,10 @@
 #pragma once
-#include "imgui.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui.h"
 #include "Cursor.h"
 #include "framework.h"
 #include "Object.h"
 #include "ObjectGroup.h"
+#include "SerializationManager.h"
 #include "SurfaceBuilder.h"
 #include <memory>
 
@@ -66,12 +67,15 @@ namespace app {
 		SurfaceBuilder m_surfaceBuilder;
 		bool m_showSurfaceBuilder = false;
 
+		SerializationManager m_serializationManager;
+
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);
+		void RenderIO();
 
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();

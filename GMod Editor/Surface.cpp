@@ -16,7 +16,7 @@ Surface::Surface(bool increment) : m_divisions(Patch::rowSize), m_aPoints(0), m_
 	}
 }
 
-Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, std::vector<Patch> patches) :
+Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) :
 	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints), m_divisions(divisions) {
 	m_type = "Surface";
 	std::ostringstream os;
@@ -25,7 +25,41 @@ Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, u
 	m_globalSurfaceNum += 1;
 
 	std::copy(controlPoints.begin(), controlPoints.end(), std::back_inserter(m_controlPoints));
-	std::copy(patches.begin(), patches.end(), std::back_inserter(m_patches));
+	
+	if (m_surfaceType == SurfaceType::Flat) {
+		unsigned int aPatch = (m_aPoints - 1) / (Patch::rowSize - 1);
+		unsigned int bPatch = (m_bPoints - 1) / (Patch::rowSize - 1);
+		for (unsigned int i = 0; i < aPatch; ++i) {
+			for (unsigned int j = 0; j < bPatch; ++j) {
+				std::array<USHORT, Patch::patchSize> indices;
+
+				USHORT step = Patch::rowSize - 1;
+				for (USHORT u = 0; u < Patch::rowSize; ++u) {
+					for (USHORT v = 0; v < Patch::rowSize; ++v) {
+						indices[u * Patch::rowSize + v] = (i * step + u) * m_bPoints + (j * step + v);
+					}
+				}
+				m_patches.emplace_back(indices);
+			}
+		}
+	} else {
+		unsigned int aPatch = (m_aPoints) / (Patch::rowSize - 1);
+		unsigned int bPatch = (m_bPoints - 1) / (Patch::rowSize - 1);
+		for (unsigned int i = 0; i < aPatch; ++i) {
+			for (unsigned int j = 0; j < bPatch; ++j) {
+				std::array<USHORT, Patch::patchSize> indices;
+
+				USHORT step = Patch::rowSize - 1;
+				for (USHORT u = 0; u < Patch::rowSize; ++u) {
+					for (USHORT v = 0; v < Patch::rowSize; ++v) {
+						USHORT wrapped_i = (i * step + u) % m_aPoints;
+						indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j * step + v);
+					}
+				}
+				m_patches.emplace_back(indices);
+			}
+		}
+	}
 
 	UpdateMidpoint();
 	for (auto& obj : m_controlPoints) {
@@ -212,8 +246,24 @@ void app::Surface::RenderProperties() {
 //	return &m_controlPoints;
 //}
 
+SurfaceType Surface::GetSurfaceType() const {
+	return m_surfaceType;
+}
+
 unsigned int Surface::GetDivisions() const {
 	return m_divisions;
+}
+
+unsigned int Surface::GetAPoints() const {
+	return m_aPoints;
+}
+
+unsigned int Surface::GetBPoints() const {
+	return m_bPoints;
+}
+
+const std::vector<Object*>& Surface::GetControlPoints() const {
+	return m_controlPoints;
 }
 
 gmod::vector3<double> Surface::UpdateMidpoint() {

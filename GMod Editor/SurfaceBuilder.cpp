@@ -26,7 +26,6 @@ void SurfaceBuilder::SetC2(bool isC2) {
 Surface* SurfaceBuilder::BuildSurface() const {
     unsigned int aPoints, bPoints;
     std::vector<Object*> controlPoints;
-    std::vector<Patch> patches;
 
     if (m_type == SurfaceType::Flat) {
         aPoints = m_aPatch * (Patch::rowSize - 1) + 1;
@@ -44,20 +43,6 @@ Surface* SurfaceBuilder::BuildSurface() const {
 
                 controlPoints.push_back(point.get());
                 m_sceneObjects.push_back(std::move(point));
-            }
-        }
-
-        for (unsigned int i = 0; i < m_aPatch; ++i) {
-            for (unsigned int j = 0; j < m_bPatch; ++j) {
-                std::array<USHORT, Patch::patchSize> indices;
-
-                USHORT step = Patch::rowSize - 1;
-                for (USHORT u = 0; u < Patch::rowSize; ++u) {
-                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
-                        indices[u * Patch::rowSize + v] = (i * step + u) * bPoints + (j * step + v);
-                    }
-                }
-                patches.emplace_back(indices);
             }
         }
     } else {
@@ -80,30 +65,14 @@ Surface* SurfaceBuilder::BuildSurface() const {
                 m_sceneObjects.push_back(std::move(point));
             }
         }
-
-        for (unsigned int i = 0; i < m_aPatch; ++i) {
-            for (unsigned int j = 0; j < m_bPatch; ++j) {
-                std::array<USHORT, Patch::patchSize> indices;
-
-                USHORT step = Patch::rowSize - 1;
-                for (USHORT u = 0; u < Patch::rowSize; ++u) {
-                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
-                        USHORT wrapped_i = (i * step + u) % aPoints;
-                        indices[u * Patch::rowSize + v] = wrapped_i * bPoints + (j * step + v);
-                    }
-                }
-                patches.emplace_back(indices);
-            }
-        }
     }
 
-    return new Surface(m_type, aPoints, bPoints, m_divisions, controlPoints, patches);
+    return new Surface(m_type, aPoints, bPoints, m_divisions, controlPoints);
 }
 
 Surface* SurfaceBuilder::BuildBSurface() const {
     unsigned int aPoints, bPoints;
     std::vector<Object*> controlPoints;
-    std::vector<Patch> patches;
 
     if (m_type == SurfaceType::Flat) {
         aPoints = m_aPatch + 3;
@@ -121,19 +90,6 @@ Surface* SurfaceBuilder::BuildBSurface() const {
 
                 controlPoints.push_back(point.get());
                 m_sceneObjects.push_back(std::move(point));
-            }
-        }
-
-        for (unsigned int i = 0; i < m_aPatch; ++i) {
-            for (unsigned int j = 0; j < m_bPatch; ++j) {
-                std::array<USHORT, Patch::patchSize> indices;
-
-                for (USHORT u = 0; u < 4; ++u) {
-                    for (USHORT v = 0; v < 4; ++v) {
-                        indices[u * 4 + v] = (i + u) * bPoints + (j + v);
-                    }
-                }
-                patches.emplace_back(indices);
             }
         }
     } else {
@@ -156,23 +112,9 @@ Surface* SurfaceBuilder::BuildBSurface() const {
                 m_sceneObjects.push_back(std::move(point));
             }
         }
-
-        for (unsigned int i = 0; i < m_aPatch; ++i) {
-            for (unsigned int j = 0; j < m_bPatch; ++j) {
-                std::array<USHORT, Patch::patchSize> indices;
-
-                for (USHORT u = 0; u < Patch::rowSize; ++u) {
-                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
-                        USHORT wrapped_i = (i + u) % aPoints;
-                        indices[u * Patch::rowSize + v] = wrapped_i * bPoints + (j + v);
-                    }
-                }
-                patches.emplace_back(indices);
-            }
-        }
     }
 
-    return new BSurface(m_type, aPoints, bPoints, m_divisions, controlPoints, patches);
+    return new BSurface(m_type, aPoints, bPoints, m_divisions, controlPoints);
 }
 
 bool SurfaceBuilder::RenderProperties() {

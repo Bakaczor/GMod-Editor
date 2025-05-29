@@ -5,7 +5,7 @@ using namespace app;
 
 unsigned short BSurface::m_globalBSurfaceNum = 0;
 
-BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, std::vector<Patch> patches) {
+BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) {
 	m_surfaceType = type;
 	m_aPoints = aPoints;
 	m_bPoints = bPoints;
@@ -18,7 +18,41 @@ BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints,
 	m_globalBSurfaceNum += 1;
 
 	std::copy(controlPoints.begin(), controlPoints.end(), std::back_inserter(m_controlPoints));
-	std::copy(patches.begin(), patches.end(), std::back_inserter(m_patches));
+	
+    if (m_surfaceType == SurfaceType::Flat) {
+        unsigned int aPatch = m_aPoints - 3;
+        unsigned int bPatch = m_bPoints - 3;
+
+        for (unsigned int i = 0; i < aPatch; ++i) {
+            for (unsigned int j = 0; j < bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < 4; ++u) {
+                    for (USHORT v = 0; v < 4; ++v) {
+                        indices[u * 4 + v] = (i + u) * m_bPoints + (j + v);
+                    }
+                }
+                m_patches.emplace_back(indices);
+            }
+        }
+    } else {
+        unsigned int aPatch = m_aPoints;
+        unsigned int bPatch = m_bPoints - 3;
+
+        for (unsigned int i = 0; i < aPatch; ++i) {
+            for (unsigned int j = 0; j < bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < Patch::rowSize; ++u) {
+                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
+                        USHORT wrapped_i = (i + u) % m_aPoints;
+                        indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j + v);
+                    }
+                }
+                m_patches.emplace_back(indices);
+            }
+        }
+    }
 
 	UpdateMidpoint();
 	for (auto& obj : m_controlPoints) {
