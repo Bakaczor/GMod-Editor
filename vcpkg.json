@@ -5,8 +5,7 @@
       "name": "imgui",
       "features": [
         "dx11-binding",
-        "win32-binding",
-        "wchar32"
+        "win32-binding"
       ]
     }
   ]

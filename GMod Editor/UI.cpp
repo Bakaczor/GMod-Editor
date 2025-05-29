@@ -6,8 +6,10 @@
 #include "Point.h"
 #include "Polyline.h"
 #include "Spline.h"
+#include "tinyfiledialogs.h"
 #include "Torus.h"
 #include "UI.h"
+#include <fstream>
 #include <unordered_set>
 
 using namespace app;
@@ -453,11 +455,72 @@ void UI::RenderIO() {
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
 
 	if (ImGui::Button("Save", ImVec2(90.f, 0.f))) {
-
+		std::string file = SaveFileDialog();
+		if (!file.empty()) {
+			SaveScene(file);
+		}
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Load", ImVec2(90.f, 0.f))) {
-
+		std::string file = OpenFileDialog();
+		if (!file.empty()) {
+			LoadJSONFile(file);
+		}
 	}	
 	ImGui::End();
+}
+
+std::string UI::OpenFileDialog() {
+	char const* filters[1] = { "*.json" };
+	char const* file = tinyfd_openFileDialog(
+		"Open JSON file",   // Title
+		"",                 // Default dir
+		1,                  // Filter count
+		filters,            // File extensions
+		nullptr,            // Filter description
+		0                   // Single select
+	);
+	return file ? file : "";
+}
+
+void UI::LoadJSONFile(const std::string& path) {
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file for reading: " + path);
+	}
+	try {
+		std::string content{ std::istreambuf_iterator<char>{file}, {} };
+		m_serializationManager.DeserializeScene(boost::json::parse(content), sceneObjects);
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Deserialization error: " + std::string(e.what()));
+	} catch (...) {
+		throw std::runtime_error("JSON parse error.");
+	}
+}
+
+std::string UI::SaveFileDialog() {
+	char const* filters[1] = { "*.json" };
+	char const* file = tinyfd_saveFileDialog(
+		"Save scene as...",   
+		"scene.json",                 
+		1,                  
+		filters,            
+		nullptr             
+	);
+	return file ? file : "";
+}
+
+void UI::SaveScene(const std::string& path) {
+	std::ofstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file for writing: " + path);
+	}
+	try {
+		boost::json::value jsonDoc = m_serializationManager.SerializeScene(sceneObjects);
+		file << boost::json::serialize(jsonDoc);
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Serialization error: " + std::string(e.what()));
+	} catch (...) {
+		throw std::runtime_error("JSON parse error.");
+	}
 }

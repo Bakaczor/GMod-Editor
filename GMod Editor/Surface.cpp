@@ -68,6 +68,16 @@ Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, u
 	geometryChanged = true;
 }
 
+Surface::~Surface() {
+	Object::~Object();
+	for (auto& obj : m_controlPoints) {
+		obj->RemoveParent(this);
+		if (obj->NumberOfParents() == 0) {
+			obj->deletable = true;
+		}
+	}
+}
+
 //Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) : m_divisions(divisions), m_surfaceType(type) {
 //	m_type = "Surface";
 //	std::ostringstream os;
@@ -264,6 +274,10 @@ unsigned int Surface::GetBPoints() const {
 
 const std::vector<Object*>& Surface::GetControlPoints() const {
 	return m_controlPoints;
+}
+
+void Surface::ClearControlPoints() {
+	m_controlPoints.clear();
 }
 
 gmod::vector3<double> Surface::UpdateMidpoint() {

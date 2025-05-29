@@ -153,11 +153,11 @@
     <ClInclude Include="Patch.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
-    <ClInclude Include="JsonSchemaTypes.h">
-      <Filter>Pliki nagłówkowe\app</Filter>
-    </ClInclude>
     <ClInclude Include="SerializationManager.h">
       <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyfiledialogs.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +250,9 @@
     </ClCompile>
     <ClCompile Include="SerializationManager.cpp">
       <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyfiledialogs.c">
+      <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

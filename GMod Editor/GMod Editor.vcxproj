@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(VcpkgManifestRoot)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <AllProjectIncludesArePublic>false</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(VcpkgManifestRoot)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)mini\;$(SolutionDir)gmod\;$(IncludePath)</IncludePath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <AllProjectIncludesArePublic>false</AllProjectIncludesArePublic>
   </PropertyGroup>
@@ -194,7 +194,6 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
-    <ClInclude Include="JsonSchemaTypes.h" />
     <ClInclude Include="Patch.h" />
     <ClInclude Include="SerializationManager.h" />
     <ClInclude Include="Spline.h" />
@@ -213,6 +212,7 @@
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceBuilder.h" />
+    <ClInclude Include="tinyfiledialogs.h" />
     <ClInclude Include="Torus.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
@@ -244,6 +244,7 @@
     <ClCompile Include="Shaders.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="SurfaceBuilder.cpp" />
+    <ClCompile Include="tinyfiledialogs.c" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="UI.cpp" />

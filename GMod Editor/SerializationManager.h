@@ -3,7 +3,6 @@
 #include "BSpline.h"
 #include "BSurface.h"
 #include "CISpline.h"
-#include "JsonSchemaTypes.h"
 #include "Torus.h"
 #include <memory>
 #include <unordered_map>

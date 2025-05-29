@@ -138,30 +138,37 @@ void SerializationManager::DeserializeGeometryObject(const json::value& jv,
         case GeometryObjectType::Torus: {
             auto ptr = std::unique_ptr<Torus>(DeserializeTorus(jv));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::Polyline: {
             auto ptr = std::unique_ptr<Polyline>(DeserializeChain(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::Spline: {
             auto ptr = std::unique_ptr<Spline>(DeserializeBezierC0(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::BSpline: {
             auto ptr = std::unique_ptr<BSpline>(DeserializeBezierC2(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::CISpline: {
             auto ptr = std::unique_ptr<CISpline>(DeserializeInterpolatedC2(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::Surface: {
             auto ptr = std::unique_ptr<Surface>(DeserializeBezierSurfaceC0(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
         case GeometryObjectType::BSurface: {
             auto ptr = std::unique_ptr<BSurface>(DeserializeBezierSurfaceC2(jv, scenePoints));
             sceneObjects.push_back(std::move(ptr));
+            break;
         }
     }
 }
@@ -204,8 +211,8 @@ Torus* SerializationManager::DeserializeTorus(const json::value& jv) {
     Torus* torus = new Torus(
         jv.at("largeRadius").as_double(),
         jv.at("smallRadius").as_double(),
-        jv.at("samples").at("u").as_uint64(),
-        jv.at("samples").at("v").as_uint64()
+        jv.at("samples").at("u").as_int64(),
+        jv.at("samples").at("v").as_int64()
     );
 
     torus->id = jv.at("id").as_int64();
@@ -370,9 +377,9 @@ Surface* SerializationManager::DeserializeBezierSurfaceC0(const json::value& jv,
     auto size = obj.at("size");
     auto samples = obj.at("samples");
 
-    unsigned int aPoints = size.at("v").as_uint64();
-    unsigned int bPoints = size.at("u").as_uint64();
-    unsigned int divisions = (samples.at("u").as_uint64() + samples.at("v").as_uint64()) / 2;
+    unsigned int aPoints = size.at("v").as_int64();
+    unsigned int bPoints = size.at("u").as_int64();
+    unsigned int divisions = (samples.at("u").as_int64() + samples.at("v").as_int64()) / 2;
     divisions = std::min(std::max(Surface::minDivisions, divisions), Surface::maxDivisions);
 
     std::vector<Object*> objects = ParseControlPoints(obj.at("controlPoints"), scenePoints);
@@ -393,7 +400,7 @@ Surface* SerializationManager::DeserializeBezierSurfaceC0(const json::value& jv,
     }
 
     Surface* surface = new Surface(type, aPoints, bPoints, divisions, objects);
-    surface->id = obj.at("id").as_uint64();
+    surface->id = obj.at("id").as_int64();
     surface->name = obj.at("name").as_string().c_str();
 
     return surface;
@@ -435,9 +442,9 @@ BSurface* SerializationManager::DeserializeBezierSurfaceC2(const json::value& jv
     auto size = obj.at("size");
     auto samples = obj.at("samples");
 
-    unsigned int aPoints = size.at("v").as_uint64();
-    unsigned int bPoints = size.at("u").as_uint64();
-    unsigned int divisions = (samples.at("u").as_uint64() + samples.at("v").as_uint64()) / 2;
+    unsigned int aPoints = size.at("v").as_int64();
+    unsigned int bPoints = size.at("u").as_int64();
+    unsigned int divisions = (samples.at("u").as_int64() + samples.at("v").as_int64()) / 2;
     divisions = std::min(std::max(Surface::minDivisions, divisions), Surface::maxDivisions);
 
     std::vector<Object*> objects = ParseControlPoints(obj.at("controlPoints"), scenePoints);
@@ -458,7 +465,7 @@ BSurface* SerializationManager::DeserializeBezierSurfaceC2(const json::value& jv
     }
 
     BSurface* surface = new BSurface(type, aPoints, bPoints, divisions, objects);
-    surface->id = obj.at("id").as_uint64();
+    surface->id = obj.at("id").as_int64();
     surface->name = obj.at("name").as_string().c_str();
 
     return surface;

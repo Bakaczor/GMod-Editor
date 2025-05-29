@@ -77,6 +77,11 @@ namespace app {
 		void RenderSettings(bool firstPass);
 		void RenderIO();
 
+		std::string OpenFileDialog();
+		void LoadJSONFile(const std::string& path);
+		std::string SaveFileDialog();
+		void SaveScene(const std::string& path);
+
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
 			const float headerHeight = ImGui::GetFrameHeightWithSpacing();

@@ -14,6 +14,7 @@ namespace app {
 
 		Surface(bool increment = false);
 		Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints);
+		virtual ~Surface();
 		//Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions);
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const override;
 		virtual void UpdateMesh(const Device& device) override;
@@ -23,7 +24,9 @@ namespace app {
 		unsigned int GetDivisions() const;
 		unsigned int GetAPoints() const;
 		unsigned int GetBPoints() const;
+
 		const std::vector<Object*>& GetControlPoints() const;
+		void ClearControlPoints();
 
 #pragma region TRANSFORM
 		virtual gmod::vector3<double> position() const override;
