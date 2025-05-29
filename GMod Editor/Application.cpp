@@ -15,8 +15,8 @@ const float Application::scaSensitivity = 0.005f;
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 1024;
 int Application::m_winHeight = 720;
-const float Application::m_near = 0.01f;
-const float Application::m_far = 1000.0f;
+const float Application::m_near = 0.05f;
+const float Application::m_far = 100.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 std::unique_ptr<AxesModel> Application::m_axesModel = std::make_unique<AxesModel>();
@@ -246,8 +246,6 @@ void Application::ResizeWnd() {
 
 void Application::Update() {
 	if (m_wndSizeChanged || m_UI->stereoscopicChanged || m_firstPass) {
-		m_UI->stereoscopicChanged = false;
-
 		ResizeWnd();
 		if (!m_UI->stereoscopicView) {
 			DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
@@ -255,10 +253,16 @@ void Application::Update() {
 		}
 	}
 
-	if (m_camera.cameraChanged || m_firstPass) {
+	if (m_camera.cameraChanged || m_UI->stereoscopicChanged || m_firstPass) {
 		m_camera.cameraChanged = false;
-		DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
-		m_device.UpdateBuffer(m_constBuffView, viewMtx);
+		if (!m_UI->stereoscopicView) {
+			DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
+			m_device.UpdateBuffer(m_constBuffView, viewMtx);
+		}
+	}
+
+	if (m_UI->stereoscopicChanged) {
+		m_UI->stereoscopicChanged = false;
 	}
 }
 
@@ -267,36 +271,45 @@ float Application::aspect() const {
 }
 
 gmod::matrix4<float> Application::projMatrix() const {
-	const float height = 1 / std::tan(0.5f * m_FOV);
-	const float width = height / aspect();
-	const float range = m_far / (m_near - m_far);
+	const float& n = m_near;
+	const float& f = m_far;
+
+	const float h = 1 / std::tan(0.5f * m_FOV);
+	const float l = h / aspect();
+	const float d = f - n;
 
 	return gmod::matrix4<float>(
-		width, 0,       0,     0,
-		0,	   height,  0,     0,
-		0,	   0,	    range, range * m_near,
-		0,     0,      -1,	   0
+		l, 0,  0,           0,
+		0, h,  0,           0,
+		0, 0, (f + n) / d, (2 * f * n) / d,
+		0, 0, -1,	        0
 	);
 }
 
 gmod::matrix4<float> Application::projMatrix_inv() const {
-	const float height_1 = std::tan(0.5f * m_FOV);
-	const float width_1 = height_1 * aspect();
-	const float range_1 = (m_near - m_far) / m_far;
+	const float& n = m_near;
+	const float& f = m_far;
+
+	const float h_1 = std::tan(0.5f * m_FOV);
+	const float w_1 = h_1 * aspect();
+	const float d = 2 * f * n;
 
 	return gmod::matrix4<float>(
-		width_1, 0,		   0,						0,
-		0,		 height_1, 0,						0,
-		0,		 0,		   0,					   -1,
-		0,		 0,		   range_1 * (1 / m_near),  1 / m_near
+		w_1, 0,	  0,		   0,
+		0,   h_1, 0,		   0,
+		0,   0,	  0,		  -1,
+		0,   0,  (f - n) / d, (f + n) / d
 	);
 }
 
 gmod::matrix4<float> Application::stereoProjMatrix(int sign) const {
-	const float d = sign * m_UI->stereoD;
-	const float shift = (d * m_near) / m_UI->stereoF;
+	const float& n = m_near;
+	const float& f = m_far;
 
-	const float t = m_near * std::tan(0.5f * m_FOV);
+	const float d = sign * m_UI->stereoD / 2;
+	const float shift = (d * n) / m_UI->stereoF;
+
+	const float t = n * std::tan(0.5f * m_FOV);
 	const float b = -t;
 
 	const float width_2 = t * aspect();
@@ -305,12 +318,12 @@ gmod::matrix4<float> Application::stereoProjMatrix(int sign) const {
 	const float r = width_2 + shift;
 	
 
-	const float A = (2.f * m_near) / (r - l);
-	const float F = (2.f * m_near) / (t - b);
+	const float A = (2 * n) / (r - l);
+	const float F = (2 * n) / (t - b);
 	const float C = (r + l) / (r - l);
 	const float G = (t + b) / (t - b);
-	const float K = m_far / (m_near - m_far);
-	const float L = (m_far * m_near) / (m_near - m_far);
+	const float K = (f + n) / (f - n);
+	const float L = (2 * f * n) / (f - n);
 
 	return gmod::matrix4<float>(
 		A, 0,  C, 0,
@@ -390,6 +403,9 @@ void Application::Render() {
 
 void app::Application::RenderStereoscopic(int sign, ImVec4& color) {
 	m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(reinterpret_cast<float*>(&color)));
+
+	DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.stereoViewMatrix(sign, m_UI->stereoD));
+	m_device.UpdateBuffer(m_constBuffView, viewMtx);
 
 	DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(stereoProjMatrix(sign));
 	m_device.UpdateBuffer(m_constBuffProj, projMtx);

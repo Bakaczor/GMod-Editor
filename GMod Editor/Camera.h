@@ -19,6 +19,7 @@ namespace app {
 
 		gmod::matrix4<float> viewMatrix() const;
 		gmod::matrix4<float> viewMatrix_inv() const;
+		gmod::matrix4<float> stereoViewMatrix(int sign, float D) const;
 		gmod::vector4<float> cameraPosition() const;
 
 		void Move(float dx, float dy);

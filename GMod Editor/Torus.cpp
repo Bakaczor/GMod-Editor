@@ -143,8 +143,8 @@ void Torus::RecalculateGeometry() {
 
 			VERTEX vertex{
 				.x = cosv * (m_R + m_r * cosu),
-				.y = sinv * (m_R + m_r * cosu),
-				.z = m_r * sinu
+				.y = m_r * sinu,
+				.z = sinv * (m_R + m_r * cosu)
 			};
 			m_vertices.push_back(vertex);
 		}

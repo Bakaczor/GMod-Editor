@@ -57,7 +57,7 @@ namespace app {
 		ImVec4 slctdColor = ImVec4(1.f, 1.f, 0.f, 1.f);
 		ImVec4 stereoCyan = ImVec4(0.f, 1.f, 1.f, 1.f);
 		ImVec4 stereoRed = ImVec4(1.f, 0.f, 0.f, 1.f);
-		float stereoD = 0.005f;
+		float stereoD = 0.01f;
 		float stereoF = 1.f;
 
 		UI();

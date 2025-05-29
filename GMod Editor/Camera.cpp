@@ -88,6 +88,22 @@ gmod::matrix4<float> Camera::viewMatrix_inv() const {
 	);
 }
 
+gmod::matrix4<float> Camera::stereoViewMatrix(int sign, float D) const {
+	const float d = sign * D / 2;
+
+	const gmod::vector3<float> ax = m_target.right();
+	const gmod::vector3<float> ay = m_target.up();
+	const gmod::vector3<float> az = m_target.forward();
+	const gmod::vector3<float> eye = cameraPosition() - ax * d;
+
+	return gmod::matrix4<float>(
+		ax.x(), ax.y(), ax.z(), -dot(ax, eye),
+		ay.x(), ay.y(), ay.z(), -dot(ay, eye),
+		az.x(), az.y(), az.z(), -dot(az, eye),
+		0, 0, 0, 1
+	);
+}
+
 gmod::vector4<float> Camera::cameraPosition() const {
 	if (m_dist == 0.0f) {
 		return gmod::vector4<float>(m_target.position(), 1.0f);
