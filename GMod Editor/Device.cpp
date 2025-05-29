@@ -52,6 +52,16 @@ mini::dx_ptr<ID3D11BlendState> Device::CreateBlendState(const BlendDescription& 
 	return result;
 }
 
+mini::dx_ptr<ID3D11DepthStencilState> Device::CreateDepthStencilState(const DepthStencilDescription& desc) const {
+	ID3D11DepthStencilState* temp = nullptr;
+	auto hr = m_device->CreateDepthStencilState(&desc, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11DepthStencilState> result(temp);
+	return result;
+}
+
 #pragma region VIEWS
 mini::dx_ptr<ID3D11RenderTargetView> Device::CreateRenderTargetView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
 	ID3D11RenderTargetView* temp;

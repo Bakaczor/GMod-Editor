@@ -56,6 +56,7 @@ void SerializationManager::DeserializeScene(const json::value& jsonDoc, std::vec
     std::unordered_map<int, Object*> scenePoints;
     if (jsonDoc.as_object().contains("points")) {
         for (const auto& jv : jsonDoc.at("points").as_array()) {
+            if (Contains(jv.at("id").as_int64(), sceneObjects)) { continue; }
             auto ptr = std::unique_ptr<Point>(DeserializePoint(jv));
             scenePoints[ptr->id] = ptr.get();
             sceneObjects.push_back(std::move(ptr));
@@ -133,6 +134,7 @@ json::value SerializationManager::SerializeGeometryObject(const Object* object) 
 void SerializationManager::DeserializeGeometryObject(const json::value& jv,
     const std::unordered_map<int, Object*>& scenePoints, std::vector<std::unique_ptr<Object>>& sceneObjects) {
     const auto& obj = jv.as_object();
+    if (Contains(obj.at("id").as_int64(), sceneObjects)) { return; }
     GeometryObjectType type = m_jsonGeometryLookup.at(obj.at("objectType").as_string().c_str());
     switch (type) {
         case GeometryObjectType::Torus: {

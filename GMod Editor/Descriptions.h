@@ -41,6 +41,11 @@ namespace app {
 		BlendDescription();
 
 		static BlendDescription AlphaBlendDescription();
+		static BlendDescription AdditiveBlendDescription();
+	};
+
+	struct DepthStencilDescription : D3D11_DEPTH_STENCIL_DESC {
+		DepthStencilDescription();
 	};
 
 }

@@ -51,8 +51,14 @@ namespace app {
 		bool showGrid = false;
 		bool showAxes = false;
 		bool hideControlPoints = false;
-		ImVec4 bkgdColor = ImVec4(0.33f, 0.33f, 0.33f, 1.0f);
-		ImVec4 slctdColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+		bool stereoscopicView = false;
+		bool stereoscopicChanged = false;
+		ImVec4 bkgdColor = ImVec4(0.2f, 0.2f, 0.2f, 0.f);
+		ImVec4 slctdColor = ImVec4(1.f, 1.f, 0.f, 1.f);
+		ImVec4 stereoCyan = ImVec4(0.f, 1.f, 1.f, 1.f);
+		ImVec4 stereoRed = ImVec4(1.f, 0.f, 0.f, 1.f);
+		float stereoD = 0.005f;
+		float stereoF = 1.f;
 
 		UI();
 		void Render(bool firstPass, Camera& camera);

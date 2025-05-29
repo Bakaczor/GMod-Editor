@@ -67,6 +67,7 @@ namespace app {
 		void RenderUI();
 		void Update();
 		void Render();
+		void RenderStereoscopic(int sign, ImVec4& color);
 
 		void HandleTransformsOnMouseMove(LPARAM lParam);
 		void HandleCameraOnMouseMove(LPARAM lParam);
@@ -95,6 +96,7 @@ namespace app {
 		float aspect() const;
 		gmod::matrix4<float> projMatrix() const;
 		gmod::matrix4<float> projMatrix_inv() const;
+		gmod::matrix4<float> stereoProjMatrix(int sign) const;
 #pragma endregion
 
 #pragma region DEVICE
@@ -104,6 +106,8 @@ namespace app {
 		mini::dx_ptr<ID3D11RasterizerState> m_rastState;
 		mini::dx_ptr<ID3D11RasterizerState> m_rastStateWireframe;
 		mini::dx_ptr<ID3D11BlendState> m_blendState;
+		mini::dx_ptr<ID3D11DepthStencilState> m_dssWrite;
+		mini::dx_ptr<ID3D11DepthStencilState> m_dssNoWrite;
 		std::unordered_map<ShaderType, Shaders> m_shaders;
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;

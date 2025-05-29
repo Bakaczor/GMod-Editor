@@ -145,8 +145,12 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
 
-	m_blendState = m_device.CreateBlendState(BlendDescription::AlphaBlendDescription());
-	// m_device.deviceContext()->OMSetBlendState(m_blendState.get(), nullptr, UINT_MAX);
+	m_blendState = m_device.CreateBlendState(BlendDescription::AdditiveBlendDescription());
+
+	DepthStencilDescription dsdesc;
+	m_dssWrite = m_device.CreateDepthStencilState(dsdesc);
+	dsdesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	m_dssNoWrite = m_device.CreateDepthStencilState(dsdesc);
 
 	rsdesc.FillMode = D3D11_FILL_WIREFRAME;
 	m_rastStateWireframe = m_device.CreateRasterizerState(rsdesc);
@@ -241,10 +245,14 @@ void Application::ResizeWnd() {
 }
 
 void Application::Update() {
-	if (m_wndSizeChanged || m_firstPass) {
+	if (m_wndSizeChanged || m_UI->stereoscopicChanged || m_firstPass) {
+		m_UI->stereoscopicChanged = false;
+
 		ResizeWnd();
-		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
-		m_device.UpdateBuffer(m_constBuffProj, projMtx);
+		if (!m_UI->stereoscopicView) {
+			DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
+			m_device.UpdateBuffer(m_constBuffProj, projMtx);
+		}
 	}
 
 	if (m_camera.cameraChanged || m_firstPass) {
@@ -259,28 +267,56 @@ float Application::aspect() const {
 }
 
 gmod::matrix4<float> Application::projMatrix() const {
-	const float Height = 1 / std::tan(0.5f * m_FOV);
-	const float Width = Height / aspect();
-	const float Range = m_far / (m_near - m_far);
+	const float height = 1 / std::tan(0.5f * m_FOV);
+	const float width = height / aspect();
+	const float range = m_far / (m_near - m_far);
 
 	return gmod::matrix4<float>(
-		Width, 0,       0,     0,
-		0,	   Height,  0,     0,
-		0,	   0,	    Range, Range * m_near,
+		width, 0,       0,     0,
+		0,	   height,  0,     0,
+		0,	   0,	    range, range * m_near,
 		0,     0,      -1,	   0
 	);
 }
 
 gmod::matrix4<float> Application::projMatrix_inv() const {
-	const float Height_1 = std::tan(0.5f * m_FOV);
-	const float Width_1 = Height_1 * aspect();
-	const float Range_1 = (m_near - m_far) / m_far;
+	const float height_1 = std::tan(0.5f * m_FOV);
+	const float width_1 = height_1 * aspect();
+	const float range_1 = (m_near - m_far) / m_far;
 
 	return gmod::matrix4<float>(
-		Width_1, 0,		   0,						0,
-		0,		 Height_1, 0,						0,
+		width_1, 0,		   0,						0,
+		0,		 height_1, 0,						0,
 		0,		 0,		   0,					   -1,
-		0,		 0,		   Range_1 * (1 / m_near),  1 / m_near
+		0,		 0,		   range_1 * (1 / m_near),  1 / m_near
+	);
+}
+
+gmod::matrix4<float> Application::stereoProjMatrix(int sign) const {
+	const float d = sign * m_UI->stereoD;
+	const float shift = (d * m_near) / m_UI->stereoF;
+
+	const float t = m_near * std::tan(0.5f * m_FOV);
+	const float b = -t;
+
+	const float width_2 = t * aspect();
+
+	const float l = -width_2 + shift;
+	const float r = width_2 + shift;
+	
+
+	const float A = (2.f * m_near) / (r - l);
+	const float F = (2.f * m_near) / (t - b);
+	const float C = (r + l) / (r - l);
+	const float G = (t + b) / (t - b);
+	const float K = m_far / (m_near - m_far);
+	const float L = (m_far * m_near) / (m_near - m_far);
+
+	return gmod::matrix4<float>(
+		A, 0,  C, 0,
+		0, F,  G, 0,
+		0, 0,  K, L,
+		0, 0, -1, 0
 	);
 }
 
@@ -310,6 +346,16 @@ void Application::Render() {
 		m_axes.RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 
+	if (m_UI->stereoscopicView) {
+		m_device.deviceContext()->OMSetBlendState(m_blendState.get(), nullptr, UINT_MAX);
+		m_device.deviceContext()->OMSetDepthStencilState(m_dssNoWrite.get(), 0);
+		RenderStereoscopic(-1, m_UI->stereoRed);
+		RenderStereoscopic(+1, m_UI->stereoCyan);
+		m_device.deviceContext()->OMSetDepthStencilState(nullptr, 0);
+		m_device.deviceContext()->OMSetBlendState(nullptr, nullptr, UINT_MAX);
+		return;
+	}
+
 	for (auto& obj : m_UI->sceneObjects) {
 		if (m_UI->hideControlPoints && typeid(Point) == typeid(*obj.get())) { continue; }
 
@@ -337,10 +383,40 @@ void Application::Render() {
 		if (nullptr != surf) {
 			unsigned int divisions = surf->GetDivisions();
 			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
-			obj->RenderMesh(m_device.deviceContext(), m_shaders);
-		} else {
-			obj->RenderMesh(m_device.deviceContext(), m_shaders);
+		} 
+		obj->RenderMesh(m_device.deviceContext(), m_shaders);
+	}
+}
+
+void app::Application::RenderStereoscopic(int sign, ImVec4& color) {
+	m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(reinterpret_cast<float*>(&color)));
+
+	DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(stereoProjMatrix(sign));
+	m_device.UpdateBuffer(m_constBuffProj, projMtx);
+
+	for (auto& obj : m_UI->sceneObjects) {
+		if (m_UI->hideControlPoints && typeid(Point) == typeid(*obj.get())) { continue; }
+
+		auto opt = obj->GetSubObjects();
+		if (opt.has_value()) {
+			for (auto& subObj : *opt.value()) {
+				if (m_UI->hideControlPoints && typeid(Point) == typeid(*subObj.get())) { continue; }
+				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
+				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
+			}
 		}
+
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
+		if (obj->geometryChanged || m_firstPass) {
+			obj->UpdateMesh(m_device);
+		}
+		auto surf = dynamic_cast<Surface*>(obj.get());
+		if (nullptr != surf) {
+			unsigned int divisions = surf->GetDivisions();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+		}
+		obj->RenderMesh(m_device.deviceContext(), m_shaders);
+
 	}
 }
 

@@ -443,6 +443,16 @@ void UI::RenderSettings(bool firstPass) {
 		ImGui::Checkbox("Show Axes", &showAxes);
 		ImGui::Checkbox("Hide control points", &hideControlPoints);
 		ImGui::Checkbox("Use MMB", &useMMB);
+		if (ImGui::Checkbox("Stereoscopic view", &stereoscopicView)) {
+			stereoscopicChanged = true;
+		}
+		if (stereoscopicView) {
+			ImGui::SetNextItemWidth(125.f);
+			ImGui::InputFloat("d", &stereoD, 0.0001f, 0.001f, "%.4f", ImGuiInputTextFlags_CharsDecimal);
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(125.f);
+			ImGui::InputFloat("f", &stereoF, 0.001f, 0.01f, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+		}
 	}
 	ImGui::End();
 }

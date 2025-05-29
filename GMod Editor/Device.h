@@ -98,6 +98,8 @@ namespace app {
 
 		mini::dx_ptr<ID3D11BlendState> CreateBlendState(const BlendDescription& desc = {}) const;
 
+		mini::dx_ptr<ID3D11DepthStencilState> CreateDepthStencilState(const DepthStencilDescription& desc = {}) const;
+
 	private:
 		mini::dx_ptr<ID3D11Device> m_device;
 		mini::dx_ptr<ID3D11DeviceContext> m_deviceContext;
