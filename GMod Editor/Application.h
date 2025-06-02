@@ -1,8 +1,8 @@
 #pragma once
 #include "framework.h"
 #include <Windows.h>
-#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_impl_dx11.h"
-#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_impl_win32.h"
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 #include "../gmod/matrix4.h"
 #include "../gmod/quaternion.h"
 #include "../gmod/vector3.h"

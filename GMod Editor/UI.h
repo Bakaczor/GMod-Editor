@@ -1,5 +1,5 @@
 #pragma once
-#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui.h"
+#include <imgui.h>
 #include "Cursor.h"
 #include "framework.h"
 #include "Object.h"

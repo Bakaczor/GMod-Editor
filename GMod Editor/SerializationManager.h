@@ -1,9 +1,9 @@
 #pragma once
-#include "../vcpkg_installed/x64-windows/x64-windows/include/boost/json.hpp"
 #include "BSpline.h"
 #include "BSurface.h"
 #include "CISpline.h"
 #include "Torus.h"
+#include <boost/json.hpp>
 #include <memory>
 #include <unordered_map>
 

@@ -1,7 +1,7 @@
 #include "Object.h"
 #include "ObjectGroup.h"
 #include "Surface.h"
-#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_stdlib.h"
+#include <imgui_stdlib.h>
 
 using namespace app;
 
