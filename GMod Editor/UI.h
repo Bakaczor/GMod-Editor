@@ -1,9 +1,10 @@
 #pragma once
-#include "../imgui/imgui.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui.h"
 #include "Cursor.h"
 #include "framework.h"
 #include "Object.h"
 #include "ObjectGroup.h"
+#include "SerializationManager.h"
 #include "SurfaceBuilder.h"
 #include <memory>
 
@@ -49,9 +50,17 @@ namespace app {
 		bool useMMB = true;
 		bool showGrid = false;
 		bool showAxes = false;
-		ImVec4 bkgdColor = ImVec4(0.33f, 0.33f, 0.33f, 1.0f);
-		ImVec4 slctdColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+		bool hideControlPoints = false;
+		bool stereoscopicView = false;
+		bool stereoscopicChanged = false;
+		ImVec4 bkgdColor = ImVec4(0.2f, 0.2f, 0.2f, 0.f);
+		ImVec4 slctdColor = ImVec4(1.f, 1.f, 0.f, 1.f);
+		ImVec4 stereoCyan = ImVec4(0.f, 1.f, 1.f, 1.f);
+		ImVec4 stereoRed = ImVec4(1.f, 0.f, 0.f, 1.f);
+		float stereoD = 0.01f;
+		float stereoF = 1.f;
 
+		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
 		int m_selectedObjType = 0;
@@ -64,12 +73,20 @@ namespace app {
 		SurfaceBuilder m_surfaceBuilder;
 		bool m_showSurfaceBuilder = false;
 
+		SerializationManager m_serializationManager;
+
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);
+		void RenderIO();
+
+		std::string OpenFileDialog();
+		void LoadJSONFile(const std::string& path);
+		std::string SaveFileDialog();
+		void SaveScene(const std::string& path);
 
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();

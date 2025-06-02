@@ -1,8 +1,8 @@
 #pragma once
 #include "framework.h"
 #include <Windows.h>
-#include "../imgui/backends/imgui_impl_dx11.h"
-#include "../imgui/backends/imgui_impl_win32.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_impl_dx11.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_impl_win32.h"
 #include "../gmod/matrix4.h"
 #include "../gmod/quaternion.h"
 #include "../gmod/vector3.h"
@@ -22,6 +22,11 @@
 #include <unordered_map>
 
 namespace app {
+	struct TessellationConstants {
+		uint32_t divisions;  // 4 bytes
+		float padding[3];    // 12 bytes
+	};
+
 	class UI;
 
 	class Application : public mini::WindowApplication {
@@ -62,6 +67,7 @@ namespace app {
 		void RenderUI();
 		void Update();
 		void Render();
+		void RenderStereoscopic(int sign, ImVec4& color);
 
 		void HandleTransformsOnMouseMove(LPARAM lParam);
 		void HandleCameraOnMouseMove(LPARAM lParam);
@@ -90,6 +96,7 @@ namespace app {
 		float aspect() const;
 		gmod::matrix4<float> projMatrix() const;
 		gmod::matrix4<float> projMatrix_inv() const;
+		gmod::matrix4<float> stereoProjMatrix(int sign) const;
 #pragma endregion
 
 #pragma region DEVICE
@@ -97,12 +104,17 @@ namespace app {
 		mini::dx_ptr<ID3D11RenderTargetView> m_backBuffer;
 		mini::dx_ptr<ID3D11DepthStencilView> m_depthBuffer;
 		mini::dx_ptr<ID3D11RasterizerState> m_rastState;
+		mini::dx_ptr<ID3D11RasterizerState> m_rastStateWireframe;
+		mini::dx_ptr<ID3D11BlendState> m_blendState;
+		mini::dx_ptr<ID3D11DepthStencilState> m_dssWrite;
+		mini::dx_ptr<ID3D11DepthStencilState> m_dssNoWrite;
 		std::unordered_map<ShaderType, Shaders> m_shaders;
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffView;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffTessConst;
 #pragma endregion
 	};
 }

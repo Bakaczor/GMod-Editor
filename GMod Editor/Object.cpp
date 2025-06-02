@@ -1,6 +1,7 @@
 #include "Object.h"
 #include "ObjectGroup.h"
-#include "../imgui/misc/cpp/imgui_stdlib.h"
+#include "Surface.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui_stdlib.h"
 
 using namespace app;
 
@@ -23,6 +24,11 @@ Object::~Object() {
 		if (selection != nullptr) {
 			selection->geometryChanged = true;
 			std::erase_if(selection->objects, [this](const auto& o) { return o->id == id; });
+		} else {
+			auto surface = dynamic_cast<Surface*>(obj);
+			if (surface != nullptr) {
+				surface->ClearControlPoints();
+			}
 		}
 	}
 }
@@ -81,6 +87,11 @@ void Object::InformParents() {
 		obj->m_sender = this;
 	}
 }
+
+unsigned int Object::NumberOfParents() const {
+	return m_parents.size();
+}
+
 #pragma endregion
 #pragma region TRANSFORM
 gmod::vector3<double> Object::position() const { 

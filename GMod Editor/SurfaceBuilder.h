@@ -1,5 +1,4 @@
 #pragma once
-#include "../imgui/imgui.h"
 #include "framework.h"
 #include "Surface.h"
 
@@ -8,12 +7,13 @@ namespace app {
 	public:
 		bool shouldBuild;
 
-		SurfaceBuilder();
+		SurfaceBuilder(std::vector<std::unique_ptr<Object>>& sceneObjects);
 		bool RenderProperties();
 		Surface* Build() const;
 		void Reset();
+		void SetC2(bool isC2);
 	private:
-		static const unsigned int m_minDivisions = 4;
+		std::vector<std::unique_ptr<Object>>& m_sceneObjects;
 		SurfaceType m_type;
 		bool m_isC2;
 		float m_a;
@@ -21,5 +21,8 @@ namespace app {
 		unsigned int m_aPatch;
 		unsigned int m_bPatch;
 		unsigned int m_divisions;
+
+		Surface* BuildSurface() const;
+		Surface* BuildBSurface() const;
 	};
 }

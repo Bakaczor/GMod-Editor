@@ -1,7 +1,7 @@
 #pragma once
 #include "../gmod/Transform.h"
 #include "../gmod/vector3.h"
-#include "../imgui/imgui.h"
+#include "../vcpkg_installed/x64-windows/x64-windows/include/imgui.h"
 #include "framework.h"
 #include "Mesh.h"
 #include "Shaders.h"
@@ -19,6 +19,7 @@ namespace app {
 		std::string type() const { return m_type; }
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
+		bool deletable = true;
 
 		Object();
 		virtual ~Object();
@@ -31,6 +32,7 @@ namespace app {
 		virtual void AddParent(Object* obj);
 		virtual void RemoveParent(Object* obj);
 		virtual void InformParents();
+		virtual unsigned int NumberOfParents() const;
 #pragma endregion
 #pragma region TRANSFORM
 		virtual gmod::vector3<double> position() const;

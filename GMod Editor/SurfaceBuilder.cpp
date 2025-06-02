@@ -1,10 +1,12 @@
+#include "Application.h"
 #include "BSurface.h"
+#include "Point.h"
 #include "SurfaceBuilder.h"
 
 using namespace app;
 
-SurfaceBuilder::SurfaceBuilder() : shouldBuild(false), m_type(SurfaceType::Flat), m_isC2(false),
-m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(m_minDivisions) {}
+SurfaceBuilder::SurfaceBuilder(std::vector<std::unique_ptr<Object>>& sceneObjects) : m_sceneObjects(sceneObjects),
+shouldBuild(false), m_type(SurfaceType::Flat), m_isC2(false), m_a(1.0f), m_b(1.0f), m_aPatch(2), m_bPatch(2), m_divisions(Surface::minDivisions) {}
 
 void SurfaceBuilder::Reset() {
     m_type = SurfaceType::Flat;
@@ -13,8 +15,106 @@ void SurfaceBuilder::Reset() {
     m_b = 1.0f;                     
     m_aPatch = 2;                   
     m_bPatch = 2;                    
-    m_divisions = m_minDivisions;     
+    m_divisions = Surface::minDivisions;     
     shouldBuild = false;           
+}
+
+void SurfaceBuilder::SetC2(bool isC2) {
+    m_isC2 = isC2;
+}
+
+Surface* SurfaceBuilder::BuildSurface() const {
+    unsigned int aPoints, bPoints;
+    std::vector<Object*> controlPoints;
+
+    if (m_type == SurfaceType::Flat) {
+        aPoints = m_aPatch * (Patch::rowSize - 1) + 1;
+        bPoints = m_bPatch * (Patch::rowSize - 1) + 1;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, 0.0f, z);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+    } else {
+        aPoints = m_aPatch * (Patch::rowSize - 1);
+        bPoints = m_bPatch * (Patch::rowSize - 1) + 1;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float x = m_a * cos(angle);
+                float y = m_a * sin(angle);
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, z, y);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+    }
+
+    return new Surface(m_type, aPoints, bPoints, m_divisions, controlPoints);
+}
+
+Surface* SurfaceBuilder::BuildBSurface() const {
+    unsigned int aPoints, bPoints;
+    std::vector<Object*> controlPoints;
+
+    if (m_type == SurfaceType::Flat) {
+        aPoints = m_aPatch + 3;
+        bPoints = m_bPatch + 3;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, 0.0f, z);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+    } else {
+        aPoints = m_aPatch;
+        bPoints = m_bPatch + 3;
+        controlPoints.reserve(aPoints * bPoints);
+
+        for (unsigned int i = 0; i < aPoints; ++i) {
+            for (unsigned int j = 0; j < bPoints; ++j) {
+                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                point->deletable = false;
+
+                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float x = m_a * std::cos(angle);
+                float y = m_a * std::sin(angle);
+                float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
+                point->SetTranslation(x, z, y);
+
+                controlPoints.push_back(point.get());
+                m_sceneObjects.push_back(std::move(point));
+            }
+        }
+    }
+
+    return new BSurface(m_type, aPoints, bPoints, m_divisions, controlPoints);
 }
 
 bool SurfaceBuilder::RenderProperties() {
@@ -56,17 +156,23 @@ bool SurfaceBuilder::RenderProperties() {
         ImGui::Separator();
         ImGui::Text("Number of patches:");
 
+        int min_aPatch = 1;
+        if (m_isC2 && m_type == SurfaceType::Cylindric) {
+            // special case, where for C2 cylinder minimum number of patches in A dimension is 3
+            min_aPatch = 3;
+        }
+
         int aPatch = m_aPatch;
         ImGui::InputInt("First count", &aPatch, 1, 2);
-        m_aPatch = std::max(1, aPatch);
+        m_aPatch = std::max(min_aPatch, aPatch);
 
         int bPatch = m_bPatch;
         ImGui::InputInt("Second count", &bPatch, 1, 2);
         m_bPatch = std::max(1, bPatch);
 
         int divisions = m_divisions;
-        ImGui::InputInt("Divisions", &divisions, 1, static_cast<int>(m_minDivisions));
-        m_divisions = std::max(static_cast<int>(m_minDivisions), divisions);
+        ImGui::InputInt("Divisions", &divisions, 1, static_cast<int>(Surface::minDivisions));
+        m_divisions = std::min(std::max(static_cast<int>(Surface::minDivisions), divisions), static_cast<int>(Surface::maxDivisions));
 
         ImGui::Separator();
         ImGuiStyle& style = ImGui::GetStyle();
@@ -90,8 +196,8 @@ bool SurfaceBuilder::RenderProperties() {
 
 Surface* SurfaceBuilder::Build() const {
 	if (m_isC2) {
-		return new BSurface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
+		return BuildBSurface();
 	} else {
-		return new Surface(m_type, m_a, m_b, m_aPatch, m_bPatch, m_divisions);
+        return BuildSurface();
 	}
 }

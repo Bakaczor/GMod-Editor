@@ -6,8 +6,10 @@
 #include "Point.h"
 #include "Polyline.h"
 #include "Spline.h"
+#include "tinyfiledialogs.h"
 #include "Torus.h"
 #include "UI.h"
+#include <fstream>
 #include <unordered_set>
 
 using namespace app;
@@ -17,9 +19,12 @@ const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
 
+UI::UI() : m_surfaceBuilder(sceneObjects) {}
+
 void UI::Render(bool firstPass, Camera& camera) {
 	RenderRightPanel(firstPass, camera);
 	RenderSettings(firstPass);
+	RenderIO();
 }
 
 void UI::RenderRightPanel(bool firstPass, Camera& camera) {
@@ -192,10 +197,12 @@ void UI::RenderCursor() {
 			}
 			case ObjectType::Surface: {
 				m_showSurfaceBuilder = true;
+				m_surfaceBuilder.SetC2(false);
 				break;
 			}
 			case ObjectType::BSurface: {
 				m_showSurfaceBuilder = true;
+				m_surfaceBuilder.SetC2(true);
 				break;
 			}
 		}
@@ -256,10 +263,12 @@ void UI::RenderObjectTable() {
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (!selection.Empty()) {
 			std::unordered_set<int> toDelete;
-			toDelete.reserve(selection.objects.size());
+			// toDelete.reserve(selection.objects.size());
 
 			for (auto& obj : selection.objects) {
-				toDelete.insert(obj->id);
+				if (obj->deletable) {
+					toDelete.insert(obj->id);
+				}
 			}
 
 			std::erase_if(sceneObjects, [&toDelete](const auto& o) {
@@ -419,7 +428,7 @@ void UI::RenderProperties() {
 }
 
 void UI::RenderSettings(bool firstPass) {
-	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
 	if (firstPass) {
@@ -427,12 +436,101 @@ void UI::RenderSettings(bool firstPass) {
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
 		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 150.0f), ImGuiCond_Always);
+		ImGui::SetWindowSize(ImVec2(size.x, 0.f), ImGuiCond_Always);
 		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
 		ImGui::ColorEdit3("Selected", reinterpret_cast<float*>(&slctdColor));
 		ImGui::Checkbox("Show Grid", &showGrid);
 		ImGui::Checkbox("Show Axes", &showAxes);
+		ImGui::Checkbox("Hide control points", &hideControlPoints);
 		ImGui::Checkbox("Use MMB", &useMMB);
+		if (ImGui::Checkbox("Stereoscopic view", &stereoscopicView)) {
+			stereoscopicChanged = true;
+		}
+		if (stereoscopicView) {
+			ImGui::SetNextItemWidth(125.f);
+			ImGui::InputFloat("d", &stereoD, 0.0001f, 0.001f, "%.4f", ImGuiInputTextFlags_CharsDecimal);
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(125.f);
+			ImGui::InputFloat("f", &stereoF, 0.001f, 0.01f, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+		}
 	}
 	ImGui::End();
+}
+
+void UI::RenderIO() {
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(0.f, viewport->Size.y - 35.f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
+	ImGui::Begin("io-buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
+
+	if (ImGui::Button("Save", ImVec2(90.f, 0.f))) {
+		std::string file = SaveFileDialog();
+		if (!file.empty()) {
+			SaveScene(file);
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Load", ImVec2(90.f, 0.f))) {
+		std::string file = OpenFileDialog();
+		if (!file.empty()) {
+			LoadJSONFile(file);
+		}
+	}	
+	ImGui::End();
+}
+
+std::string UI::OpenFileDialog() {
+	char const* filters[1] = { "*.json" };
+	char const* file = tinyfd_openFileDialog(
+		"Open JSON file",   // Title
+		"",                 // Default dir
+		1,                  // Filter count
+		filters,            // File extensions
+		nullptr,            // Filter description
+		0                   // Single select
+	);
+	return file ? file : "";
+}
+
+void UI::LoadJSONFile(const std::string& path) {
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file for reading: " + path);
+	}
+	try {
+		std::string content{ std::istreambuf_iterator<char>{file}, {} };
+		m_serializationManager.DeserializeScene(boost::json::parse(content), sceneObjects);
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Deserialization error: " + std::string(e.what()));
+	} catch (...) {
+		throw std::runtime_error("JSON parse error.");
+	}
+}
+
+std::string UI::SaveFileDialog() {
+	char const* filters[1] = { "*.json" };
+	char const* file = tinyfd_saveFileDialog(
+		"Save scene as...",   
+		"scene.json",                 
+		1,                  
+		filters,            
+		nullptr             
+	);
+	return file ? file : "";
+}
+
+void UI::SaveScene(const std::string& path) {
+	std::ofstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file for writing: " + path);
+	}
+	try {
+		boost::json::value jsonDoc = m_serializationManager.SerializeScene(sceneObjects);
+		file << boost::json::serialize(jsonDoc);
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Serialization error: " + std::string(e.what()));
+	} catch (...) {
+		throw std::runtime_error("JSON parse error.");
+	}
 }

@@ -67,6 +67,8 @@ namespace app {
 
 		mini::dx_ptr<ID3D11DomainShader> CreateDomainShader(std::vector<BYTE> dsCode) const;
 
+		mini::dx_ptr<ID3D11GeometryShader> CreateGeometryShader(std::vector<BYTE> gsCode) const;
+
 		mini::dx_ptr<ID3D11PixelShader> CreatePixelShader(std::vector<BYTE> psCode) const;
 
 		static std::vector<BYTE> LoadByteCode(const std::wstring& filename);
@@ -93,6 +95,10 @@ namespace app {
 		mini::dx_ptr<ID3D11Texture2D> CreateTexture(const D3D11_TEXTURE2D_DESC& desc) const;
 
 		mini::dx_ptr<ID3D11RasterizerState> CreateRasterizerState(const D3D11_RASTERIZER_DESC& desc) const;
+
+		mini::dx_ptr<ID3D11BlendState> CreateBlendState(const BlendDescription& desc = {}) const;
+
+		mini::dx_ptr<ID3D11DepthStencilState> CreateDepthStencilState(const DepthStencilDescription& desc = {}) const;
 
 	private:
 		mini::dx_ptr<ID3D11Device> m_device;

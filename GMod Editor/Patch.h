@@ -6,10 +6,7 @@ namespace app {
 	public:
 		static const size_t patchSize = 16U;
 		static const size_t rowSize = 4U;
-		Patch();
-		void AddRow(std::array<Object*, rowSize> row);
-		std::array<DirectX::XMFLOAT3, patchSize> GetPatch() const;
-	private:
-		std::vector<Object*> m_points;
+		std::array<USHORT, patchSize> indices;
+		Patch(std::array<USHORT, patchSize> indices);
 	};
 }

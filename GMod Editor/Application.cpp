@@ -15,8 +15,8 @@ const float Application::scaSensitivity = 0.005f;
 const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 1024;
 int Application::m_winHeight = 720;
-const float Application::m_near = 0.01f;
-const float Application::m_far = 1000.0f;
+const float Application::m_near = 0.05f;
+const float Application::m_far = 100.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 std::unique_ptr<AxesModel> Application::m_axesModel = std::make_unique<AxesModel>();
@@ -28,10 +28,10 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
-	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>())
+	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>()),
+	m_constBuffTessConst(m_device.CreateConstantBuffer<TessellationConstants>())
 {
 	m_UI = std::make_unique<UI>();
-	m_UI->sceneObjects.push_back(std::make_unique<Cube>(m_cubeModel.get()));
 	m_mouse.prevCursorPos = {
 		static_cast<LONG>(m_winWidth),
 		static_cast<LONG>(m_winHeight)
@@ -48,6 +48,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_r),
 				nullptr, // domain
 				nullptr, // hull
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_r)
 			}
@@ -59,6 +60,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwc),
 				nullptr, // domain
 				nullptr, // hull
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_rwc),
 				m_device.CreateInputLayout<Vertex_PoCo>(vsBytes_rwc)
 			}
@@ -71,6 +73,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwt),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -81,6 +84,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwt),
 				m_device.CreateDomainShader(dsBytes_rwtbs),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -93,8 +97,33 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateVertexShader(vsBytes_rwtcis),
 				m_device.CreateHullShader(hsBytes_rwtcis),
 				m_device.CreateDomainShader(dsBytes_rwtcis),
+				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_PoCoef>(vsBytes_rwtcis)
+			}
+		));
+		// RegularWithTesselationSurface
+		const auto hsBytes_rwtsr = Device::LoadByteCode(L"hs_rwtsr.cso");
+		const auto dsBytes_rwtsr = Device::LoadByteCode(L"ds_rwtsr.cso");
+		const auto gsBytes_rwtsr = Device::LoadByteCode(L"gs_rwtsr.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationSurface, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwtsr),
+				m_device.CreateDomainShader(dsBytes_rwtsr),
+				m_device.CreateGeometryShader(gsBytes_rwtsr),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
+		// RegularWithTesselationBSurface
+		const auto dsBytes_rwtbsr = Device::LoadByteCode(L"ds_rwtbsr.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationBSurface, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwtsr),
+				m_device.CreateDomainShader(dsBytes_rwtbsr),
+				m_device.CreateGeometryShader(gsBytes_rwtsr),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
 	}
@@ -103,8 +132,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	{
 		ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get() };
 		m_device.deviceContext()->VSSetConstantBuffers(0, 3, vsb);
-		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
-		m_device.deviceContext()->HSSetConstantBuffers(0, 2, hsb);
+		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get(), m_constBuffTessConst.get() };
+		m_device.deviceContext()->HSSetConstantBuffers(0, 3, hsb);
 		ID3D11Buffer* dsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
 		m_device.deviceContext()->DSSetConstantBuffers(0, 2, dsb);
 		ID3D11Buffer* psb[] = { m_constBuffColor.get() };
@@ -115,6 +144,16 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	RasterizerDescription rsdesc;
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
+
+	m_blendState = m_device.CreateBlendState(BlendDescription::AdditiveBlendDescription());
+
+	DepthStencilDescription dsdesc;
+	m_dssWrite = m_device.CreateDepthStencilState(dsdesc);
+	dsdesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	m_dssNoWrite = m_device.CreateDepthStencilState(dsdesc);
+
+	rsdesc.FillMode = D3D11_FILL_WIREFRAME;
+	m_rastStateWireframe = m_device.CreateRasterizerState(rsdesc);
 
 	// GLOBAL
 	m_axesModel->Initialize(m_device);
@@ -206,16 +245,24 @@ void Application::ResizeWnd() {
 }
 
 void Application::Update() {
-	if (m_wndSizeChanged || m_firstPass) {
+	if (m_wndSizeChanged || m_UI->stereoscopicChanged || m_firstPass) {
 		ResizeWnd();
-		DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
-		m_device.UpdateBuffer(m_constBuffProj, projMtx);
+		if (!m_UI->stereoscopicView) {
+			DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(projMatrix());
+			m_device.UpdateBuffer(m_constBuffProj, projMtx);
+		}
 	}
 
-	if (m_camera.cameraChanged || m_firstPass) {
+	if (m_camera.cameraChanged || m_UI->stereoscopicChanged || m_firstPass) {
 		m_camera.cameraChanged = false;
-		DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
-		m_device.UpdateBuffer(m_constBuffView, viewMtx);
+		if (!m_UI->stereoscopicView) {
+			DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix());
+			m_device.UpdateBuffer(m_constBuffView, viewMtx);
+		}
+	}
+
+	if (m_UI->stereoscopicChanged) {
+		m_UI->stereoscopicChanged = false;
 	}
 }
 
@@ -224,28 +271,65 @@ float Application::aspect() const {
 }
 
 gmod::matrix4<float> Application::projMatrix() const {
-	const float Height = 1 / std::tan(0.5f * m_FOV);
-	const float Width = Height / aspect();
-	const float Range = m_far / (m_near - m_far);
+	const float& n = m_near;
+	const float& f = m_far;
+
+	const float h = 1 / std::tan(0.5f * m_FOV);
+	const float l = h / aspect();
+	const float d = f - n;
 
 	return gmod::matrix4<float>(
-		Width, 0,       0,     0,
-		0,	   Height,  0,     0,
-		0,	   0,	    Range, Range * m_near,
-		0,     0,      -1,	   0
+		l, 0,  0,           0,
+		0, h,  0,           0,
+		0, 0, (f + n) / d, (2 * f * n) / d,
+		0, 0, -1,	        0
 	);
 }
 
 gmod::matrix4<float> Application::projMatrix_inv() const {
-	const float Height_1 = std::tan(0.5f * m_FOV);
-	const float Width_1 = Height_1 * aspect();
-	const float Range_1 = (m_near - m_far) / m_far;
+	const float& n = m_near;
+	const float& f = m_far;
+
+	const float h_1 = std::tan(0.5f * m_FOV);
+	const float w_1 = h_1 * aspect();
+	const float d = 2 * f * n;
 
 	return gmod::matrix4<float>(
-		Width_1, 0,		   0,						0,
-		0,		 Height_1, 0,						0,
-		0,		 0,		   0,					   -1,
-		0,		 0,		   Range_1 * (1 / m_near),  1 / m_near
+		w_1, 0,	  0,		   0,
+		0,   h_1, 0,		   0,
+		0,   0,	  0,		  -1,
+		0,   0,  (f - n) / d, (f + n) / d
+	);
+}
+
+gmod::matrix4<float> Application::stereoProjMatrix(int sign) const {
+	const float& n = m_near;
+	const float& f = m_far;
+
+	const float d = sign * m_UI->stereoD / 2;
+	const float shift = (d * n) / m_UI->stereoF;
+
+	const float t = n * std::tan(0.5f * m_FOV);
+	const float b = -t;
+
+	const float width_2 = t * aspect();
+
+	const float l = -width_2 + shift;
+	const float r = width_2 + shift;
+	
+
+	const float A = (2 * n) / (r - l);
+	const float F = (2 * n) / (t - b);
+	const float C = (r + l) / (r - l);
+	const float G = (t + b) / (t - b);
+	const float K = (f + n) / (f - n);
+	const float L = (2 * f * n) / (f - n);
+
+	return gmod::matrix4<float>(
+		A, 0,  C, 0,
+		0, F,  G, 0,
+		0, 0,  K, L,
+		0, 0, -1, 0
 	);
 }
 
@@ -275,7 +359,29 @@ void Application::Render() {
 		m_axes.RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 
+	if (m_UI->stereoscopicView) {
+		m_device.deviceContext()->OMSetBlendState(m_blendState.get(), nullptr, UINT_MAX);
+		m_device.deviceContext()->OMSetDepthStencilState(m_dssNoWrite.get(), 0);
+		RenderStereoscopic(-1, m_UI->stereoRed);
+		RenderStereoscopic(+1, m_UI->stereoCyan);
+		m_device.deviceContext()->OMSetDepthStencilState(nullptr, 0);
+		m_device.deviceContext()->OMSetBlendState(nullptr, nullptr, UINT_MAX);
+		return;
+	}
+
 	for (auto& obj : m_UI->sceneObjects) {
+		if (m_UI->hideControlPoints && typeid(Point) == typeid(*obj.get())) { continue; }
+
+		auto opt = obj->GetSubObjects();
+		if (opt.has_value()) {
+			for (auto& subObj : *opt.value()) {
+				if (m_UI->hideControlPoints && typeid(Point) == typeid(*subObj.get())) { continue; }
+				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
+				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
+				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
+			}
+		}
+
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
 		// TODO : to improve performance, change internals of Contains
 		if (m_UI->selection.Contains(obj->id)) {
@@ -286,16 +392,46 @@ void Application::Render() {
 		if (obj->geometryChanged || m_firstPass) {
 			obj->UpdateMesh(m_device);
 		}
+		auto surf = dynamic_cast<Surface*>(obj.get());
+		if (nullptr != surf) {
+			unsigned int divisions = surf->GetDivisions();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+		} 
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
+	}
+}
+
+void app::Application::RenderStereoscopic(int sign, ImVec4& color) {
+	m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(reinterpret_cast<float*>(&color)));
+
+	DirectX::XMFLOAT4X4 viewMtx = matrix4_to_XMFLOAT4X4(m_camera.stereoViewMatrix(sign, m_UI->stereoD));
+	m_device.UpdateBuffer(m_constBuffView, viewMtx);
+
+	DirectX::XMFLOAT4X4 projMtx = matrix4_to_XMFLOAT4X4(stereoProjMatrix(sign));
+	m_device.UpdateBuffer(m_constBuffProj, projMtx);
+
+	for (auto& obj : m_UI->sceneObjects) {
+		if (m_UI->hideControlPoints && typeid(Point) == typeid(*obj.get())) { continue; }
 
 		auto opt = obj->GetSubObjects();
 		if (opt.has_value()) {
 			for (auto& subObj : *opt.value()) {
+				if (m_UI->hideControlPoints && typeid(Point) == typeid(*subObj.get())) { continue; }
 				m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(subObj->modelMatrix()));
-				m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(subObj->color.data()));
 				subObj->RenderMesh(m_device.deviceContext(), m_shaders);
 			}
 		}
+
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
+		if (obj->geometryChanged || m_firstPass) {
+			obj->UpdateMesh(m_device);
+		}
+		auto surf = dynamic_cast<Surface*>(obj.get());
+		if (nullptr != surf) {
+			unsigned int divisions = surf->GetDivisions();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+		}
+		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 
 	}
 }

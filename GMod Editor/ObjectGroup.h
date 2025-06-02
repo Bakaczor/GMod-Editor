@@ -40,7 +40,7 @@ namespace app {
 		virtual void UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) override;
 #pragma endregion
 	private:
-		const float m_modelScale = 0.5f;
+		const float m_modelScale = 0.25f;
 		PointModel* m_model;
 		gmod::vector3<double> m_midpoint;
 		int m_numOfPoints = 0;

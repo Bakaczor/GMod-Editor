@@ -1,13 +1,147 @@
 #include "BSurface.h"
+#include <numbers>
 
 using namespace app;
 
-BSurface::BSurface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) : Surface(type, a, b, aPatch, bPatch, divisions) {}
+unsigned short BSurface::m_globalBSurfaceNum = 0;
 
-void BSurface::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) {
+	m_surfaceType = type;
+	m_aPoints = aPoints;
+	m_bPoints = bPoints;
+	m_divisions = divisions;
 
+	m_type = "BSurface";
+	std::ostringstream os;
+	os << "bsurface_" << m_globalBSurfaceNum;
+	name = os.str();
+	m_globalBSurfaceNum += 1;
+
+	std::copy(controlPoints.begin(), controlPoints.end(), std::back_inserter(m_controlPoints));
+	
+    if (m_surfaceType == SurfaceType::Flat) {
+        unsigned int aPatch = m_aPoints - 3;
+        unsigned int bPatch = m_bPoints - 3;
+
+        for (unsigned int i = 0; i < aPatch; ++i) {
+            for (unsigned int j = 0; j < bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < 4; ++u) {
+                    for (USHORT v = 0; v < 4; ++v) {
+                        indices[u * 4 + v] = (i + u) * m_bPoints + (j + v);
+                    }
+                }
+                m_patches.emplace_back(indices);
+            }
+        }
+    } else {
+        unsigned int aPatch = m_aPoints;
+        unsigned int bPatch = m_bPoints - 3;
+
+        for (unsigned int i = 0; i < aPatch; ++i) {
+            for (unsigned int j = 0; j < bPatch; ++j) {
+                std::array<USHORT, Patch::patchSize> indices;
+
+                for (USHORT u = 0; u < Patch::rowSize; ++u) {
+                    for (USHORT v = 0; v < Patch::rowSize; ++v) {
+                        USHORT wrapped_i = (i + u) % m_aPoints;
+                        indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j + v);
+                    }
+                }
+                m_patches.emplace_back(indices);
+            }
+        }
+    }
+
+	UpdateMidpoint();
+	for (auto& obj : m_controlPoints) {
+		obj->AddParent(this);
+	}
+	geometryChanged = true;
 }
 
-void BSurface::UpdateMesh(const Device& device) {
+//BSurface::BSurface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) {
+//	m_divisions = divisions;
+//	m_surfaceType = type;
+//	m_type = "BSurface";
+//	std::ostringstream os;
+//	os << "bsurface_" << m_globalBSurfaceNum;
+//	name = os.str();
+//	m_globalBSurfaceNum += 1;
+//	m_patches.reserve(aPatch * bPatch);
+//
+//	if (type == SurfaceType::Flat) {
+//		m_aPoints = aPatch + 3;
+//		m_bPoints = bPatch + 3;
+//		m_controlPoints.reserve(m_aPoints * m_bPoints);
+//
+//		for (unsigned int i = 0; i < m_aPoints; ++i) {
+//			for (unsigned int j = 0; j < m_bPoints; ++j) {
+//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+//				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
+//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
+//				point->SetTranslation(x, 0.0f, z);
+//				m_controlPoints.push_back(std::move(point));
+//			}
+//		}
+//
+//		for (unsigned int i = 0; i < aPatch; ++i) {
+//			for (unsigned int j = 0; j < bPatch; ++j) {
+//				std::array<USHORT, Patch::patchSize> indices;
+//
+//				for (USHORT u = 0; u < 4; ++u) {
+//					for (USHORT v = 0; v < 4; ++v) {
+//						indices[u * 4 + v] = (i + u) * m_bPoints + (j + v);
+//					}
+//				}
+//				m_patches.emplace_back(indices);
+//			}
+//		}
+//	} else {
+//		m_aPoints = aPatch;
+//		m_bPoints = bPatch + 3;
+//		m_controlPoints.reserve(m_aPoints * m_bPoints);
+//
+//		for (unsigned int i = 0; i < m_aPoints; ++i) {
+//			for (unsigned int j = 0; j < m_bPoints; ++j) {
+//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+//				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
+//				float x = a * std::cos(angle);
+//				float y = a * std::sin(angle);
+//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
+//				point->SetTranslation(x, z, y);
+//				m_controlPoints.push_back(std::move(point));
+//			}
+//		}
+//
+//		for (unsigned int i = 0; i < aPatch; ++i) {
+//			for (unsigned int j = 0; j < bPatch; ++j) {
+//				std::array<USHORT, Patch::patchSize> indices;
+//
+//				for (USHORT u = 0; u < Patch::rowSize; ++u) {
+//					for (USHORT v = 0; v < Patch::rowSize; ++v) {
+//						USHORT wrapped_i = (i + u) % m_aPoints;
+//						indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j + v);
+//					}
+//				}
+//				m_patches.emplace_back(indices);
+//			}
+//		}
+//	}
+//	UpdateMidpoint();
+//
+//	for (auto& obj : m_controlPoints) {
+//		obj->AddParent(this);
+//	}
+//	geometryChanged = true;
+//}
 
+void BSurface::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+	if (m_showNet) {
+		map.at(ShaderType::Regular).Set(context);
+		m_netMesh.Render(context);
+	}
+	map.at(ShaderType::RegularWithTesselationBSurface).Set(context);
+	m_surfaceMesh.Render(context);
 }

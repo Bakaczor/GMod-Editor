@@ -91,3 +91,43 @@ RasterizerDescription::RasterizerDescription() {
 	MultisampleEnable = false;
 	AntialiasedLineEnable = true;
 }
+
+BlendDescription::BlendDescription() {
+	ZeroMemory(this, sizeof(BlendDescription));
+	RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+	RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+}
+
+BlendDescription BlendDescription::AlphaBlendDescription() {
+	BlendDescription desc;
+	desc.RenderTarget[0].BlendEnable = true;
+	desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	return desc;
+}
+
+BlendDescription BlendDescription::AdditiveBlendDescription() {
+	BlendDescription desc;
+	desc.RenderTarget[0].BlendEnable = true;
+	desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	return desc;
+}
+
+DepthStencilDescription::DepthStencilDescription() {
+	DepthEnable = true;
+	DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	DepthFunc = D3D11_COMPARISON_LESS;
+	StencilEnable = false;
+	StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+	StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+	FrontFace.StencilFunc = BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	FrontFace.StencilDepthFailOp = BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+	FrontFace.StencilPassOp = BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	FrontFace.StencilFailOp = BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+}
