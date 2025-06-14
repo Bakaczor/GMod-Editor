@@ -31,7 +31,9 @@ json::value SerializationManager::SerializeScene(const std::vector<std::unique_p
         if (obj->type() == "Point") {
             points.push_back(obj.get());
         } else {
-            geometry.push_back(obj.get());
+            if (m_gmodGeometryLookup.contains(obj->type())) {
+                geometry.push_back(obj.get());
+            }
         }
     }
 

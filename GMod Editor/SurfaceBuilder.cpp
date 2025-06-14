@@ -34,7 +34,7 @@ Surface* SurfaceBuilder::BuildSurface() const {
 
         for (unsigned int i = 0; i < aPoints; ++i) {
             for (unsigned int j = 0; j < bPoints; ++j) {
-                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
                 float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
@@ -52,7 +52,7 @@ Surface* SurfaceBuilder::BuildSurface() const {
 
         for (unsigned int i = 0; i < aPoints; ++i) {
             for (unsigned int j = 0; j < bPoints; ++j) {
-                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
                 float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
@@ -81,7 +81,7 @@ Surface* SurfaceBuilder::BuildBSurface() const {
 
         for (unsigned int i = 0; i < aPoints; ++i) {
             for (unsigned int j = 0; j < bPoints; ++j) {
-                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
                 float x = (m_a * i) / (aPoints - 1) - m_a / 2.0f;
@@ -99,7 +99,7 @@ Surface* SurfaceBuilder::BuildBSurface() const {
 
         for (unsigned int i = 0; i < aPoints; ++i) {
             for (unsigned int j = 0; j < bPoints; ++j) {
-                auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
+                auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
                 float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
