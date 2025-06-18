@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "SerializationManager.h"
+#include <ranges>
 
 using namespace app;
 
@@ -352,7 +353,10 @@ json::value SerializationManager::SerializeBezierSurfaceC0(const Surface* surfac
         json::value jv = { { "id", p->id } };
         points.emplace_back(jv);
     }
+    unsigned int sizeU = surface->GetBPoints();
+    unsigned int sizeV = surface->GetAPoints();
     if (surface->GetSurfaceType() == SurfaceType::Cylindric) {
+        sizeV += 1;
         for (unsigned int i = 0; i < surface->GetBPoints(); ++i) {
             json::value jv = { { "id", controlPoints[i]->id }};
             points.emplace_back(jv);
@@ -365,8 +369,8 @@ json::value SerializationManager::SerializeBezierSurfaceC0(const Surface* surfac
         { "name", surface->name },
         { "controlPoints", points },
         { "size", {
-            { "u", surface->GetBPoints() },
-            { "v", surface->GetAPoints() }
+            { "u", sizeU },
+            { "v", sizeV }
         }},
         { "samples", {
             { "u", surface->GetDivisions() },
@@ -390,8 +394,9 @@ Surface* SerializationManager::DeserializeBezierSurfaceC0(const json::value& jv,
 
     SurfaceType type = SurfaceType::Flat;
     bool cylindric = true;
+    const unsigned int offset = (aPoints - 1) * bPoints;
     for (unsigned int i = 0; i < bPoints; ++i) {
-        unsigned int lastRow = i + aPoints * bPoints;
+        unsigned int lastRow = i + offset;
         if (lastRow >= objects.size() || objects[i]->id != objects[lastRow]->id) {
             cylindric = false;
             break;
@@ -400,6 +405,8 @@ Surface* SerializationManager::DeserializeBezierSurfaceC0(const json::value& jv,
 
     if (cylindric) {
         type = SurfaceType::Cylindric;
+        aPoints -= 1;
+        objects.erase(objects.begin() + offset, objects.end());
     }
 
     Surface* surface = new Surface(type, aPoints, bPoints, divisions, objects);
@@ -416,7 +423,10 @@ json::value SerializationManager::SerializeBezierSurfaceC2(const BSurface* surfa
         json::value jv = { { "id", p->id } };
         points.emplace_back(jv);
     }
+    unsigned int sizeU = surface->GetBPoints();
+    unsigned int sizeV = surface->GetAPoints();
     if (surface->GetSurfaceType() == SurfaceType::Cylindric) {
+        sizeV += 3;
         for (unsigned int i = 0; i < 3 * surface->GetBPoints(); ++i) {
             json::value jv = { { "id", controlPoints[i]->id } };
             points.emplace_back(jv);
@@ -429,8 +439,8 @@ json::value SerializationManager::SerializeBezierSurfaceC2(const BSurface* surfa
         { "name", surface->name },
         { "controlPoints", points },
         { "size", {
-            { "u", surface->GetBPoints() },
-            { "v", surface->GetAPoints() }
+            { "u", sizeU },
+            { "v", sizeV }
         }},
         { "samples", {
             { "u", surface->GetDivisions() },
@@ -454,8 +464,9 @@ BSurface* SerializationManager::DeserializeBezierSurfaceC2(const json::value& jv
 
     SurfaceType type = SurfaceType::Flat;
     bool cylindric = true;
+    const unsigned int offset = (aPoints - 3) * bPoints;
     for (unsigned int i = 0; i < 3 * bPoints; ++i) {
-        unsigned int lastRow = i + aPoints * bPoints;
+        unsigned int lastRow = i + offset;
         if (lastRow >= objects.size() || objects[i]->id != objects[lastRow]->id) {
             cylindric = false;
             break;
@@ -464,6 +475,8 @@ BSurface* SerializationManager::DeserializeBezierSurfaceC2(const json::value& jv
 
     if (cylindric) {
         type = SurfaceType::Cylindric;
+        aPoints -= 3;
+        objects.erase(objects.begin() + offset, objects.end());
     }
 
     BSurface* surface = new BSurface(type, aPoints, bPoints, divisions, objects);
