@@ -6,6 +6,111 @@ using namespace app;
 
 unsigned short Surface::m_globalSurfaceNum = 0;
 
+const std::vector<std::pair<USHORT, USHORT>> Surface::m_borderEdges = {
+	{0, 1}, {1, 2}, {2, 3},       // góra
+	{3, 7}, {7, 11}, {11, 15},    // prawa
+	{15, 14}, {14, 13}, {13, 12}, // dó³
+	{12, 8}, {8, 4}, {4, 0}       // lewa
+};
+
+std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& surfaces) {
+	std::unordered_map<int, BoundaryPoint> boundaryPoints;
+	for (const auto& surface : surfaces) {
+		for (const auto& bp : surface->m_boundaryPoints) {
+			int bpId = (*bp.thisPoint)->id;
+			if (boundaryPoints.contains(bpId)) {
+				for (const auto& neighbour : bp.neighbours) {
+					boundaryPoints[bpId].neighbours.insert(neighbour);
+				}
+				boundaryPoints[bpId].isBoundary |= bp.isBoundary;
+				boundaryPoints[bpId].isCorner |= bp.isCorner;
+			} else {
+				boundaryPoints[bpId] = bp;
+			}
+		}
+	}
+
+	std::unordered_set<int> criticalPoints;
+	for (const auto& pair : boundaryPoints) {
+		const int& id = pair.first;
+		const BoundaryPoint& bp = pair.second;
+		size_t degree = bp.neighbours.size();
+		if (degree > 2 || bp.isCorner) {
+			criticalPoints.insert(id);
+		}
+	}
+
+	std::unordered_map<int, std::vector<Edge>> criticalGraph;
+	for (int critical : criticalPoints) {
+		const BoundaryPoint& cp = boundaryPoints[critical];
+		for (Object** neighbor : cp.neighbours) {
+			std::vector<Object**> path;
+			Object** prev = cp.thisPoint;
+			Object** current = neighbor;
+			path.push_back(prev);
+
+			while (true) {
+				path.push_back(current);
+				int currentId = (*current)->id;
+				if (criticalPoints.contains(currentId)) {
+					Edge edge;
+					edge.start = boundaryPoints[critical].thisPoint;
+					edge.end = current;
+					edge.intermediate.assign(path.begin() + 1, path.end() - 1);
+					criticalGraph[critical].push_back(edge);
+					break;
+				}
+
+				const BoundaryPoint& bp = boundaryPoints[currentId];
+				auto it = bp.neighbours.begin();
+				int prevId = (*prev)->id;
+				int nextId = (**it)->id;
+				Object** next = (prevId == nextId) ? *(++it) : *it;
+
+				prev = current;
+				current = next;
+			}
+		}
+	}
+
+	return FindUniqueTrianglesInGraph(criticalGraph);
+}
+
+std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unordered_map<int, std::vector<Edge>>& criticalGraph) {
+	std::vector<Cycle3> triangles;
+
+	for (const auto& [idA, edgesAB] : criticalGraph) {
+		// A-B edges
+		for (const auto& edgeAB : edgesAB) {
+			int idB = (*edgeAB.end)->id;
+			if (idB <= idA) continue; // assert idA < idB
+
+			auto itB = criticalGraph.find(idB);
+			if (itB == criticalGraph.end()) continue;
+
+			// B-C edges
+			for (const auto& edgeBC : itB->second) {
+				int idC = (*edgeBC.end)->id;
+				if (idC <= idB || idC == idA) continue; // asset idB < idC and idC != idA
+
+				auto itC = criticalGraph.find(idC);
+				if (itC == criticalGraph.end()) continue;
+
+				// now search C-A edges to close triangle
+				for (const auto& edgeCA : itC->second) {
+					int backToA = (*edgeCA.end)->id;
+					if (backToA == idA) {
+						Cycle3 cycle = { edgeAB, edgeBC, edgeCA };
+						triangles.push_back(cycle);
+					}
+				}
+			}
+		}
+	}
+
+	return triangles;
+}
+
 Surface::Surface(bool increment) : m_divisions(Patch::rowSize), m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
 	m_type = "Surface";
 	std::ostringstream os;
@@ -66,11 +171,13 @@ Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, u
 		obj->AddParent(this);
 	}
 	geometryChanged = true;
+	UpdateBoundaryPoints();
 }
 
 Surface::~Surface() {
 	Object::~Object();
 	for (auto& obj : m_controlPoints) {
+		if (obj == nullptr) { continue; }
 		obj->RemoveParent(this);
 		if (obj->NumberOfParents() == 0) {
 			obj->deletable = true;
@@ -78,83 +185,33 @@ Surface::~Surface() {
 	}
 }
 
-//Surface::Surface(SurfaceType type, float a, float b, unsigned int aPatch, unsigned int bPatch, unsigned int divisions) : m_divisions(divisions), m_surfaceType(type) {
-//	m_type = "Surface";
-//	std::ostringstream os;
-//	os << "surface_" << m_globalSurfaceNum;
-//	name = os.str();
-//	m_globalSurfaceNum += 1;
-//	m_patches.reserve(aPatch * bPatch);
-//
-//	if (type == SurfaceType::Flat) {
-//		m_aPoints = aPatch * (Patch::rowSize - 1) + 1;
-//		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
-//		m_controlPoints.reserve(m_aPoints * m_bPoints);
-//
-//		for (unsigned int i = 0; i < m_aPoints; ++i) {
-//			for (unsigned int j = 0; j < m_bPoints; ++j) {
-//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
-//
-//				float x = (a * i) / (m_aPoints - 1) - a / 2.0f;
-//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
-//				point->SetTranslation(x, 0.0f, z);
-//				m_controlPoints.push_back(std::move(point));
-//			}
-//		}
-//
-//		for (unsigned int i = 0; i < aPatch; ++i) {
-//			for (unsigned int j = 0; j < bPatch; ++j) {
-//				std::array<USHORT, Patch::patchSize> indices;
-//
-//				USHORT step = Patch::rowSize - 1;
-//				for (USHORT u = 0; u < Patch::rowSize; ++u) {
-//					for (USHORT v = 0; v < Patch::rowSize; ++v) {
-//						indices[u * Patch::rowSize + v] = (i * step + u) * m_bPoints + (j * step + v);
-//					}
-//				}
-//				m_patches.emplace_back(indices);
-//			}
-//		}
-//	} else {
-//		m_aPoints = aPatch * (Patch::rowSize - 1);
-//		m_bPoints = bPatch * (Patch::rowSize - 1) + 1;
-//		m_controlPoints.reserve(m_aPoints * m_bPoints);
-//
-//		for (unsigned int i = 0; i < m_aPoints; ++i) {
-//			for (unsigned int j = 0; j < m_bPoints; ++j) {
-//				auto point = std::make_unique<Point>(Application::m_pointModel.get(), 0.5f);
-//
-//				float angle = (2 * std::numbers::pi_v<float> * i) / m_aPoints;
-//				float x = a * cos(angle);
-//				float y = a * sin(angle);
-//				float z = (b * j) / (m_bPoints - 1) - b / 2.0f;
-//				point->SetTranslation(x, z, y);
-//				m_controlPoints.push_back(std::move(point));
-//			}
-//		}
-//
-//		for (unsigned int i = 0; i < aPatch; ++i) {
-//			for (unsigned int j = 0; j < bPatch; ++j) {
-//				std::array<USHORT, Patch::patchSize> indices;
-//
-//				USHORT step = Patch::rowSize - 1;
-//				for (USHORT u = 0; u < Patch::rowSize; ++u) {
-//					for (USHORT v = 0; v < Patch::rowSize; ++v) {
-//						USHORT wrapped_i = (i * step + u) % m_aPoints;
-//						indices[u * Patch::rowSize + v] = wrapped_i * m_bPoints + (j * step + v);
-//					}
-//				}
-//				m_patches.emplace_back(indices);
-//			}
-//		}
-//	}
-//	UpdateMidpoint();
-//
-//	for (auto& obj : m_controlPoints) {
-//		obj->AddParent(this);
-//	}
-//	geometryChanged = true;
-//}
+void Surface::UpdateBoundaryPoints() {
+	m_boundaryPoints.resize(m_controlPoints.size());
+
+	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
+		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
+	}
+
+	for (const Patch& patch : m_patches) {
+		for (const auto& [pia, pib] : m_borderEdges) {
+			USHORT a = patch.indices[pia];
+			USHORT b = patch.indices[pib];
+
+			m_boundaryPoints[a].isBoundary = true;
+			m_boundaryPoints[b].isBoundary = true;
+
+			m_boundaryPoints[a].isCorner = isCorner(pia);
+			m_boundaryPoints[b].isCorner = isCorner(pib);
+
+			m_boundaryPoints[a].neighbours.insert(&m_controlPoints[b]);
+			m_boundaryPoints[b].neighbours.insert(&m_controlPoints[a]);
+		}
+	}
+}
+
+bool Surface::isCorner(USHORT idx) const {
+	return idx == 0 || idx == 3 || idx == 12 || idx == 15;
+}
 
 void Surface::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_showNet) {
@@ -222,7 +279,6 @@ void app::Surface::RenderProperties() {
 	if (m_showNet && m_showNet != old) {
 		geometryChanged = true;
 	}
-	//ImGui::Checkbox("Hide points", &m_hidePoints);
 
 	if (m_selectedIdx != -1) {
 		ImGui::Separator();
@@ -249,12 +305,20 @@ void app::Surface::RenderProperties() {
 	}
 }
 
-//std::optional<std::vector<std::unique_ptr<Object>>*> Surface::GetSubObjects() {
-//	if (m_hidePoints) {
-//		return std::nullopt;
-//	}
-//	return &m_controlPoints;
-//}
+void Surface::Replace(int id, Object* obj) {
+	auto it = std::find_if(m_controlPoints.begin(), m_controlPoints.end(),
+		[id](Object* o) { return o && o->id == id; });
+
+	if (it != m_controlPoints.end()) {
+		(*it)->RemoveParent(this);
+		*it = obj;
+		if (obj != nullptr) {
+			obj->AddParent(this);
+			UpdateMidpoint();
+			geometryChanged = true;
+		}
+	}
+}
 
 SurfaceType Surface::GetSurfaceType() const {
 	return m_surfaceType;

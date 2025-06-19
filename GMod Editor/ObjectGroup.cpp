@@ -10,6 +10,7 @@ ObjectGroup::ObjectGroup(PointModel* model) : m_model(model) {
 ObjectGroup::~ObjectGroup() {
 	Object::~Object();
 	for (auto& obj : objects) {
+		if (obj == nullptr) { continue; }
 		obj->RemoveParent(this);
 	}
 }
@@ -21,6 +22,21 @@ void ObjectGroup::SetModel(PointModel* model) {
 void ObjectGroup::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	map.at(ShaderType::Regular).Set(context);
 	m_model->Render(context);
+}
+
+void ObjectGroup::Replace(int id, Object* obj) {
+	auto it = std::find_if(objects.begin(), objects.end(),
+		[id](Object* o) { return o && o->id == id; });
+
+	if (it != objects.end()) {
+		(*it)->RemoveParent(this);
+		*it = obj;
+		if (obj != nullptr) {
+			obj->AddParent(this);
+			UpdateMidpoint();
+			geometryChanged = true;
+		}
+	}
 }
 
 gmod::vector3<double> ObjectGroup::Midpoint() const {

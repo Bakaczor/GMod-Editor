@@ -19,7 +19,8 @@ Object::Object() : m_transform(), m_type("Object") {
 }
 
 Object::~Object() {
-	for (auto& obj : m_parents) {
+	std::vector<Object*> parentsCopy = m_parents;
+	for (auto& obj : parentsCopy) {
 		auto selection = dynamic_cast<ObjectGroup*>(obj);
 		if (selection != nullptr) {
 			selection->geometryChanged = true;
@@ -27,7 +28,7 @@ Object::~Object() {
 		} else {
 			auto surface = dynamic_cast<Surface*>(obj);
 			if (surface != nullptr) {
-				surface->ClearControlPoints();
+				surface->Replace(this->id, nullptr);
 			}
 		}
 	}
@@ -90,6 +91,17 @@ void Object::InformParents() {
 
 unsigned int Object::NumberOfParents() const {
 	return m_parents.size();
+}
+
+void Object::ReplaceSelf(Object* obj) {
+	std::vector<Object*> parentsCopy = m_parents;
+	for (auto& parent : parentsCopy) {
+		if (parent->type() == "ObjectGroup") {
+			// skip for non-scene ObjectGroup objects
+			continue; 
+		}
+		parent->Replace(this->id, obj);
+	}
 }
 
 #pragma endregion

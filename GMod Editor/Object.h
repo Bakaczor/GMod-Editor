@@ -33,6 +33,8 @@ namespace app {
 		virtual void RemoveParent(Object* obj);
 		virtual void InformParents();
 		virtual unsigned int NumberOfParents() const;
+		virtual void Replace(int id, Object* obj) { /*currently only for ObjectGroup*/ }
+		virtual void ReplaceSelf(Object* obj);
 #pragma endregion
 #pragma region TRANSFORM
 		virtual gmod::vector3<double> position() const;

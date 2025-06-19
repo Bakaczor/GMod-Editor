@@ -184,7 +184,7 @@ void UI::RenderCursor() {
 				obj->SetTranslation(pos.x(), pos.y(), pos.z());
 				sceneObjects.push_back(std::move(obj));
 
-				// if objectgroup is selected, add to that group
+				// if ObjectGroup is selected, add to that group
 				std::optional<Object*> opt = selection.Single();
 				if (opt.has_value()) {
 					ObjectGroup* grp = dynamic_cast<ObjectGroup*>(opt.value());
@@ -259,7 +259,52 @@ void UI::RenderObjectTable() {
 	if (!selection.isPolyline()) {
 		ImGui::EndDisabled();
 	}
-	ImGui::Spacing();
+	if (ImGui::Button("Collapse", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		if (selection.objects.size() == 2) {
+			Object* p1 = selection.objects[0];
+			Object* p2 = selection.objects[1];
+
+			static const std::string type = "Point";
+			if (p1->type() == type && p2->type() == type) {
+				auto pos = (p1->position() + p2->position()) * 0.5f;
+				auto obj = std::make_unique<Point>(Application::m_pointModel.get());
+				obj->SetTranslation(pos.x(), pos.y(), pos.z());
+				p1->ReplaceSelf(obj.get());
+				p2->ReplaceSelf(obj.get());
+				sceneObjects.push_back(std::move(obj));
+
+				std::erase_if(sceneObjects, [&p1, &p2](const auto& o) {
+					return o->id == p1->id || o->id == p2->id;
+				});
+			}
+		}
+	}
+	bool disable = false;
+	std::vector<Surface*> surfaces;
+	if (!selection.Empty()) {
+		for (const auto& obj : selection.objects) {
+			if (obj->type() != "Surface") {
+				disable = true;
+				break;
+			} else {
+				surfaces.push_back(dynamic_cast<Surface*>(obj));
+			}
+		}
+	} else {
+		disable = true;
+	}
+	if (disable) {
+		ImGui::BeginDisabled();
+	}
+	if (ImGui::Button("Add Gregory Patch", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
+		auto cycles = Surface::FindCycles3(surfaces);
+		if (cycles.size() > 0) {
+
+		}
+	}
+	if (disable) {
+		ImGui::EndDisabled();
+	}
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (!selection.Empty()) {
 			std::unordered_set<int> toDelete;
@@ -414,7 +459,7 @@ void UI::RenderProperties() {
 	selectedObj->RenderProperties();
 
 	auto grp = dynamic_cast<ObjectGroup*>(selectedObj);
-	// if objectgroup, but not selection
+	// if ObjectGroup, but not selection
 	if (nullptr != grp && grp->id != selection.id) {
 		if (grp->Empty()) {
 			std::erase_if(sceneObjects, [&grp](const auto& o) {
