@@ -13,40 +13,71 @@ const std::vector<std::pair<USHORT, USHORT>> Surface::m_borderEdges = {
 	{12, 8}, {8, 4}, {4, 0}       // lewa
 };
 
-std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& surfaces) {
+std::unordered_map<int, Surface::BoundaryPoint> Surface::CombineBoundaryPoints(const std::vector<Surface*>& surfaces, bool includePatchBoundaries) {
 	std::unordered_map<int, BoundaryPoint> boundaryPoints;
 	for (const auto& surface : surfaces) {
 		for (const auto& bp : surface->m_boundaryPoints) {
 			int bpId = (*bp.thisPoint)->id;
+
+			bool isBoundary = includePatchBoundaries ? bp.isPatchBoundary : bp.isSurfaceBoundary;
+			if (!isBoundary) { continue; }
+
 			if (boundaryPoints.contains(bpId)) {
-				for (const auto& neighbour : bp.neighbours) {
-					boundaryPoints[bpId].neighbours.insert(neighbour);
+				boundaryPoints[bpId].isPatchBoundary |= bp.isPatchBoundary;
+				boundaryPoints[bpId].isPatchCorner |= bp.isPatchCorner;
+				boundaryPoints[bpId].isSurfaceBoundary |= bp.isSurfaceBoundary;
+				boundaryPoints[bpId].isSurfaceCorner |= bp.isSurfaceCorner;
+
+				for (auto& [nbr, idx] : bp.neighbours) {
+					const auto& nbrBp = surface->m_boundaryPoints[idx];
+					bool nbrIsBoundary = includePatchBoundaries ? nbrBp.isPatchBoundary : nbrBp.isSurfaceBoundary;
+					if (nbrIsBoundary) {
+						boundaryPoints[bpId].neighbours[nbr] = idx;
+					}
 				}
-				boundaryPoints[bpId].isBoundary |= bp.isBoundary;
-				boundaryPoints[bpId].isCorner |= bp.isCorner;
+
 			} else {
 				boundaryPoints[bpId] = bp;
+
+				std::unordered_map<Object**, int> neighbours;
+				for (auto& [nbr, idx] : bp.neighbours) {
+					const auto& nbrBp = surface->m_boundaryPoints[idx];
+					bool nbrIsBoundary = includePatchBoundaries ? nbrBp.isPatchBoundary : nbrBp.isSurfaceBoundary;
+					if (nbrIsBoundary) {
+						neighbours[nbr] = idx;
+					}
+				}
+				boundaryPoints[bpId].neighbours = neighbours;
 			}
 		}
 	}
+	// surface boundary points can become "corners" if they are patch corners and are somehow collapsed
+	for (auto& [id, bp] : boundaryPoints) {
+		if (bp.isSurfaceBoundary && bp.isPatchCorner && bp.neighbours.size() > 2) {
+			boundaryPoints[id].isSurfaceCorner = true;
+		}
+	}
+	return boundaryPoints;
+}
+
+std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& surfaces, bool includePatchBoundaries) {
+	std::unordered_map<int, BoundaryPoint> boundaryPoints = CombineBoundaryPoints(surfaces, includePatchBoundaries);
 
 	std::unordered_set<int> criticalPoints;
-	for (const auto& pair : boundaryPoints) {
-		const int& id = pair.first;
-		const BoundaryPoint& bp = pair.second;
-		size_t degree = bp.neighbours.size();
-		if (degree > 2 || bp.isCorner) {
+	for (const auto& [id, bp] : boundaryPoints) {
+		bool isCorner = includePatchBoundaries ? bp.isPatchCorner : bp.isSurfaceCorner;
+		if (isCorner) {
 			criticalPoints.insert(id);
 		}
 	}
 
 	std::unordered_map<int, std::vector<Edge>> criticalGraph;
-	for (int critical : criticalPoints) {
-		const BoundaryPoint& cp = boundaryPoints[critical];
-		for (Object** neighbor : cp.neighbours) {
+	for (int criticalId : criticalPoints) {
+		const BoundaryPoint& cp = boundaryPoints[criticalId];
+		for (auto& [nbr, idx] : cp.neighbours) {
 			std::vector<Object**> path;
 			Object** prev = cp.thisPoint;
-			Object** current = neighbor;
+			Object** current = nbr;
 			path.push_back(prev);
 
 			while (true) {
@@ -54,18 +85,19 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 				int currentId = (*current)->id;
 				if (criticalPoints.contains(currentId)) {
 					Edge edge;
-					edge.start = boundaryPoints[critical].thisPoint;
+					edge.start = cp.thisPoint;
 					edge.end = current;
 					edge.intermediate.assign(path.begin() + 1, path.end() - 1);
-					criticalGraph[critical].push_back(edge);
+					criticalGraph[criticalId].push_back(edge);
 					break;
 				}
 
 				const BoundaryPoint& bp = boundaryPoints[currentId];
+				// if (bp.neighbours.size() != 2) break;  // bad topology
 				auto it = bp.neighbours.begin();
 				int prevId = (*prev)->id;
-				int nextId = (**it)->id;
-				Object** next = (prevId == nextId) ? *(++it) : *it;
+				int nextId = (*it->first)->id;
+				Object** next = (prevId == nextId) ? (++it)->first : it->first;
 
 				prev = current;
 				current = next;
@@ -91,7 +123,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 			// B-C edges
 			for (const auto& edgeBC : itB->second) {
 				int idC = (*edgeBC.end)->id;
-				if (idC <= idB || idC == idA) continue; // asset idB < idC and idC != idA
+				if (idC <= idB || idC == idA) continue; // assert idB < idC and idC != idA
 
 				auto itC = criticalGraph.find(idC);
 				if (itC == criticalGraph.end()) continue;
@@ -171,7 +203,8 @@ Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, u
 		obj->AddParent(this);
 	}
 	geometryChanged = true;
-	UpdateBoundaryPoints();
+	InitializeBoundaryPoints();
+	DetectSurfaceBoundaryPoints();
 }
 
 Surface::~Surface() {
@@ -185,10 +218,11 @@ Surface::~Surface() {
 	}
 }
 
-void Surface::UpdateBoundaryPoints() {
+void Surface::InitializeBoundaryPoints() {
 	m_boundaryPoints.resize(m_controlPoints.size());
 
 	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
+		m_boundaryPoints[i].idx = i;
 		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
 	}
 
@@ -197,20 +231,57 @@ void Surface::UpdateBoundaryPoints() {
 			USHORT a = patch.indices[pia];
 			USHORT b = patch.indices[pib];
 
-			m_boundaryPoints[a].isBoundary = true;
-			m_boundaryPoints[b].isBoundary = true;
+			m_boundaryPoints[a].isPatchBoundary = true;
+			m_boundaryPoints[b].isPatchBoundary = true;
 
-			m_boundaryPoints[a].isCorner = isCorner(pia);
-			m_boundaryPoints[b].isCorner = isCorner(pib);
+			m_boundaryPoints[a].isPatchCorner = isPatchCorner(pia);
+			m_boundaryPoints[b].isPatchCorner = isPatchCorner(pib);
 
-			m_boundaryPoints[a].neighbours.insert(&m_controlPoints[b]);
-			m_boundaryPoints[b].neighbours.insert(&m_controlPoints[a]);
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]] = b;
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]] = a;
 		}
 	}
 }
 
-bool Surface::isCorner(USHORT idx) const {
+bool Surface::isPatchCorner(USHORT idx) const {
 	return idx == 0 || idx == 3 || idx == 12 || idx == 15;
+}
+
+void Surface::DetectSurfaceBoundaryPoints() {
+	m_boundaryPoints[0].isSurfaceCorner = true;
+	for (int i = 0; i < m_bPoints; ++i) {
+		int idx = i;
+		m_boundaryPoints[idx].isSurfaceBoundary = true;
+	}
+	if (m_surfaceType == SurfaceType::Flat) {
+		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i + (m_bPoints - 1);
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+
+		m_boundaryPoints[(m_aPoints - 1) * m_bPoints].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+
+		m_boundaryPoints[m_aPoints * m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_bPoints; ++i) {
+			int idx = i + (m_aPoints - 1) * m_bPoints;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+	} else {
+		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i + (m_bPoints - 1);
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+	}
 }
 
 void Surface::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
@@ -306,17 +377,22 @@ void app::Surface::RenderProperties() {
 }
 
 void Surface::Replace(int id, Object* obj) {
-	auto it = std::find_if(m_controlPoints.begin(), m_controlPoints.end(),
-		[id](Object* o) { return o && o->id == id; });
+	bool replacedAny = false;
 
-	if (it != m_controlPoints.end()) {
-		(*it)->RemoveParent(this);
-		*it = obj;
-		if (obj != nullptr) {
-			obj->AddParent(this);
-			UpdateMidpoint();
-			geometryChanged = true;
+	for (auto& p : m_controlPoints) {
+		if (p && p->id == id) {
+			p->RemoveParent(this);
+			p = obj;
+			if (obj != nullptr) {
+				obj->AddParent(this);
+			}
+			replacedAny = true;
 		}
+	}
+
+	if (replacedAny && obj != nullptr) {
+		UpdateMidpoint();
+		geometryChanged = true;
 	}
 }
 

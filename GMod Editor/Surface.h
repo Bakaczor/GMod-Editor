@@ -14,8 +14,8 @@ namespace app {
 		static const unsigned int maxDivisions = 64;
 
 		struct Edge {
-			Object** start;
-			Object** end;
+			Object** start = nullptr;
+			Object** end = nullptr;
 			std::vector<Object**> intermediate;
 
 			bool operator==(const Edge& other) const {
@@ -23,7 +23,7 @@ namespace app {
 			}
 		};
 		using Cycle3 = std::array<Edge, 3>;
-		static std::vector<Cycle3> FindCycles3(const std::vector<Surface*>& surfaces);
+		static std::vector<Cycle3> FindCycles3(const std::vector<Surface*>& surfaces, bool includePatchBoundaries);
 
 		Surface(bool increment = false);
 		Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints);
@@ -73,18 +73,24 @@ namespace app {
 		static unsigned short m_globalSurfaceNum;
 		gmod::vector3<double> m_midpoint;
 
-		struct BoundaryPoint {
-			Object** thisPoint = nullptr;
-			bool isBoundary = false;
-			bool isCorner = false;
-			std::unordered_set<Object**> neighbours;
-		};
-		std::vector<BoundaryPoint> m_boundaryPoints;
-		void UpdateBoundaryPoints();
-
-		bool isCorner(USHORT idx) const;
 		static const std::vector<std::pair<USHORT, USHORT>> m_borderEdges;
 
+		struct BoundaryPoint {
+			int idx;
+			Object** thisPoint = nullptr;
+			bool isPatchBoundary = false;
+			bool isSurfaceBoundary = false;
+			bool isPatchCorner = false;
+			bool isSurfaceCorner = false;
+			std::unordered_map<Object**, int> neighbours;
+		};
+		std::vector<BoundaryPoint> m_boundaryPoints;
+		bool isPatchCorner(USHORT idx) const;
+
+		void InitializeBoundaryPoints();
+		void DetectSurfaceBoundaryPoints();
+
+		static std::unordered_map<int, BoundaryPoint> CombineBoundaryPoints(const std::vector<Surface*>& surfaces, bool includePatchBoundaries);
 		static std::vector<Cycle3> FindUniqueTrianglesInGraph(const std::unordered_map<int, std::vector<Edge>>& criticalGraph);
 	};
 }

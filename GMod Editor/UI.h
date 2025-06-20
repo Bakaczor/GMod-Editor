@@ -75,6 +75,8 @@ namespace app {
 
 		SerializationManager m_serializationManager;
 
+		bool m_includePatchBoundaries = false;
+
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();

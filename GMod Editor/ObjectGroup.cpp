@@ -25,17 +25,22 @@ void ObjectGroup::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, c
 }
 
 void ObjectGroup::Replace(int id, Object* obj) {
-	auto it = std::find_if(objects.begin(), objects.end(),
-		[id](Object* o) { return o && o->id == id; });
+	bool replacedAny = false;
 
-	if (it != objects.end()) {
-		(*it)->RemoveParent(this);
-		*it = obj;
-		if (obj != nullptr) {
-			obj->AddParent(this);
-			UpdateMidpoint();
-			geometryChanged = true;
+	for (auto& p : objects) {
+		if (p && p->id == id) {
+			p->RemoveParent(this);
+			p = obj;
+			if (obj != nullptr) {
+				obj->AddParent(this);
+			}
+			replacedAny = true;
 		}
+	}
+
+	if (replacedAny && obj != nullptr) {
+		UpdateMidpoint();
+		geometryChanged = true;
 	}
 }
 
