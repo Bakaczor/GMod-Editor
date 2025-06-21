@@ -28,23 +28,26 @@ std::unordered_map<int, Surface::BoundaryPoint> Surface::CombineBoundaryPoints(c
 				boundaryPoints[bpId].isSurfaceBoundary |= bp.isSurfaceBoundary;
 				boundaryPoints[bpId].isSurfaceCorner |= bp.isSurfaceCorner;
 
-				for (auto& [nbr, idx] : bp.neighbours) {
-					const auto& nbrBp = surface->m_boundaryPoints[idx];
+				for (auto& [nbr, data] : bp.neighbours) {
+					const auto& nbrBp = surface->m_boundaryPoints[data.idx];
 					bool nbrIsBoundary = includePatchBoundaries ? nbrBp.isPatchBoundary : nbrBp.isSurfaceBoundary;
 					if (nbrIsBoundary) {
-						boundaryPoints[bpId].neighbours[nbr] = idx;
+						boundaryPoints[bpId].neighbours[nbr].idx = data.idx;
+						boundaryPoints[bpId].neighbours[nbr].surfId.insert(data.surfId.begin(), data.surfId.end());
+						boundaryPoints[bpId].neighbours[nbr].patchIdx.insert(data.patchIdx.begin(), data.patchIdx.end());
 					}
 				}
-
+				boundaryPoints[bpId].data.surfId.insert(bp.data.surfId.begin(), bp.data.surfId.end());
+				boundaryPoints[bpId].data.patchIdx.insert(bp.data.patchIdx.begin(), bp.data.patchIdx.end());
 			} else {
 				boundaryPoints[bpId] = bp;
 
-				std::unordered_map<Object**, int> neighbours;
-				for (auto& [nbr, idx] : bp.neighbours) {
-					const auto& nbrBp = surface->m_boundaryPoints[idx];
+				std::unordered_map<Object**, BpData> neighbours;
+				for (auto& [nbr, data] : bp.neighbours) {
+					const auto& nbrBp = surface->m_boundaryPoints[data.idx];
 					bool nbrIsBoundary = includePatchBoundaries ? nbrBp.isPatchBoundary : nbrBp.isSurfaceBoundary;
 					if (nbrIsBoundary) {
-						neighbours[nbr] = idx;
+						neighbours[nbr] = data;
 					}
 				}
 				boundaryPoints[bpId].neighbours = neighbours;
@@ -74,18 +77,18 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 	std::unordered_map<int, std::vector<Edge>> criticalGraph;
 	for (int criticalId : criticalPoints) {
 		const BoundaryPoint& cp = boundaryPoints[criticalId];
-		for (auto& [nbr, idx] : cp.neighbours) {
-			std::vector<Object**> path;
-			Object** prev = cp.thisPoint;
-			Object** current = nbr;
+		for (auto& [nbr, data] : cp.neighbours) {
+			std::vector<NetPoint> path;
+			NetPoint prev = { cp.thisPoint, cp.data.surfId,  cp.data.patchIdx };
+			NetPoint current = { nbr, data.surfId, data.patchIdx };
 			path.push_back(prev);
 
 			while (true) {
 				path.push_back(current);
-				int currentId = (*current)->id;
+				int currentId = (*current.thisPoint)->id;
 				if (criticalPoints.contains(currentId)) {
 					Edge edge;
-					edge.start = cp.thisPoint;
+					edge.start = { cp.thisPoint, cp.data.surfId,  cp.data.patchIdx };
 					edge.end = current;
 					edge.intermediate.assign(path.begin() + 1, path.end() - 1);
 					criticalGraph[criticalId].push_back(edge);
@@ -95,9 +98,12 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 				const BoundaryPoint& bp = boundaryPoints[currentId];
 				// if (bp.neighbours.size() != 2) break;  // bad topology
 				auto it = bp.neighbours.begin();
-				int prevId = (*prev)->id;
+				int prevId = (*prev.thisPoint)->id;
 				int nextId = (*it->first)->id;
-				Object** next = (prevId == nextId) ? (++it)->first : it->first;
+				if (prevId == nextId) {
+					++it;
+				}
+				NetPoint next = { it->first, it->second.surfId, it->second.patchIdx };
 
 				prev = current;
 				current = next;
@@ -114,7 +120,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 	for (const auto& [idA, edgesAB] : criticalGraph) {
 		// A-B edges
 		for (const auto& edgeAB : edgesAB) {
-			int idB = (*edgeAB.end)->id;
+			int idB = (*edgeAB.end.thisPoint)->id;
 			if (idB <= idA) continue; // assert idA < idB
 
 			auto itB = criticalGraph.find(idB);
@@ -122,7 +128,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 
 			// B-C edges
 			for (const auto& edgeBC : itB->second) {
-				int idC = (*edgeBC.end)->id;
+				int idC = (*edgeBC.end.thisPoint)->id;
 				if (idC <= idB || idC == idA) continue; // assert idB < idC and idC != idA
 
 				auto itC = criticalGraph.find(idC);
@@ -130,7 +136,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 
 				// now search C-A edges to close triangle
 				for (const auto& edgeCA : itC->second) {
-					int backToA = (*edgeCA.end)->id;
+					int backToA = (*edgeCA.end.thisPoint)->id;
 					if (backToA == idA) {
 						Cycle3 cycle = { edgeAB, edgeBC, edgeCA };
 						triangles.push_back(cycle);
@@ -222,14 +228,18 @@ void Surface::InitializeBoundaryPoints() {
 	m_boundaryPoints.resize(m_controlPoints.size());
 
 	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
-		m_boundaryPoints[i].idx = i;
+		m_boundaryPoints[i].data.idx = i;
 		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
+		m_boundaryPoints[i].data.surfId.insert(this->id);
 	}
 
-	for (const Patch& patch : m_patches) {
+	for (size_t i = 0; i < m_patches.size(); ++i) {
 		for (const auto& [pia, pib] : m_borderEdges) {
-			USHORT a = patch.indices[pia];
-			USHORT b = patch.indices[pib];
+			USHORT a = m_patches[i].indices[pia];
+			USHORT b = m_patches[i].indices[pib];
+
+			m_boundaryPoints[a].data.patchIdx.insert(i);
+			m_boundaryPoints[b].data.patchIdx.insert(i);
 
 			m_boundaryPoints[a].isPatchBoundary = true;
 			m_boundaryPoints[b].isPatchBoundary = true;
@@ -237,8 +247,13 @@ void Surface::InitializeBoundaryPoints() {
 			m_boundaryPoints[a].isPatchCorner = isPatchCorner(pia);
 			m_boundaryPoints[b].isPatchCorner = isPatchCorner(pib);
 
-			m_boundaryPoints[a].neighbours[&m_controlPoints[b]] = b;
-			m_boundaryPoints[b].neighbours[&m_controlPoints[a]] = a;
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].idx = b;
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].surfId.insert(this->id);
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].patchIdx.insert(i);
+
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].idx = a;
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].surfId.insert(this->id);
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].patchIdx.insert(i);
 		}
 	}
 }
@@ -419,108 +434,3 @@ const std::vector<Object*>& Surface::GetControlPoints() const {
 void Surface::ClearControlPoints() {
 	m_controlPoints.clear();
 }
-
-gmod::vector3<double> Surface::UpdateMidpoint() {
-	gmod::vector3<double> mid;
-	if (!m_controlPoints.empty()) {
-		for (const auto& obj : m_controlPoints) {
-			const auto pos = obj->position();
-			mid.x() += pos.x();
-			mid.y() += pos.y();
-			mid.z() += pos.z();
-		}
-		mid = mid * (1.0 / m_controlPoints.size());
-	}
-	m_midpoint = mid;
-	return m_midpoint;
-}
-
-#pragma region TRANSFORM
-gmod::vector3<double> Surface::position() const {
-	return m_midpoint;
-}
-gmod::matrix4<double> Surface::modelMatrix() const {
-	return gmod::matrix4<double>::identity();
-}
-void Surface::SetTranslation(double tx, double ty, double tz) {
-	Object::SetTranslation(tx, ty, tz);
-	auto diff = gmod::vector3<double>(tx, ty, tz) - m_midpoint;
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateTranslation(diff.x(), diff.y(), diff.z());
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::SetRotation(double rx, double ry, double rz) {
-	Object::SetRotation(rx, ry, rz);
-	for (auto& obj : m_controlPoints) {
-		obj->SetRotationAroundPoint(rx, ry, rz, m_midpoint);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) {
-	Object::SetRotationAroundPoint(rx, ry, rz, p);
-	for (auto& obj : m_controlPoints) {
-		obj->SetRotationAroundPoint(rx, ry, rz, p);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::SetScaling(double sx, double sy, double sz) {
-	Object::SetScaling(sx, sy, sz);
-	for (auto& obj : m_controlPoints) {
-		obj->SetScalingAroundPoint(sx, sy, sz, m_midpoint);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) {
-	Object::SetScalingAroundPoint(sx, sy, sz, p);
-	for (auto& obj : m_controlPoints) {
-		obj->SetScalingAroundPoint(sx, sy, sz, p);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::UpdateTranslation(double dtx, double dty, double dtz) {
-	Object::UpdateTranslation(dtx, dty, dtz);
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateTranslation(dtx, dty, dtz);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::UpdateRotation_Quaternion(double drx, double dry, double drz) {
-	Object::UpdateRotation_Quaternion(drx, dry, drz);
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) {
-	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::UpdateScaling(double dsx, double dsy, double dsz) {
-	Object::UpdateScaling(dsx, dsy, dsz);
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-void Surface::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) {
-	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, p);
-	for (auto& obj : m_controlPoints) {
-		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, p);
-		obj->InformParents();
-	}
-	UpdateMidpoint();
-}
-#pragma endregion

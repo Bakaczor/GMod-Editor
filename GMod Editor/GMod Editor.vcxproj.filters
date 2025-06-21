@@ -159,6 +159,12 @@
     <ClInclude Include="tinyfiledialogs.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="Gregory.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="Transformable.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -253,6 +259,9 @@
     </ClCompile>
     <ClCompile Include="tinyfiledialogs.c">
       <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Transformable.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -63,6 +63,14 @@ gmod::vector3<double> ObjectGroup::UpdateMidpoint() {
 	return m_midpoint;
 }
 
+std::unordered_map<int, Object*> ObjectGroup::GetUnique() const {
+	std::unordered_map<int, Object*> unique;
+	for (const auto& obj : objects) {
+		unique.insert(std::make_pair(obj->id, obj));
+	}
+	return unique;
+}
+
 void ObjectGroup::AddObject(Object* obj) {
 	if (Contains(obj->id)) { return; }
 	objects.push_back(obj);
@@ -83,7 +91,7 @@ void ObjectGroup::RemoveObject(Object* obj) {
 		geometryChanged = true;
 		UpdateMidpoint();
 		if (nullptr != dynamic_cast<Point*>(obj)) {
-			m_numOfPoints--;
+			m_numOfPoints -= erased;
 		}
 	}
 }
@@ -120,7 +128,8 @@ gmod::matrix4<double> ObjectGroup::modelMatrix() const {
 void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
 	Object::SetTranslation(tx, ty, tz);
 	auto diff = gmod::vector3<double>(tx, ty, tz) - m_midpoint;
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateTranslation(diff.x(), diff.y(), diff.z());
 		obj->InformParents();
 	}
@@ -128,7 +137,8 @@ void ObjectGroup::SetTranslation(double tx, double ty, double tz) {
 }
 void ObjectGroup::SetRotation(double rx, double ry, double rz) {
 	Object::SetRotation(rx, ry, rz);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->SetRotationAroundPoint(rx, ry, rz, m_midpoint);
 		obj->InformParents();
 	}
@@ -136,7 +146,8 @@ void ObjectGroup::SetRotation(double rx, double ry, double rz) {
 }
 void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) {
 	Object::SetRotationAroundPoint(rx, ry, rz, p);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->SetRotationAroundPoint(rx, ry, rz, p);
 		obj->InformParents();
 	}
@@ -144,7 +155,8 @@ void ObjectGroup::SetRotationAroundPoint(double rx, double ry, double rz, const 
 }
 void ObjectGroup::SetScaling(double sx, double sy, double sz) {
 	Object::SetScaling(sx, sy, sz);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->SetScalingAroundPoint(sx, sy, sz, m_midpoint);
 		obj->InformParents();
 	}
@@ -152,7 +164,8 @@ void ObjectGroup::SetScaling(double sx, double sy, double sz) {
 }
 void ObjectGroup::SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) {
 	Object::SetScalingAroundPoint(sx, sy, sz, p);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->SetScalingAroundPoint(sx, sy, sz, p);
 		obj->InformParents();
 	}
@@ -160,7 +173,8 @@ void ObjectGroup::SetScalingAroundPoint(double sx, double sy, double sz, const g
 }
 void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
 	Object::UpdateTranslation(dtx, dty, dtz);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateTranslation(dtx, dty, dtz);
 		obj->InformParents();
 	}
@@ -168,7 +182,8 @@ void ObjectGroup::UpdateTranslation(double dtx, double dty, double dtz) {
 }
 void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) {
 	Object::UpdateRotation_Quaternion(drx, dry, drz);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, m_midpoint);
 		obj->InformParents();
 	}
@@ -176,7 +191,8 @@ void ObjectGroup::UpdateRotation_Quaternion(double drx, double dry, double drz) 
 }
 void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) {
 	Object::UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateRotationAroundPoint_Quaternion(drx, dry, drz, p);
 		obj->InformParents();
 	}
@@ -184,7 +200,8 @@ void ObjectGroup::UpdateRotationAroundPoint_Quaternion(double drx, double dry, d
 }
 void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
 	Object::UpdateScaling(dsx, dsy, dsz);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, m_midpoint);
 		obj->InformParents();
 	}
@@ -192,7 +209,8 @@ void ObjectGroup::UpdateScaling(double dsx, double dsy, double dsz) {
 }
 void ObjectGroup::UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) {
 	Object::UpdateScalingAroundPoint(dsx, dsy, dsz, p);
-	for (auto& obj : objects) {
+	auto unique = GetUnique();
+	for (auto& [id, obj] : unique) {
 		obj->UpdateScalingAroundPoint(dsx, dsy, dsz, p);
 		obj->InformParents();
 	}

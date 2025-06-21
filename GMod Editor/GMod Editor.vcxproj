@@ -194,6 +194,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
+    <ClInclude Include="Gregory.h" />
     <ClInclude Include="Patch.h" />
     <ClInclude Include="SerializationManager.h" />
     <ClInclude Include="Spline.h" />
@@ -214,6 +215,7 @@
     <ClInclude Include="SurfaceBuilder.h" />
     <ClInclude Include="tinyfiledialogs.h" />
     <ClInclude Include="Torus.h" />
+    <ClInclude Include="Transformable.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
@@ -247,6 +249,7 @@
     <ClCompile Include="tinyfiledialogs.c" />
     <ClCompile Include="Torus.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Transformable.cpp" />
     <ClCompile Include="UI.cpp" />
   </ItemGroup>
   <ItemGroup>

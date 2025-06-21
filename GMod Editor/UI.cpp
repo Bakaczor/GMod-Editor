@@ -312,10 +312,12 @@ void UI::RenderObjectTable() {
 	if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		sceneObjects.clear();
 	}
+	ImGui::BeginDisabled();
+	ImGui::Checkbox("Include Patch Boundaries", &m_includePatchBoundaries);
+	ImGui::EndDisabled();
 	if (disable) {
 		ImGui::BeginDisabled();
 	}
-	ImGui::Checkbox("Include Patch Boundaries", &m_includePatchBoundaries);
 	if (ImGui::Button("Add Gregory Patch", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		auto cycles = Surface::FindCycles3(surfaces, m_includePatchBoundaries);
 		if (cycles.size() > 0) {

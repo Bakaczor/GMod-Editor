@@ -74,6 +74,7 @@ void Polyline::RenderProperties() {
 		for (int i = 0; i < objects.size(); i++) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
+			ImGui::PushID(i);
 			if(ImGui::Selectable(objects[i]->name.c_str(), i == m_selectedIdx, ImGuiSelectableFlags_SpanAllColumns)) {
 				if (m_selectedIdx == i) {
 					m_selectedIdx = -1;
@@ -81,6 +82,7 @@ void Polyline::RenderProperties() {
 					m_selectedIdx = i;
 				}
 			}
+			ImGui::PopID();
 		}
 		ImGui::EndTable();
 	}

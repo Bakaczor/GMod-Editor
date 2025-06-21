@@ -1,5 +1,5 @@
 #pragma once
-#include "Object.h"
+#include "Transformable.h"
 #include "Patch.h"
 #include <unordered_set>
 
@@ -8,18 +8,24 @@ namespace app {
 		Flat, Cylindric
 	};
 
-	class Surface : public Object {
+	class Surface : public Transformable {
 	public:
 		static const unsigned int minDivisions = 4;
 		static const unsigned int maxDivisions = 64;
 
+		struct NetPoint {
+			Object** thisPoint = nullptr;
+			std::unordered_set<int> surfId;
+			std::unordered_set<int> patchIdx;
+		};
 		struct Edge {
-			Object** start = nullptr;
-			Object** end = nullptr;
-			std::vector<Object**> intermediate;
+			NetPoint start;
+			NetPoint end;
+			std::vector<NetPoint> intermediate;
 
 			bool operator==(const Edge& other) const {
-				return (start == other.start && end == other.end) || (start == other.end && end == other.start);
+				return ((*start.thisPoint)->id == (*other.start.thisPoint)->id && (*end.thisPoint)->id == (*other.end.thisPoint)->id) ||
+					((*start.thisPoint)->id == (*other.end.thisPoint)->id && (*end.thisPoint)->id == (*other.start.thisPoint)->id);
 			}
 		};
 		using Cycle3 = std::array<Edge, 3>;
@@ -39,50 +45,37 @@ namespace app {
 
 		const std::vector<Object*>& GetControlPoints() const;
 		void ClearControlPoints();
-
-#pragma region TRANSFORM
-		virtual gmod::vector3<double> position() const override;
-		virtual gmod::matrix4<double> modelMatrix() const override;
-		virtual void SetTranslation(double tx, double ty, double tz) override;
-		virtual void SetRotation(double rx, double ry, double rz) override;
-		virtual void SetRotationAroundPoint(double rx, double ry, double rz, const gmod::vector3<double>& p) override;
-		virtual void SetScaling(double sx, double sy, double sz) override;
-		virtual void SetScalingAroundPoint(double sx, double sy, double sz, const gmod::vector3<double>& p) override;
-		virtual void UpdateTranslation(double dtx, double dty, double dtz) override;
-		virtual void UpdateRotation_Quaternion(double drx, double dry, double drz) override;
-		virtual void UpdateRotationAroundPoint_Quaternion(double drx, double dry, double drz, const gmod::vector3<double>& p) override;
-		virtual void UpdateScaling(double dsx, double dsy, double dsz) override;
-		virtual void UpdateScalingAroundPoint(double dsx, double dsy, double dsz, const gmod::vector3<double>& p) override;
-#pragma endregion
 	protected:
 		unsigned int m_divisions;
 		bool m_showNet = false;
-		//bool m_hidePoints = false;
 		Mesh m_netMesh;
 
-		std::vector<Object*> m_controlPoints;
 		std::vector<Patch> m_patches;
 		Mesh m_surfaceMesh;
 
 		unsigned int m_aPoints;
 		unsigned int m_bPoints;
 		SurfaceType m_surfaceType;
-		gmod::vector3<double> UpdateMidpoint();
 	private:
 		int m_selectedIdx = -1;
 		static unsigned short m_globalSurfaceNum;
-		gmod::vector3<double> m_midpoint;
 
 		static const std::vector<std::pair<USHORT, USHORT>> m_borderEdges;
 
-		struct BoundaryPoint {
+		struct BpData {
 			int idx;
+			std::unordered_set<int> surfId;
+			std::unordered_set<int> patchIdx;
+		};
+		struct BoundaryPoint {
 			Object** thisPoint = nullptr;
 			bool isPatchBoundary = false;
 			bool isSurfaceBoundary = false;
 			bool isPatchCorner = false;
 			bool isSurfaceCorner = false;
-			std::unordered_map<Object**, int> neighbours;
+			std::unordered_map<Object**, BpData> neighbours;
+
+			BpData data;
 		};
 		std::vector<BoundaryPoint> m_boundaryPoints;
 		bool isPatchCorner(USHORT idx) const;
