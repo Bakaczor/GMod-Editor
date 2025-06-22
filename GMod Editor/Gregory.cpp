@@ -296,7 +296,7 @@ std::array<gmod::vector3<double>, 2> Gregory::D(
 	return { controlPoints[1] + d1, controlPoints[2] + d2 };
 }
 
-void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadGreg, 3>& gregoryPatches, std::vector<gmod::vector3<double>>& tangentVectorsEnds) const {
+void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadGreg, 3>& gregoryPatches, NetAndVectors& netAndVectors) const {
 	std::array<EdgeData, 3> edgeData;
 	std::array<TangentData, 3> edgeTangentDataCCW;
 	std::array<TangentData, 3> edgeTangentDataCC;
@@ -306,10 +306,12 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 			boundaryPoints[i] = m_controlPoints[edgeIdx * 8 + i]->position();
 		}
 		edgeData[edgeIdx].bernsteinPoints = boundaryPoints;
+
 		std::array<gmod::vector3<double>, 4> inwardPoints;
 		for (int i = 0; i < 4; i++) {
 			inwardPoints[i] = m_controlPoints[edgeIdx * 8 + 4 + i]->position();
 		}
+
 		DeCasteljauRes boundaryRes = DeCasteljau(boundaryPoints);
 		DeCasteljauRes inwardRes = DeCasteljau(inwardPoints);
 		edgeData[edgeIdx].boundaryRes = boundaryRes;
@@ -322,11 +324,12 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 		edgeData[edgeIdx].edgeGregPoints[2] = ExtrapolateToward(inwardRes.S[1], boundaryRes.S[1]);
 		edgeData[edgeIdx].edgeGregPoints[3] = ExtrapolateToward(inwardRes.R[2], boundaryRes.R[2]);
 
-		tangentVectorsEnds.push_back(boundaryRes.R[0]); tangentVectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[0]);
-		tangentVectorsEnds.push_back(boundaryRes.S[0]); tangentVectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[1]);
-		tangentVectorsEnds.push_back(boundaryRes.R[1]); tangentVectorsEnds.push_back(edgeData[edgeIdx].P2);
-		tangentVectorsEnds.push_back(boundaryRes.S[1]); tangentVectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[2]);
-		tangentVectorsEnds.push_back(boundaryRes.R[2]); tangentVectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[3]);
+		netAndVectors.vectorsEnds.push_back(boundaryRes.R[0]); netAndVectors.vectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[0]);
+		netAndVectors.vectorsEnds.push_back(boundaryRes.S[0]); netAndVectors.vectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[1]);
+		netAndVectors.vectorsEnds.push_back(boundaryRes.S[1]); netAndVectors.vectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[2]);
+		netAndVectors.vectorsEnds.push_back(boundaryRes.R[2]); netAndVectors.vectorsEnds.push_back(edgeData[edgeIdx].edgeGregPoints[3]);
+
+		netAndVectors.netStrips[edgeIdx] = { boundaryPoints[0], boundaryRes.R[0], boundaryRes.S[0], boundaryRes.T, boundaryRes.S[1], boundaryRes.R[2], boundaryPoints[3] };
 
 		edgeData[edgeIdx].Q = Q(edgeData[edgeIdx].P2, edgeData[edgeIdx].P3);
 
@@ -341,6 +344,7 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 	edgeData[0].P0 = edgeData[1].P0 = edgeData[2].P0 = P({ edgeData[0].Q, edgeData[1].Q , edgeData[2].Q });
 	for (int edgeIdx = 0; edgeIdx < 3; edgeIdx++) {
 		edgeData[edgeIdx].P1 = P1(edgeData[edgeIdx].Q, edgeData[edgeIdx].P0);
+		netAndVectors.netStrips[edgeIdx + 3] = { edgeData[edgeIdx].P0, edgeData[edgeIdx].P1, edgeData[edgeIdx].P2, edgeData[edgeIdx].P3 };
 	}
 
 	std::array<TangentData, 3> midTangentDataCCW;
@@ -372,6 +376,9 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 		patchData[patchIdx].patchGregPoints[0] = leftGregs[0];
 		patchData[patchIdx].patchGregPoints[1] = leftGregs[1];
 
+		netAndVectors.vectorsEnds.push_back(edgeData[leftEdgeIdx].P1); netAndVectors.vectorsEnds.push_back(leftGregs[0]);
+		netAndVectors.vectorsEnds.push_back(edgeData[leftEdgeIdx].P2); netAndVectors.vectorsEnds.push_back(leftGregs[1]);
+
 		auto rightGVecs = gVecs({ midTangentDataCC[rightEdgeIdx], edgeTangentDataCC[rightEdgeIdx] });
 		auto rightGregs = D(
 			{ midTangentDataCC[rightEdgeIdx].b, edgeTangentDataCC[rightEdgeIdx].b },
@@ -380,6 +387,9 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 		);
 		patchData[patchIdx].patchGregPoints[2] = rightGregs[0];
 		patchData[patchIdx].patchGregPoints[3] = rightGregs[1];
+
+		netAndVectors.vectorsEnds.push_back(edgeData[rightEdgeIdx].P1); netAndVectors.vectorsEnds.push_back(rightGregs[0]);
+		netAndVectors.vectorsEnds.push_back(edgeData[rightEdgeIdx].P2); netAndVectors.vectorsEnds.push_back(rightGregs[1]);
 	}
 
 	// transfer to QuadGreg, start from left-down corner
@@ -420,21 +430,41 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 
 void Gregory::UpdateMesh(const Device& device) {
 	std::array<Gregory::QuadGreg, 3> gregoryPatches;
-	std::vector<gmod::vector3<double>> tangentVectorsEnds;
-	CalculateGregoryPatchesAndTangentVectors(gregoryPatches, tangentVectorsEnds);
+	NetAndVectors netAndVectors;
+	CalculateGregoryPatchesAndTangentVectors(gregoryPatches, netAndVectors);
+
+	if (m_showNet) {
+		for (int i = 0; i < netAndVectors.netStrips.size(); ++i) {
+			std::vector<Vertex_PoCo> verts;
+			auto& strip = netAndVectors.netStrips[i];
+			verts.reserve(strip.size());
+			std::vector<USHORT> idxs(strip.size());
+			std::iota(idxs.begin(), idxs.end(), 0);
+
+			for (const auto& pos : strip) {
+				verts.push_back({
+					DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()),
+					DirectX::XMFLOAT3(m_helpersColor[0], m_helpersColor[1], m_helpersColor[2])
+				});
+			}
+			m_netMeshes[i].Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		}
+	}
 
 	if (m_showVectors) {
-		std::vector<Vertex_Po> verts;
-		verts.reserve(tangentVectorsEnds.size() * 2);
-		std::vector<USHORT> idxs(tangentVectorsEnds.size() * 2);
+		std::vector<Vertex_PoCo> verts;
+		verts.reserve(netAndVectors.vectorsEnds.size() * 2);
+		std::vector<USHORT> idxs(netAndVectors.vectorsEnds.size() * 2);
 		std::iota(idxs.begin(), idxs.end(), 0);
 
-		for (const auto& pos : tangentVectorsEnds) {
-			verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
+		for (const auto& pos : netAndVectors.vectorsEnds) {
+			verts.push_back({
+				DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()),
+				DirectX::XMFLOAT3(m_helpersColor[0], m_helpersColor[1], m_helpersColor[2])
+			});
 		}
 		m_vectorsMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	}
-
 
 	std::vector<gmod::vector3<double>> positions(49);
 	const auto& p0 = gregoryPatches[0];
@@ -528,8 +558,14 @@ Gregory::~Gregory() {
 
 void Gregory::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	if (m_showVectors) {
-		map.at(ShaderType::Regular).Set(context);
+		map.at(ShaderType::RegularWithColors).Set(context);
 		m_vectorsMesh.Render(context);
+	}
+	if (m_showNet) {
+		map.at(ShaderType::RegularWithColors).Set(context);
+		for (auto& mesh : m_netMeshes) {
+			mesh.Render(context);
+		}
 	}
 	map.at(ShaderType::RegularWithTesselationGregory).Set(context);
 	m_gregoryMesh.Render(context);
@@ -537,14 +573,20 @@ void Gregory::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const
 
 void Gregory::RenderProperties() {
 	Object::RenderProperties();
+	ImGui::ColorEdit3("Helpers color", reinterpret_cast<float*>(&m_helpersColor));
 	int divisions = m_divisions;
 	ImGui::InputInt("Divisions", &divisions, 1, static_cast<int>(minDivisions));
 	m_divisions = std::min(std::max(static_cast<int>(minDivisions), divisions), static_cast<int>(maxDivisions));
 
 	ImGui::Separator();
-	bool old = m_showVectors;
+	bool oldV = m_showVectors;
 	ImGui::Checkbox("Show vectors", &m_showVectors);
-	if (m_showVectors && m_showVectors != old) {
+	if (m_showVectors && m_showVectors != oldV) {
+		geometryChanged = true;
+	}
+	bool oldN = m_showNet;
+	ImGui::Checkbox("Show net", &m_showNet);
+	if (m_showNet && m_showNet != oldN) {
 		geometryChanged = true;
 	}
 

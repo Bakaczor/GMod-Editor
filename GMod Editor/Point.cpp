@@ -25,7 +25,7 @@ void Point::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const s
 	}
 }
 
-gmod::matrix4<double> app::Point::modelMatrix() const {
+gmod::matrix4<double> Point::modelMatrix() const {
 	auto pos = position();
 	return gmod::matrix4<double>::translation(pos.x(), pos.y(), pos.z()) * 
 		gmod::matrix4<double>::scaling(m_modelScale, m_modelScale, m_modelScale);

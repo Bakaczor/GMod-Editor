@@ -20,7 +20,15 @@ namespace app {
 		int m_selectedIdx = -1;
 		static unsigned short m_globalGregoryNum;
 
+		struct NetAndVectors {
+			std::vector<gmod::vector3<double>> vectorsEnds;
+			std::array<std::vector<gmod::vector3<double>>, 6> netStrips;
+		};
 		bool m_showVectors = false;
+		bool m_showNet = false;
+		std::array<float, 4> m_helpersColor = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+		std::array<Mesh, 6> m_netMeshes;
 		Mesh m_vectorsMesh;
 		Mesh m_gregoryMesh;
 
@@ -70,6 +78,6 @@ namespace app {
 			std::array<gmod::vector3<double>, 8> edgePoints;
 			std::array<gmod::vector3<double>, 8> facePoints;
 		};
-		void CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadGreg, 3>& gregoryPatches, std::vector<gmod::vector3<double>>& tangentVectorsEnds) const;
+		void CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadGreg, 3>& gregoryPatches, NetAndVectors& netAndVectors) const;
 	};
 }
