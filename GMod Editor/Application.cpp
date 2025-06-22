@@ -126,6 +126,18 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
+		// RegularWithTesselationGregory
+		const auto hsBytes_rwtg = Device::LoadByteCode(L"hs_rwtg.cso");
+		const auto dsBytes_rwtg = Device::LoadByteCode(L"ds_rwtg.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationGregory, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwt),
+				m_device.CreateHullShader(hsBytes_rwtg),
+				m_device.CreateDomainShader(dsBytes_rwtg),
+				m_device.CreateGeometryShader(gsBytes_rwtsr),
+				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
+			}
+		));
 	}
 
 	// CONSTANT BUFFERS
@@ -392,11 +404,11 @@ void Application::Render() {
 		if (obj->geometryChanged || m_firstPass) {
 			obj->UpdateMesh(m_device);
 		}
-		auto surf = dynamic_cast<Surface*>(obj.get());
-		if (nullptr != surf) {
-			unsigned int divisions = surf->GetDivisions();
+		auto div = dynamic_cast<Divisable*>(obj.get());
+		if (nullptr != div) {
+			unsigned int divisions = div->GetDivisions();
 			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
-		} 
+		}
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 	}
 }

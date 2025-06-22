@@ -23,6 +23,7 @@ std::unordered_map<int, Object*> Transformable::GetUnique() const {
 	}
 	return unique;
 }
+
 gmod::vector3<double> Transformable::position() const {
 	return m_midpoint;
 }

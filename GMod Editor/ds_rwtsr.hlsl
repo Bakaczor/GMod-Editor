@@ -57,9 +57,9 @@ float3 P(OutputPatch<DSInput, NUM_CONTROL_POINTS> patch, float2 uv)
     float3 pos = 0;
     for (int i = 0; i < 4; i++)
     {
+        float Bu = B(i, uv.x);
         for (int j = 0; j < 4; j++)
         {
-            float Bu = B(i, uv.x);
             float Bv = B(j, uv.y);
             pos += patch[i * 4 + j].wPosition * Bu * Bv;
         }

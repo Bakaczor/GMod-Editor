@@ -11,7 +11,7 @@ unsigned short Object::m_globalObjectNum = 0;
 Object::Object() : m_transform(), m_type("Object") {
 	std::ostringstream os;
 	os << "object_" << m_globalObjectNum;
-	name = os.str();
+	name = os.str(); 
 	m_globalObjectNum += 1;
 
 	id = m_globalObjectId;
@@ -26,9 +26,9 @@ Object::~Object() {
 			selection->geometryChanged = true;
 			std::erase_if(selection->objects, [this](const auto& o) { return o->id == id; });
 		} else {
-			auto surface = dynamic_cast<Surface*>(obj);
-			if (surface != nullptr) {
-				surface->Replace(this->id, nullptr);
+			auto trans = dynamic_cast<Transformable*>(obj);
+			if (trans != nullptr) {
+				trans->Replace(this->id, nullptr);
 			}
 		}
 	}
@@ -70,6 +70,16 @@ void Object::RenderPosition(float step, float stepFast) {
 
 std::optional<std::vector<std::unique_ptr<Object>>*> app::Object::GetSubObjects() {
 	return std::nullopt;
+}
+
+void Object::FixGlobalObjectId(const std::vector<std::unique_ptr<Object>>& sceneObjects) {
+	int maxId = -1;
+	for (const auto& obj : sceneObjects) {
+		if (obj->id > maxId) {
+			maxId = obj->id;
+		}
+	}
+	m_globalObjectId = maxId + 1;
 }
 
 #pragma region PARENTS

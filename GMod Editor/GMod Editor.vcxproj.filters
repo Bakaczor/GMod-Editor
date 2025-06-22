@@ -64,6 +64,9 @@
     <Filter Include="Pliki zasobów\RegularWithTesselationBSurface">
       <UniqueIdentifier>{aca6ded9-1af8-4697-9d86-8fbc7d6ceea2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselationGregory">
+      <UniqueIdentifier>{586a05fd-6dfb-4931-8685-5e3ce3e3c2ed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -165,6 +168,12 @@
     <ClInclude Include="Transformable.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Edge.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
+    <ClInclude Include="Divisable.h">
+      <Filter>Pliki nagłówkowe\object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -263,6 +272,9 @@
     <ClCompile Include="Transformable.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
+    <ClCompile Include="Gregory.cpp">
+      <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">
@@ -309,6 +321,12 @@
     </FxCompile>
     <FxCompile Include="gs_rwtsr.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
+    </FxCompile>
+    <FxCompile Include="hs_rwtg.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_rwtg.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

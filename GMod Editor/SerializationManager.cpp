@@ -409,8 +409,7 @@ Surface* SerializationManager::DeserializeBezierSurfaceC0(const json::value& jv,
         objects.erase(objects.begin() + offset, objects.end());
     }
 
-    Surface* surface = new Surface(type, aPoints, bPoints, divisions, objects);
-    surface->id = obj.at("id").as_int64();
+    Surface* surface = new Surface(type, aPoints, bPoints, divisions, objects, obj.at("id").as_int64());
     surface->name = obj.at("name").as_string().c_str();
 
     return surface;

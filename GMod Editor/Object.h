@@ -28,6 +28,8 @@ namespace app {
 		virtual void RenderProperties();
 		void RenderPosition(float step = 0.001f, float stepFast = 0.1f);
 		virtual std::optional<std::vector<std::unique_ptr<Object>>*> GetSubObjects();
+
+		static void FixGlobalObjectId(const std::vector<std::unique_ptr<Object>>& sceneObjects);
 #pragma region PARENTS
 		virtual void AddParent(Object* obj);
 		virtual void RemoveParent(Object* obj);

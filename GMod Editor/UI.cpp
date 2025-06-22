@@ -6,6 +6,7 @@
 #include "Point.h"
 #include "Polyline.h"
 #include "Spline.h"
+#include "Gregory.h"
 #include "tinyfiledialogs.h"
 #include "Torus.h"
 #include "UI.h"
@@ -279,20 +280,6 @@ void UI::RenderObjectTable() {
 			}
 		}
 	}
-	bool disable = false;
-	std::vector<Surface*> surfaces;
-	if (!selection.Empty()) {
-		for (const auto& obj : selection.objects) {
-			if (obj->type() != "Surface") {
-				disable = true;
-				break;
-			} else {
-				surfaces.push_back(dynamic_cast<Surface*>(obj));
-			}
-		}
-	} else {
-		disable = true;
-	}
 	if (ImGui::Button("Delete", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		if (!selection.Empty()) {
 			std::unordered_set<int> toDelete;
@@ -315,13 +302,37 @@ void UI::RenderObjectTable() {
 	ImGui::BeginDisabled();
 	ImGui::Checkbox("Include Patch Boundaries", &m_includePatchBoundaries);
 	ImGui::EndDisabled();
+	bool disable = false;
+	std::vector<Surface*> surfaces;
+	if (!selection.Empty()) {
+		for (const auto& obj : selection.objects) {
+			if (obj->type() != "Surface") {
+				disable = true;
+				break;
+			} else {
+				surfaces.push_back(dynamic_cast<Surface*>(obj));
+			}
+		}
+	} else {
+		disable = true;
+	}
 	if (disable) {
 		ImGui::BeginDisabled();
 	}
 	if (ImGui::Button("Add Gregory Patch", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		auto cycles = Surface::FindCycles3(surfaces, m_includePatchBoundaries);
-		if (cycles.size() > 0) {
-
+		for (const auto& cycle3 : cycles) {
+			bool correctLength = true;
+			for (const auto& edge : cycle3) {
+				if (edge.intermediate.size() != 2) {
+					correctLength = false;
+					break;
+				}
+			}
+			if (correctLength) {
+				auto obj = std::make_unique<Gregory>(cycle3, surfaces);
+				sceneObjects.push_back(std::move(obj));
+			}
 		}
 	}
 	if (disable) {
@@ -552,6 +563,7 @@ void UI::LoadJSONFile(const std::string& path) {
 	try {
 		std::string content{ std::istreambuf_iterator<char>{file}, {} };
 		m_serializationManager.DeserializeScene(boost::json::parse(content), sceneObjects);
+		Object::FixGlobalObjectId(sceneObjects);
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Deserialization error: " + std::string(e.what()));
 	} catch (...) {

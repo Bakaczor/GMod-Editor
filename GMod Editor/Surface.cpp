@@ -33,12 +33,14 @@ std::unordered_map<int, Surface::BoundaryPoint> Surface::CombineBoundaryPoints(c
 					bool nbrIsBoundary = includePatchBoundaries ? nbrBp.isPatchBoundary : nbrBp.isSurfaceBoundary;
 					if (nbrIsBoundary) {
 						boundaryPoints[bpId].neighbours[nbr].idx = data.idx;
-						boundaryPoints[bpId].neighbours[nbr].surfId.insert(data.surfId.begin(), data.surfId.end());
-						boundaryPoints[bpId].neighbours[nbr].patchIdx.insert(data.patchIdx.begin(), data.patchIdx.end());
+						for (auto& [surfId, patchIdx] : data.surfIdPatchIdx) {
+							boundaryPoints[bpId].neighbours[nbr].surfIdPatchIdx[surfId].insert(patchIdx.begin(), patchIdx.end());
+						}
 					}
 				}
-				boundaryPoints[bpId].data.surfId.insert(bp.data.surfId.begin(), bp.data.surfId.end());
-				boundaryPoints[bpId].data.patchIdx.insert(bp.data.patchIdx.begin(), bp.data.patchIdx.end());
+				for (auto& [surfId, patchIdx] : bp.data.surfIdPatchIdx) {
+					boundaryPoints[bpId].data.surfIdPatchIdx[surfId].insert(patchIdx.begin(), patchIdx.end());
+				}
 			} else {
 				boundaryPoints[bpId] = bp;
 
@@ -79,8 +81,8 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 		const BoundaryPoint& cp = boundaryPoints[criticalId];
 		for (auto& [nbr, data] : cp.neighbours) {
 			std::vector<NetPoint> path;
-			NetPoint prev = { cp.thisPoint, cp.data.surfId,  cp.data.patchIdx };
-			NetPoint current = { nbr, data.surfId, data.patchIdx };
+			NetPoint prev = { cp.thisPoint, cp.data.surfIdPatchIdx };
+			NetPoint current = { nbr, data.surfIdPatchIdx };
 			path.push_back(prev);
 
 			while (true) {
@@ -88,7 +90,7 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 				int currentId = (*current.thisPoint)->id;
 				if (criticalPoints.contains(currentId)) {
 					Edge edge;
-					edge.start = { cp.thisPoint, cp.data.surfId,  cp.data.patchIdx };
+					edge.start = { cp.thisPoint, cp.data.surfIdPatchIdx };
 					edge.end = current;
 					edge.intermediate.assign(path.begin() + 1, path.end() - 1);
 					criticalGraph[criticalId].push_back(edge);
@@ -103,7 +105,7 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 				if (prevId == nextId) {
 					++it;
 				}
-				NetPoint next = { it->first, it->second.surfId, it->second.patchIdx };
+				NetPoint next = { it->first, it->second.surfIdPatchIdx };
 
 				prev = current;
 				current = next;
@@ -149,7 +151,8 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 	return triangles;
 }
 
-Surface::Surface(bool increment) : m_divisions(Patch::rowSize), m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
+Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
+	m_divisions = Patch::rowSize;
 	m_type = "Surface";
 	std::ostringstream os;
 	os << "surface_" << m_globalSurfaceNum;
@@ -159,8 +162,13 @@ Surface::Surface(bool increment) : m_divisions(Patch::rowSize), m_aPoints(0), m_
 	}
 }
 
-Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) :
-	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints), m_divisions(divisions) {
+Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, int id) :
+	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints) {
+	m_divisions = divisions;
+	// required, since Gregory patches require id set at construction stage
+	if (id != -1) {
+		this->id = id;
+	}
 	m_type = "Surface";
 	std::ostringstream os;
 	os << "surface_" << m_globalSurfaceNum;
@@ -230,7 +238,6 @@ void Surface::InitializeBoundaryPoints() {
 	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
 		m_boundaryPoints[i].data.idx = i;
 		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
-		m_boundaryPoints[i].data.surfId.insert(this->id);
 	}
 
 	for (size_t i = 0; i < m_patches.size(); ++i) {
@@ -238,8 +245,8 @@ void Surface::InitializeBoundaryPoints() {
 			USHORT a = m_patches[i].indices[pia];
 			USHORT b = m_patches[i].indices[pib];
 
-			m_boundaryPoints[a].data.patchIdx.insert(i);
-			m_boundaryPoints[b].data.patchIdx.insert(i);
+			m_boundaryPoints[a].data.surfIdPatchIdx[this->id].insert(i);
+			m_boundaryPoints[b].data.surfIdPatchIdx[this->id].insert(i);
 
 			m_boundaryPoints[a].isPatchBoundary = true;
 			m_boundaryPoints[b].isPatchBoundary = true;
@@ -248,12 +255,10 @@ void Surface::InitializeBoundaryPoints() {
 			m_boundaryPoints[b].isPatchCorner = isPatchCorner(pib);
 
 			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].idx = b;
-			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].surfId.insert(this->id);
-			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].patchIdx.insert(i);
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].surfIdPatchIdx[this->id].insert(i);
 
 			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].idx = a;
-			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].surfId.insert(this->id);
-			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].patchIdx.insert(i);
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].surfIdPatchIdx[this->id].insert(i);
 		}
 	}
 }
@@ -379,6 +384,7 @@ void app::Surface::RenderProperties() {
 		for (int i = 0; i < m_controlPoints.size(); i++) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
+			ImGui::PushID(i);
 			if (ImGui::Selectable(m_controlPoints[i]->name.c_str(), i == m_selectedIdx, ImGuiSelectableFlags_SpanAllColumns)) {
 				if (m_selectedIdx == i) {
 					m_selectedIdx = -1;
@@ -386,6 +392,7 @@ void app::Surface::RenderProperties() {
 					m_selectedIdx = i;
 				}
 			}
+			ImGui::PopID();
 		}
 		ImGui::EndTable();
 	}
@@ -415,10 +422,6 @@ SurfaceType Surface::GetSurfaceType() const {
 	return m_surfaceType;
 }
 
-unsigned int Surface::GetDivisions() const {
-	return m_divisions;
-}
-
 unsigned int Surface::GetAPoints() const {
 	return m_aPoints;
 }
@@ -429,6 +432,10 @@ unsigned int Surface::GetBPoints() const {
 
 const std::vector<Object*>& Surface::GetControlPoints() const {
 	return m_controlPoints;
+}
+
+const Patch& Surface::GetPatch(int idx) const {
+	return m_patches.at(idx);
 }
 
 void Surface::ClearControlPoints() {
