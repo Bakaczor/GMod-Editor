@@ -206,7 +206,7 @@ gmod::vector3<double> Gregory::P(const std::array<gmod::vector3<double>, 3>& Q) 
 }
 
 gmod::vector3<double> Gregory::P1(gmod::vector3<double>& Q, gmod::vector3<double>& P) {
-	return (2 * Q - P) * (1.0 / 3.0);
+	return (2 * Q + P) * (1.0 / 3.0);
 }
 
 std::array<gmod::vector3<double>, 3> Gregory::gVecs(const std::array<TangentData, 2>& tangentData) {
@@ -256,13 +256,11 @@ std::array<double, 2> Gregory::evaluateKH(const gmod::vector3<double>& b, const 
 	auto result = solve(b.x(), b.y(), g.x(), g.y(), c.x(), c.y());
 	if (result.first && check(result.second, b.z(), g.z(), c.z())) {
 		return result.second;
-		
 	}
 
 	result = solve(b.y(), b.z(), g.y(), g.z(), c.y(), c.z());
 	if (result.first && check(result.second, b.x(), g.x(), c.x())) {
 		return result.second;
-		
 	}
 
 	result = solve(b.x(), b.z(), g.x(), g.z(), c.x(), c.z());
@@ -333,18 +331,14 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 		edgeData[edgeIdx].Q = Q(edgeData[edgeIdx].P2, edgeData[edgeIdx].P3);
 
 		edgeTangentDataCCW[edgeIdx].a = boundaryRes.T - boundaryRes.S[0];
-		edgeTangentDataCCW[edgeIdx].C = boundaryRes.T;
 		edgeTangentDataCCW[edgeIdx].b = boundaryRes.S[1] - boundaryRes.T;
 
 		edgeTangentDataCC[edgeIdx].a = boundaryRes.T - boundaryRes.S[1];
-		edgeTangentDataCC[edgeIdx].C = boundaryRes.T;
 		edgeTangentDataCC[edgeIdx].b = boundaryRes.S[0] - boundaryRes.T;
 	}
 
 	// fill remaining partial data
-	gmod::vector3<double> mid = P({ edgeData[0].Q, edgeData[1].Q , edgeData[2].Q });
-	edgeData[0].P0 = edgeData[1].P0 = edgeData[2].P0 = mid;
-
+	edgeData[0].P0 = edgeData[1].P0 = edgeData[2].P0 = P({ edgeData[0].Q, edgeData[1].Q , edgeData[2].Q });
 	for (int edgeIdx = 0; edgeIdx < 3; edgeIdx++) {
 		edgeData[edgeIdx].P1 = P1(edgeData[edgeIdx].Q, edgeData[edgeIdx].P0);
 	}
@@ -358,11 +352,9 @@ void Gregory::CalculateGregoryPatchesAndTangentVectors(std::array<Gregory::QuadG
 		if (leftEdgeIdx == -1) { leftEdgeIdx = 2; }
 
 		midTangentDataCCW[edgeIdx].a = edgeData[edgeIdx].P0 - edgeData[leftEdgeIdx].P1;
-		midTangentDataCCW[edgeIdx].C = edgeData[edgeIdx].P0;
 		midTangentDataCCW[edgeIdx].b = edgeData[rightEdgeIdx].P1 - edgeData[edgeIdx].P0;
 
 		midTangentDataCC[edgeIdx].a = edgeData[edgeIdx].P0 - edgeData[rightEdgeIdx].P1;
-		midTangentDataCC[edgeIdx].C = edgeData[edgeIdx].P0;
 		midTangentDataCC[edgeIdx].b = edgeData[leftEdgeIdx].P1 - edgeData[edgeIdx].P0;
 	}
 
@@ -514,7 +506,7 @@ void Gregory::UpdateMesh(const Device& device) {
 	// Patch 2
 	idxs.insert(idxs.end(), {
 		5, 6, 0, 3,				// corners
-		17,21,22,23,24,7,14,20, // edges
+		19,21,22,23,24,7,14,20, // edges
 		41,42,43,44,45,46,47,48 // faces
 	});
 

@@ -54,7 +54,6 @@ namespace app {
 
 		struct TangentData {
 			gmod::vector3<double> a;
-			gmod::vector3<double> C;
 			gmod::vector3<double> b;
 		};
 		static std::array<gmod::vector3<double>, 3> gVecs(const std::array<TangentData, 2>& tangentData);
