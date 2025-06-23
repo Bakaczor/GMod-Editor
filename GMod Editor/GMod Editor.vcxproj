@@ -196,6 +196,7 @@
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Divisable.h" />
     <ClInclude Include="Edge.h" />
+    <ClInclude Include="IGeometrical.h" />
     <ClInclude Include="Gregory.h" />
     <ClInclude Include="Patch.h" />
     <ClInclude Include="SerializationManager.h" />

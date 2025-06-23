@@ -68,9 +68,8 @@ namespace gmod {
             return vec * scalar;
         }
 
-        // dot product
-        T operator*(const vector4& other) const {
-            return m_x * other.m_x + m_y * other.m_y + m_z * other.m_z + m_w * other.m_w;
+        vector4 operator*(const vector4& other) const {
+            return vector4(m_x * other.m_x, m_y * other.m_y, m_z * other.m_z, m_w * other.m_w);
         }
 
         // vector4 * matrix4
@@ -126,7 +125,7 @@ namespace gmod {
 
     template<floating_point T>
     T dot(const vector4<T>& vec1, const vector4<T>& vec2) {
-        return vec1 * vec2;
+        return vec1.x() * vec2.x() + vec1.y() * vec2.y() + vec1.z() * vec2.z() + vec1.w() * vec2.w();
     }
 
     template<floating_point T>

@@ -67,18 +67,8 @@ namespace gmod {
             return vec * scalar;
         }
 
-        // dot product
-        T operator*(const vector3& other) const {
-            return m_x * other.m_x + m_y * other.m_y + m_z * other.m_z;
-        }
-
-        // cross product
-        vector3 operator^(const vector3& other) const {
-            return vector3(
-                m_y * other.m_z - m_z * other.m_y,
-                m_z * other.m_x - m_x * other.m_z,
-                m_x * other.m_y - m_y * other.m_x
-            );
+        vector3 operator*(const vector3& other) const {
+            return vector3(m_x * other.m_x, m_y * other.m_y, m_z * other.m_z);
         }
 
         // vector3 * matrix3
@@ -146,12 +136,16 @@ namespace gmod {
 
     template<floating_point T>
     T dot(const vector3<T>& vec1, const vector3<T>& vec2) {
-        return vec1 * vec2;
+        return vec1.x() * vec2.x() + vec1.y() * vec2.y() + vec1.z() * vec2.z();
     }
 
     template<floating_point T>
     vector3<T> cross(const vector3<T>& vec1, const vector3<T>& vec2) {
-        return vec1 ^ vec2;
+        return vector3(
+            vec1.y() * vec2.z() - vec1.z() * vec2.y(),
+            vec1.z() * vec2.x() - vec1.x() * vec2.z(),
+            vec1.x() * vec2.y() - vec1.y() * vec2.x()
+        );
     }
 
     template<floating_point T>

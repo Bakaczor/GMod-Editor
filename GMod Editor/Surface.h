@@ -3,6 +3,7 @@
 #include "Edge.h"
 #include "Patch.h"
 #include "Transformable.h"
+#include "IGeometrical.h"
 #include <unordered_set>
 
 namespace app {
@@ -10,7 +11,7 @@ namespace app {
 		Flat, Cylindric
 	};
 
-	class Surface : public Transformable, public Divisable {
+	class Surface : public Transformable, public Divisable, public IGeometrical {
 	public:
 		static const unsigned int minDivisions = 4;
 		static const unsigned int maxDivisions = 64;
@@ -32,6 +33,17 @@ namespace app {
 		const std::vector<Object*>& GetControlPoints() const;
 		const Patch& GetPatch(int idx) const;
 		void ClearControlPoints();
+		virtual std::pair<unsigned int, unsigned int> NumberOfPatches() const;
+
+#pragma region IGEOMETRICAL
+		virtual XYZBounds WorldBounds() const override;
+		virtual UVBounds ParametricBounds() const override;
+		virtual bool IsUClosed() const override;
+		virtual bool IsVClosed() const override;
+		virtual gmod::vector3<double> Point(double u, double v) const override;
+		virtual gmod::vector3<double> Tangent(double u, double v, gmod::vector3<double>* dPu = nullptr, gmod::vector3<double>* dPv = nullptr) const override;
+		virtual gmod::vector3<double> Normal(double u, double v, gmod::vector3<double>* dPu = nullptr, gmod::vector3<double>* dPv = nullptr) const override;
+#pragma endregion
 	protected:
 		bool m_showNet = false;
 		Mesh m_netMesh;
@@ -42,10 +54,15 @@ namespace app {
 		unsigned int m_aPoints;
 		unsigned int m_bPoints;
 		SurfaceType m_surfaceType;
+
+		static gmod::vector3<double> sumBasis(const std::array<gmod::vector3<double>, 16>& patch, const std::array<double, 4>& basisU, const std::array<double, 4>& basisV);
+		virtual std::array<gmod::vector3<double>, Patch::patchSize> GetPatch(double u, double v) const;
+		virtual std::pair<double, double> LocalUV(double u, double v) const;
 	private:
 		int m_selectedIdx = -1;
 		static unsigned short m_globalSurfaceNum;
 
+#pragma region TOPOLOGY
 		static const std::vector<std::pair<USHORT, USHORT>> m_borderEdges;
 
 		struct BpData {
@@ -70,5 +87,8 @@ namespace app {
 
 		static std::unordered_map<int, BoundaryPoint> CombineBoundaryPoints(const std::vector<Surface*>& surfaces, bool includePatchBoundaries);
 		static std::vector<Cycle3> FindUniqueTrianglesInGraph(const std::unordered_map<int, std::vector<Edge>>& criticalGraph);
+#pragma endregion
+		static std::array<double, 4> B3(double t);
+		static std::array<double, 4> dB3(double t);
 	};
 }

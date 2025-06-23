@@ -118,6 +118,110 @@ void Torus::RenderProperties() {
 	}
 }
 
+#pragma region IGEOMETRICAL
+IGeometrical::XYZBounds Torus::WorldBounds() const {
+	const double xMin = -(m_R + m_r);
+	const double xMax = (m_R + m_r);
+	const double yMin = -m_r;
+	const double yMax = m_r;
+	const double zMin = -(m_R + m_r);
+	const double zMax = (m_R + m_r);
+
+	const auto& M = modelMatrix();
+
+	std::array<gmod::vector3<double>, 8> corners = {
+		LocalToWorld({xMin, yMin, zMin}),
+		LocalToWorld({xMin, yMin, zMax}),
+		LocalToWorld({xMin, yMax, zMin}),
+		LocalToWorld({xMin, yMax, zMax}),
+		LocalToWorld({xMax, yMin, zMin}),
+		LocalToWorld({xMax, yMin, zMax}),
+		LocalToWorld({xMax, yMax, zMin}),
+		LocalToWorld({xMax, yMax, zMax})
+	};
+
+	gmod::vector3<double> min = corners[0];
+	gmod::vector3<double> max = corners[0];
+
+	for (const auto& pt : corners) {
+		for (int i = 0; i < 3; ++i) {
+			if (pt[i] < min[i]) { min[i] = pt[i]; }
+			if (pt[i] > max[i]) { max[i] = pt[i]; }
+		}
+	}
+
+	return { min, max };
+}
+
+IGeometrical::UVBounds Torus::ParametricBounds() const {
+	return { 0.0, 2 * DirectX::XM_PI, 0.0, 2 * DirectX::XM_PI };
+}
+
+bool Torus::IsUClosed() const {
+	return true;
+}
+
+bool Torus::IsVClosed() const {
+	return true;
+}
+
+gmod::vector3<double> Torus::Point(double u, double v) const {
+	double cosu = std::cos(u), sinu = std::sin(u);
+	double cosv = std::cos(v), sinv = std::sin(v);
+	double ring = m_R + m_r * cosu;
+
+	gmod::vector3<double> local = {
+		cosv * ring,
+		m_r * sinu,
+		sinv * ring
+	};
+
+	return LocalToWorld(local);
+}
+
+gmod::vector3<double> Torus::Tangent(double u, double v, gmod::vector3<double>* dPu, gmod::vector3<double>* dPv) const {
+	double cosu = std::cos(u), sinu = std::sin(u);
+	double cosv = std::cos(v), sinv = std::sin(v);
+
+	gmod::vector3<double> du = {
+		-cosv * m_r * sinu,
+		m_r * cosu,
+		-sinv * m_r * sinu
+	};
+
+	gmod::vector3<double> dv = {
+		-sinv * (m_R + m_r * cosu),
+		0.0,
+		cosv * (m_R + m_r * cosu)
+	};
+
+	const auto& M = modelMatrix();
+	gmod::matrix3<double> linear {
+		M[0], M[1], M[2],    
+		M[4], M[5], M[6],     
+		M[8], M[9], M[10]     
+	};
+
+	du = normalize(linear * du);
+	dv = normalize(linear * dv);
+
+	if (dPu) { *dPu = du; }
+	if (dPv) { *dPv = dv; }
+
+	return normalize(du + dv);
+}
+
+gmod::vector3<double> Torus::Normal(double u, double v, gmod::vector3<double>* dPu, gmod::vector3<double>* dPv) const {
+	gmod::vector3<double> du, dv;
+	Tangent(u, v, &du, &dv);
+
+	if (dPu) { *dPu = du; }
+	if (dPv) { *dPv = dv; }
+
+	return normalize(cross(du, dv));
+}
+#pragma endregion
+
 void Torus::RecalculateGeometry() {
 	geometryChanged = true;
 
@@ -140,11 +244,12 @@ void Torus::RecalculateGeometry() {
 			const double u = i * uStep;
 			const double cosu = std::cos(u);
 			const double sinu = std::sin(u);
+			const double ring = m_R + m_r * cosu;
 
 			VERTEX vertex{
-				.x = cosv * (m_R + m_r * cosu),
+				.x = cosv * ring,
 				.y = m_r * sinu,
-				.z = sinv * (m_R + m_r * cosu)
+				.z = sinv * ring
 			};
 			m_vertices.push_back(vertex);
 		}
@@ -172,4 +277,10 @@ void Torus::RecalculateGeometry() {
 			m_edges.push_back(nextVEdge);
 		}
 	}
+}
+
+gmod::vector3<double> Torus::LocalToWorld(const gmod::vector3<double>& p) const {
+	gmod::vector4<double> local(p.x(), p.y(), p.z(), 1.0);
+	gmod::vector4<double> world = gmod::transform_coord(local, this->modelMatrix());
+	return { world.x(), world.y(), world.z() };
 }

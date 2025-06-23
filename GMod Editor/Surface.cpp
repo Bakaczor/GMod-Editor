@@ -1,17 +1,91 @@
 #include "framework.h"
 #include "Surface.h"
 #include <numbers>
+#include "BSurface.h"
 
 using namespace app;
 
 unsigned short Surface::m_globalSurfaceNum = 0;
 
+#pragma region TOPOLOGY
 const std::vector<std::pair<USHORT, USHORT>> Surface::m_borderEdges = {
 	{0, 1}, {1, 2}, {2, 3},       // góra
 	{3, 7}, {7, 11}, {11, 15},    // prawa
 	{15, 14}, {14, 13}, {13, 12}, // dó³
 	{12, 8}, {8, 4}, {4, 0}       // lewa
 };
+
+void Surface::InitializeBoundaryPoints() {
+	m_boundaryPoints.resize(m_controlPoints.size());
+
+	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
+		m_boundaryPoints[i].data.idx = i;
+		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
+	}
+
+	for (size_t i = 0; i < m_patches.size(); ++i) {
+		for (const auto& [pia, pib] : m_borderEdges) {
+			USHORT a = m_patches[i].indices[pia];
+			USHORT b = m_patches[i].indices[pib];
+
+			m_boundaryPoints[a].data.surfIdPatchIdx[this->id].insert(i);
+			m_boundaryPoints[b].data.surfIdPatchIdx[this->id].insert(i);
+
+			m_boundaryPoints[a].isPatchBoundary = true;
+			m_boundaryPoints[b].isPatchBoundary = true;
+
+			m_boundaryPoints[a].isPatchCorner = isPatchCorner(pia);
+			m_boundaryPoints[b].isPatchCorner = isPatchCorner(pib);
+
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].idx = b;
+			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].surfIdPatchIdx[this->id].insert(i);
+
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].idx = a;
+			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].surfIdPatchIdx[this->id].insert(i);
+		}
+	}
+}
+
+bool Surface::isPatchCorner(USHORT idx) const {
+	return idx == 0 || idx == 3 || idx == 12 || idx == 15;
+}
+
+void Surface::DetectSurfaceBoundaryPoints() {
+	m_boundaryPoints[0].isSurfaceCorner = true;
+	for (int i = 0; i < m_bPoints; ++i) {
+		int idx = i;
+		m_boundaryPoints[idx].isSurfaceBoundary = true;
+	}
+	if (m_surfaceType == SurfaceType::Flat) {
+		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i + (m_bPoints - 1);
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+
+		m_boundaryPoints[(m_aPoints - 1) * m_bPoints].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+
+		m_boundaryPoints[m_aPoints * m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_bPoints; ++i) {
+			int idx = i + (m_aPoints - 1) * m_bPoints;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+	} else {
+		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i;
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+		for (int i = 0; i < m_aPoints; ++i) {
+			int idx = m_bPoints * i + (m_bPoints - 1);
+			m_boundaryPoints[idx].isSurfaceBoundary = true;
+		}
+	}
+}
 
 std::unordered_map<int, Surface::BoundaryPoint> Surface::CombineBoundaryPoints(const std::vector<Surface*>& surfaces, bool includePatchBoundaries) {
 	std::unordered_map<int, BoundaryPoint> boundaryPoints;
@@ -150,6 +224,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 
 	return triangles;
 }
+#pragma endregion
 
 Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
 	m_divisions = Patch::rowSize;
@@ -228,78 +303,6 @@ Surface::~Surface() {
 		obj->RemoveParent(this);
 		if (obj->NumberOfParents() == 0) {
 			obj->deletable = true;
-		}
-	}
-}
-
-void Surface::InitializeBoundaryPoints() {
-	m_boundaryPoints.resize(m_controlPoints.size());
-
-	for (size_t i = 0; i < m_controlPoints.size(); ++i) {
-		m_boundaryPoints[i].data.idx = i;
-		m_boundaryPoints[i].thisPoint = &m_controlPoints[i];
-	}
-
-	for (size_t i = 0; i < m_patches.size(); ++i) {
-		for (const auto& [pia, pib] : m_borderEdges) {
-			USHORT a = m_patches[i].indices[pia];
-			USHORT b = m_patches[i].indices[pib];
-
-			m_boundaryPoints[a].data.surfIdPatchIdx[this->id].insert(i);
-			m_boundaryPoints[b].data.surfIdPatchIdx[this->id].insert(i);
-
-			m_boundaryPoints[a].isPatchBoundary = true;
-			m_boundaryPoints[b].isPatchBoundary = true;
-
-			m_boundaryPoints[a].isPatchCorner = isPatchCorner(pia);
-			m_boundaryPoints[b].isPatchCorner = isPatchCorner(pib);
-
-			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].idx = b;
-			m_boundaryPoints[a].neighbours[&m_controlPoints[b]].surfIdPatchIdx[this->id].insert(i);
-
-			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].idx = a;
-			m_boundaryPoints[b].neighbours[&m_controlPoints[a]].surfIdPatchIdx[this->id].insert(i);
-		}
-	}
-}
-
-bool Surface::isPatchCorner(USHORT idx) const {
-	return idx == 0 || idx == 3 || idx == 12 || idx == 15;
-}
-
-void Surface::DetectSurfaceBoundaryPoints() {
-	m_boundaryPoints[0].isSurfaceCorner = true;
-	for (int i = 0; i < m_bPoints; ++i) {
-		int idx = i;
-		m_boundaryPoints[idx].isSurfaceBoundary = true;
-	}
-	if (m_surfaceType == SurfaceType::Flat) {
-		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
-		for (int i = 0; i < m_aPoints; ++i) {
-			int idx = m_bPoints * i + (m_bPoints - 1);
-			m_boundaryPoints[idx].isSurfaceBoundary = true;
-		}
-
-		m_boundaryPoints[(m_aPoints - 1) * m_bPoints].isSurfaceCorner = true;
-		for (int i = 0; i < m_aPoints; ++i) {
-			int idx = m_bPoints * i;
-			m_boundaryPoints[idx].isSurfaceBoundary = true;
-		}
-
-		m_boundaryPoints[m_aPoints * m_bPoints - 1].isSurfaceCorner = true;
-		for (int i = 0; i < m_bPoints; ++i) {
-			int idx = i + (m_aPoints - 1) * m_bPoints;
-			m_boundaryPoints[idx].isSurfaceBoundary = true;
-		}
-	} else {
-		m_boundaryPoints[m_bPoints - 1].isSurfaceCorner = true;
-		for (int i = 0; i < m_aPoints; ++i) {
-			int idx = m_bPoints * i;
-			m_boundaryPoints[idx].isSurfaceBoundary = true;
-		}
-		for (int i = 0; i < m_aPoints; ++i) {
-			int idx = m_bPoints * i + (m_bPoints - 1);
-			m_boundaryPoints[idx].isSurfaceBoundary = true;
 		}
 	}
 }
@@ -441,3 +444,157 @@ const Patch& Surface::GetPatch(int idx) const {
 void Surface::ClearControlPoints() {
 	m_controlPoints.clear();
 }
+
+std::pair<unsigned int, unsigned int> Surface::NumberOfPatches() const {
+	unsigned int aPatch = m_surfaceType == SurfaceType::Flat ?
+		(m_aPoints - 1) / (Patch::rowSize - 1) : (m_aPoints) / (Patch::rowSize - 1);
+	unsigned int bPatch = (m_bPoints - 1) / (Patch::rowSize - 1);
+
+	return std::make_pair(aPatch, bPatch);
+}
+
+std::array<double, 4> Surface::B3(double t) {
+	double tInv = 1 - t;
+	return {
+		tInv * tInv * tInv,
+		3 * t * tInv * tInv,
+		3 * t * t * tInv,
+		t * t * t
+	};
+}
+
+std::array<double, 4> Surface::dB3(double t) {
+	double tInv = 1 - t;
+	return {
+		-3 * tInv * tInv,
+		 3 * tInv * (1 - 3 * t),
+		 3 * t * (2 - 3 * t),
+		 3 * t * t
+	};
+}
+
+gmod::vector3<double> Surface::sumBasis(const std::array<gmod::vector3<double>, 16>& patch, const std::array<double, 4>& basisU, const std::array<double, 4>& basisV) {
+	gmod::vector3<double> sum = { 0,0,0 };
+	sum = sum + basisV[0] * (basisU[0] * patch[0] +
+		basisU[1] * patch[1] +
+		basisU[2] * patch[2] +
+		basisU[3] * patch[3]);
+	sum = sum + basisV[1] * (basisU[0] * patch[4] +
+		basisU[1] * patch[5] +
+		basisU[2] * patch[6] +
+		basisU[3] * patch[7]);
+	sum = sum + basisV[2] * (basisU[0] * patch[8] +
+		basisU[1] * patch[9] +
+		basisU[2] * patch[10] +
+		basisU[3] * patch[11]);
+	sum = sum + basisV[3] * (basisU[0] * patch[12] +
+		basisU[1] * patch[13] +
+		basisU[2] * patch[14] +
+		basisU[3] * patch[15]);
+	return sum;
+}
+
+std::array<gmod::vector3<double>, Patch::patchSize> Surface::GetPatch(double u, double v) const {
+	auto [aPatch, bPatch] = NumberOfPatches();
+
+	u = std::clamp(u, 0.0, static_cast<double>(bPatch));
+	v = std::clamp(v, 0.0, static_cast<double>(aPatch));
+	unsigned int patchIndex = static_cast<unsigned int>(v) * bPatch + static_cast<unsigned int>(u);
+
+	std::array<gmod::vector3<double>, Patch::patchSize> result;
+	const auto& patch = GetPatch(patchIndex);
+
+	for (int k = 0; k < Patch::patchSize; ++k) {
+		result[k] = m_controlPoints[patch.indices[k]]->position();
+	}
+	return result;
+}
+
+std::pair<double, double> Surface::LocalUV(double u, double v) const {
+	double localU = u - static_cast<int>(u);
+	double localV = v - static_cast<int>(v);
+	return std::make_pair(localU, localV);
+}
+
+#pragma region IGEOMETRICAL
+IGeometrical::XYZBounds Surface::WorldBounds() const {
+	auto [minXIt, maxXIt] = std::minmax_element(m_controlPoints.begin(), m_controlPoints.end(),
+		[](const Object* a, const Object* b) {
+		return a->position().x() < b->position().x();
+	});
+
+	auto [minYIt, maxYIt] = std::minmax_element(m_controlPoints.begin(), m_controlPoints.end(),
+		[](const Object* a, const Object* b) {
+		return a->position().y() < b->position().y();
+	});
+
+	auto [minZIt, maxZIt] = std::minmax_element(m_controlPoints.begin(), m_controlPoints.end(),
+		[](const Object* a, const Object* b) {
+		return a->position().z() < b->position().z();
+	});
+
+	return {
+		gmod::vector3<double>{
+			(*minXIt)->position().x(),
+			(*minYIt)->position().y(),
+			(*minZIt)->position().z()
+		},
+		gmod::vector3<double>{
+			(*maxXIt)->position().x(),
+			(*maxYIt)->position().y(),
+			(*maxZIt)->position().z()
+		}
+	};
+}
+
+IGeometrical::UVBounds Surface::ParametricBounds() const {
+	auto [aPatch, bPatch] = NumberOfPatches();
+	return { 0.0, static_cast<double>(bPatch), 0.0, static_cast<double>(aPatch) };
+}
+
+bool Surface::IsUClosed() const {
+	return false;
+}
+
+bool Surface::IsVClosed() const {
+	return m_surfaceType == SurfaceType::Cylindric;
+}
+
+gmod::vector3<double> Surface::Point(double u, double v) const {
+	auto [localU, localV] = LocalUV(u, v);
+
+	std::array<double, 4> basisU = B3(localU);
+	std::array<double, 4> basisV = B3(localV);
+
+	return sumBasis(GetPatch(u, v), basisU, basisV);
+}
+
+gmod::vector3<double> Surface::Tangent(double u, double v, gmod::vector3<double>* dPu, gmod::vector3<double>* dPv) const {
+	auto [localU, localV] = LocalUV(u, v);
+
+	std::array<double, 4> basisU = B3(localU);
+	std::array<double, 4> basisV = B3(localV);
+
+	std::array<double, 4> dBu = dB3(localU);
+	std::array<double, 4> dBv = dB3(localV);
+
+	auto patch = GetPatch(u, v);
+	gmod::vector3<double> du = normalize(sumBasis(patch, dBu, basisV));
+	gmod::vector3<double> dv = normalize(sumBasis(patch, basisU, dBv));
+
+	if (dPu) { *dPu = du; }
+	if (dPv) { *dPv = dv; }
+
+	return normalize(du + dv);
+}
+
+gmod::vector3<double> Surface::Normal(double u, double v, gmod::vector3<double>* dPu, gmod::vector3<double>* dPv) const {
+	gmod::vector3<double> du, dv;
+	Tangent(u, v, &du, &dv);
+
+	if (dPu) { *dPu = du; }
+	if (dPv) { *dPv = dv; }
+
+	return normalize(cross(du, dv));
+}
+#pragma endregion
