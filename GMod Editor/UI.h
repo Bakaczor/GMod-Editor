@@ -7,6 +7,7 @@
 #include "SerializationManager.h"
 #include "SurfaceBuilder.h"
 #include <memory>
+#include "Intersection.h"
 
 namespace app {
 	class Application;
@@ -77,9 +78,15 @@ namespace app {
 
 		bool m_includePatchBoundaries = true;
 
+		// INTERSECTIONS
+		Intersection m_intersection;
+		std::pair<const IGeometrical*, const IGeometrical*> GetIntersectingSurfaces() const;
+
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
+		void RenderIntersections();
+		void RenderUVPlanes();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);

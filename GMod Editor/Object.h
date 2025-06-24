@@ -20,6 +20,7 @@ namespace app {
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
 		bool deletable = true;
+		bool intersectable = false;
 
 		Object();
 		virtual ~Object();

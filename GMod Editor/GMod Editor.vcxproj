@@ -198,6 +198,7 @@
     <ClInclude Include="Edge.h" />
     <ClInclude Include="IGeometrical.h" />
     <ClInclude Include="Gregory.h" />
+    <ClInclude Include="Intersection.h" />
     <ClInclude Include="Patch.h" />
     <ClInclude Include="SerializationManager.h" />
     <ClInclude Include="Spline.h" />
@@ -233,6 +234,7 @@
     <ClCompile Include="CubeModel.cpp" />
     <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Gregory.cpp" />
+    <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Patch.cpp" />
     <ClCompile Include="SerializationManager.cpp" />
     <ClCompile Include="Spline.cpp" />

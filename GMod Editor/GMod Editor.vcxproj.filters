@@ -177,6 +177,9 @@
     <ClInclude Include="IGeometrical.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Intersection.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -277,6 +280,9 @@
     </ClCompile>
     <ClCompile Include="Gregory.cpp">
       <Filter>Pliki źródłowe\object</Filter>
+    </ClCompile>
+    <ClCompile Include="Intersection.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

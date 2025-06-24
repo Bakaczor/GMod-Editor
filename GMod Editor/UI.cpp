@@ -28,14 +28,37 @@ void UI::Render(bool firstPass, Camera& camera) {
 	RenderIO();
 }
 
+std::pair<const IGeometrical*, const IGeometrical*> UI::GetIntersectingSurfaces() const {
+	if (selection.objects.empty() || selection.objects.size() > 2) {
+		return std::make_pair(nullptr, nullptr);
+	}
+	Object* first = selection.objects.front();
+	IGeometrical* gFirst = dynamic_cast<IGeometrical*>(first);
+	if (!gFirst) {
+		return std::make_pair(nullptr, nullptr);
+	}
+	if (selection.objects.size() == 1) {
+		return std::make_pair(gFirst, nullptr);
+	}
+	Object* second = selection.objects.back();
+	IGeometrical* gSecond = dynamic_cast<IGeometrical*>(second);
+	if (!gSecond) {
+		return std::make_pair(nullptr, nullptr);
+	}
+	if (IGeometrical::XYZBoundsIntersect(gFirst->WorldBounds(), gSecond->WorldBounds())) {
+		return std::make_pair(gFirst, gSecond);
+	}
+	return std::make_pair(nullptr, nullptr);
+}
+
 void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
-	const float width = 250.0f;
+	const float width = 250.f;
 	const float height = viewportSize.y;
 
 	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
-	ImGui::SetNextWindowBgAlpha(1.0f);
+	ImGui::SetNextWindowBgAlpha(1.f);
 
 	ImGui::Begin("Right panel", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 	RenderTransforms();
@@ -46,6 +69,10 @@ void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 		}
 		if (ImGui::BeginTabItem("Objects")) {
 			RenderObjectTable();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Intersections")) {
+			RenderIntersections();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Properties")) {
@@ -223,6 +250,78 @@ void UI::RenderCursor() {
 		m_surfaceBuilder.Reset();
 	}
 	ImGui::EndChild();
+}
+
+void UI::RenderIntersections() {
+	ImGui::BeginChild("IntersectionsWindow", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_NoBackground);
+	double step = 0.001f;
+	double stepFast = 0.1f;
+	ImGui::Text("Gradient Method Step");
+	ImGui::InputDouble("###GradientMethodStep", &m_intersection.gradientStep, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Gradient Method Max Iterations");
+	ImGui::InputInt("###GradientMethodMaxIterations", &m_intersection.gradientMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Gradient Method Tolerance");
+	ImGui::InputDouble("###GradientMethodTolerance", &m_intersection.gradientTolerance, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Newton Method Step");
+	ImGui::InputDouble("###NewtonMethodStep", &m_intersection.newtonStep, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Newton Method Max Iterations");
+	ImGui::InputInt("###NewtonMethodMaxIterations", &m_intersection.newtonMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Newton Method Tolerance");
+	ImGui::InputDouble("###NewtonMethodTolerance", &m_intersection.newtonTolerance, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Checkbox("Use Cursor as Start", &m_intersection.useCursorAsStart);
+
+	if (ImGui::Button("Find Intersection", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		auto surfaces = GetIntersectingSurfaces();
+		if (surfaces.first != nullptr) {
+			m_intersection.Clear();
+			if (m_intersection.useCursorAsStart) {
+				m_intersection.cursorPosition = cursor.transform.position();
+			}
+			m_intersection.FindIntersection(surfaces);
+		}
+	}
+
+	if (!m_intersection.availible) {
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::Button("Show UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		m_intersection.showUVPlanes = true;
+	}
+
+	if (m_intersection.showUVPlanes) {
+		RenderUVPlanes();
+	}
+
+	ImGui::Separator();
+
+	ImGui::Text("Intersection Curve Samples");
+	ImGui::InputInt("###IntersectionCurveSamples", &m_intersection.intersectionCurveSamples, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+	if (ImGui::Button("Create Intersection Curve", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+
+	}
+
+	if (!m_intersection.intersectionCurve) {
+		ImGui::BeginDisabled();
+	}
+	if (ImGui::Button("Create Interpolation Curve", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+
+	}
+	if (!m_intersection.intersectionCurve) {
+		ImGui::EndDisabled();
+	}
+
+	if (!m_intersection.availible) {
+		ImGui::EndDisabled();
+	}
+
+	ImGui::EndChild();
+}
+
+void UI::RenderUVPlanes() {
+	if (ImGui::Button("Hide UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		m_intersection.showUVPlanes = false;
+	}
 }
 
 void UI::RenderObjectTable() {

@@ -227,6 +227,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 #pragma endregion
 
 Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
+	intersectable = true;
 	m_divisions = Patch::rowSize;
 	m_type = "Surface";
 	std::ostringstream os;
@@ -239,6 +240,7 @@ Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(Sur
 
 Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, int id) :
 	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints) {
+	intersectable = true;
 	m_divisions = divisions;
 	// required, since Gregory patches require id set at construction stage
 	if (id != -1) {
