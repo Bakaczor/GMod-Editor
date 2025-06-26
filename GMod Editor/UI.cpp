@@ -28,27 +28,29 @@ void UI::Render(bool firstPass, Camera& camera) {
 	RenderIO();
 }
 
-std::pair<const IGeometrical*, const IGeometrical*> UI::GetIntersectingSurfaces() const {
+std::pair<Intersection::IDIG, Intersection::IDIG> UI::GetIntersectingSurfaces() const {
 	if (selection.objects.empty() || selection.objects.size() > 2) {
-		return std::make_pair(nullptr, nullptr);
+		return std::make_pair(Intersection::IDIG(), Intersection::IDIG());
 	}
 	Object* first = selection.objects.front();
 	IGeometrical* gFirst = dynamic_cast<IGeometrical*>(first);
 	if (!gFirst) {
-		return std::make_pair(nullptr, nullptr);
+		return std::make_pair(Intersection::IDIG(), Intersection::IDIG());
 	}
+	Intersection::IDIG s1 = { first->id, gFirst };
 	if (selection.objects.size() == 1) {
-		return std::make_pair(gFirst, nullptr);
+		return std::make_pair(s1, Intersection::IDIG());
 	}
 	Object* second = selection.objects.back();
 	IGeometrical* gSecond = dynamic_cast<IGeometrical*>(second);
 	if (!gSecond) {
-		return std::make_pair(nullptr, nullptr);
+		return std::make_pair(Intersection::IDIG(), Intersection::IDIG());
 	}
+	Intersection::IDIG s2 = { second->id, gSecond };
 	if (IGeometrical::XYZBoundsIntersect(gFirst->WorldBounds(), gSecond->WorldBounds())) {
-		return std::make_pair(gFirst, gSecond);
+		return std::make_pair(s1, s2);
 	}
-	return std::make_pair(nullptr, nullptr);
+	return std::make_pair(Intersection::IDIG(), Intersection::IDIG());
 }
 
 void UI::RenderRightPanel(bool firstPass, Camera& camera) {
@@ -254,52 +256,54 @@ void UI::RenderCursor() {
 
 void UI::RenderIntersections() {
 	ImGui::BeginChild("IntersectionsWindow", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_NoBackground);
+	if (ImGui::CollapsingHeader("Parameters")) {
+		ImGui::Text("Gradient Method Step");
+		ImGui::InputDouble("###GradientMethodStep", &intersection.gradientStep, 1e-3, 1e-1, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Gradient Method Tolerance");
+		ImGui::InputDouble("###GradientMethodTolerance", &intersection.gradientTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Gradient Method Max Iterations");
+		ImGui::InputInt("###GradientMethodMaxIterations", &intersection.gradientMaxIterations, 1, 10, ImGuiInputTextFlags_CharsDecimal);
 
-	ImGui::Text("Gradient Method Step");
-	ImGui::InputDouble("###GradientMethodStep", &intersection.gradientStep, 1e-3, 1e-1, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Gradient Method Tolerance");
-	ImGui::InputDouble("###GradientMethodTolerance", &intersection.gradientTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Gradient Method Max Iterations");
-	ImGui::InputInt("###GradientMethodMaxIterations", &intersection.gradientMaxIterations, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Separator();
 
-	ImGui::Separator();
+		ImGui::Text("Newton Method Step");
+		ImGui::InputDouble("###NewtonMethodStep", &intersection.newtonStep, 1e-2, 1e-1, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Newton Method Tolerance");
+		ImGui::InputDouble("###NewtonMethodTolerance", &intersection.newtonTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Newton Method Max Iterations");
+		ImGui::InputInt("###NewtonMethodMaxIterations", &intersection.newtonMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Newton Method Max Repeats");
+		ImGui::InputInt("###NewtonMethodMaxRepeats", &intersection.newtonMaxRepeats, 1, 1, ImGuiInputTextFlags_CharsDecimal);
 
-	ImGui::Text("Newton Method Step");
-	ImGui::InputDouble("###NewtonMethodStep", &intersection.newtonStep, 1e-2, 1e-1, "%.2f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Newton Method Tolerance");
-	ImGui::InputDouble("###NewtonMethodTolerance", &intersection.newtonTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Newton Method Max Iterations");
-	ImGui::InputInt("###NewtonMethodMaxIterations", &intersection.newtonMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Newton Method Max Repeats");
-	ImGui::InputInt("###NewtonMethodMaxRepeats", &intersection.newtonMaxRepeats, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Separator();
 
-	ImGui::Separator();
+		ImGui::Text("Max Intersection Points");
+		ImGui::InputInt("###MaxIntersectionPoints", &intersection.maxIntersectionPoints, 100, 1000, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Distance");
+		ImGui::InputDouble("###Distance", &intersection.distance, 1e-3, 1e-2, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Text("Closing Point Tolerance");
+		ImGui::InputDouble("###ClosingPointTolerance", &intersection.closingPointTolerance, 1e-4, 1e-3, "%.4f", ImGuiInputTextFlags_CharsDecimal);
 
-	ImGui::Text("Max Intersection Points");
-	ImGui::InputInt("###MaxIntersectionPoints", &intersection.maxIntersectionPoints, 100, 1000, ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Distance");
-	ImGui::InputDouble("###Distance", &intersection.distance, 1e-3, 1e-2, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Closing Point Tolerance");
-	ImGui::InputDouble("###ClosingPointTolerance", &intersection.closingPointTolerance, 1e-4, 1e-3, "%.4f", ImGuiInputTextFlags_CharsDecimal);
-
-	ImGui::Separator();
+		ImGui::Separator();
+	}
 
 	ImGui::Checkbox("Use Cursor as Start", &intersection.useCursorAsStart);
 	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&intersection.color));
 
-	ImGui::Separator();
-
 	if (ImGui::Button("Find Intersection", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
 		intersection.Clear();
+		m_intersectionInfoColor = { 1.f, 1.f, 1.f, 1.f };
 		m_intersectionInfo = "No intersection";
 		auto surfaces = GetIntersectingSurfaces();
-		if (surfaces.first != nullptr) {
+		if (surfaces.first.id != -1) {
 			if (intersection.useCursorAsStart) {
 				intersection.cursorPosition = cursor.transform.position();
 			}
 			unsigned int res = intersection.FindIntersection(surfaces);
+			m_intersectionInfoColor = { 1.f, 0.f, 0.f, 1.f };
 			if (res == 0) {
 				m_intersectionInfo = "Intersection found";
+				m_intersectionInfoColor = { 0.f, 1.f, 0.f, 1.f };
 				updatePreview = true;
 			} else if (res == 1) {
 				m_intersectionInfo = "Could not locate start";
@@ -308,7 +312,9 @@ void UI::RenderIntersections() {
 			}
 		}
 	}
-	ImGui::SeparatorText(m_intersectionInfo.c_str());
+	ImGui::Separator();
+	ImGui::TextColored(m_intersectionInfoColor, m_intersectionInfo.c_str());
+	ImGui::Separator();
 
 	if (!intersection.availible) {
 		ImGui::BeginDisabled();
@@ -322,7 +328,7 @@ void UI::RenderIntersections() {
 		intersection.RenderUVPlanes();
 	}
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Adding to scene");
 
 	ImGui::Text("Intersection Curve Control Points");
 	ImGui::InputInt("###IntersectionCurveControlPoints", &intersection.intersectionCurveControlPoints, 1, 10, ImGuiInputTextFlags_CharsDecimal);

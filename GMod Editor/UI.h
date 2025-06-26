@@ -83,7 +83,8 @@ namespace app {
 		bool m_includePatchBoundaries = true;
 
 		std::string m_intersectionInfo = "Intersection info";
-		std::pair<const IGeometrical*, const IGeometrical*> GetIntersectingSurfaces() const;
+		ImVec4 m_intersectionInfoColor = { 1.f, 1.f, 1.f, 1.f };
+		std::pair<Intersection::IDIG, Intersection::IDIG> GetIntersectingSurfaces() const;
 
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();

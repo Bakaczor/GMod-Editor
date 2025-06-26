@@ -55,7 +55,7 @@ Surface* SurfaceBuilder::BuildSurface() const {
                 auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
-                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float angle = (2 * std::numbers::pi_v<float> * i) / aPoints;
                 float x = m_a * cos(angle);
                 float y = m_a * sin(angle);
                 float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;
@@ -102,7 +102,7 @@ Surface* SurfaceBuilder::BuildBSurface() const {
                 auto point = std::make_unique<Point>(Application::m_pointModel.get());
                 point->deletable = false;
 
-                float angle = (2 * std::numbers::pi_v<float> *i) / aPoints;
+                float angle = (2 * std::numbers::pi_v<float> * i) / aPoints;
                 float x = m_a * std::cos(angle);
                 float y = m_a * std::sin(angle);
                 float z = (m_b * j) / (bPoints - 1) - m_b / 2.0f;

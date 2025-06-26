@@ -29,7 +29,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffProj(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffColor(m_device.CreateConstantBuffer<DirectX::XMFLOAT4>()),
-	m_constBuffTessConst(m_device.CreateConstantBuffer<TessellationConstants>())
+	m_constBuffTessConst(m_device.CreateConstantBuffer<TessellationConstants>()),
+	m_constBuffTrimInfo(m_device.CreateConstantBuffer<TrimmingInfo>())
 {
 	m_UI = std::make_unique<UI>();
 	m_mouse.prevCursorPos = {
@@ -63,6 +64,18 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				nullptr, // geometry
 				m_device.CreatePixelShader(psBytes_rwc),
 				m_device.CreateInputLayout<Vertex_PoCo>(vsBytes_rwc)
+			}
+		));
+		// RegularWithUVs
+		const auto vsBytes_rwuvs = Device::LoadByteCode(L"vs_rwuvs.cso");
+		const auto psBytes_rwuvs = Device::LoadByteCode(L"ps_rwuvs.cso");
+		m_shaders.insert(std::make_pair(ShaderType::RegularWithUVs, Shaders{
+				m_device.CreateVertexShader(vsBytes_rwuvs),
+				nullptr, // domain
+				nullptr, // hull
+				nullptr, // geometry
+				m_device.CreatePixelShader(psBytes_rwuvs),
+				m_device.CreateInputLayout<Vertex_PoUVs>(vsBytes_rwuvs)
 			}
 		));
 		// RegularWithTesselation
@@ -111,7 +124,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateHullShader(hsBytes_rwtsr),
 				m_device.CreateDomainShader(dsBytes_rwtsr),
 				m_device.CreateGeometryShader(gsBytes_rwtsr),
-				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreatePixelShader(psBytes_rwuvs),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
@@ -122,18 +135,19 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 				m_device.CreateHullShader(hsBytes_rwtsr),
 				m_device.CreateDomainShader(dsBytes_rwtbsr),
 				m_device.CreateGeometryShader(gsBytes_rwtsr),
-				m_device.CreatePixelShader(psBytes_r),
+				m_device.CreatePixelShader(psBytes_rwuvs),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
 		));
 		// RegularWithTesselationGregory
 		const auto hsBytes_rwtg = Device::LoadByteCode(L"hs_rwtg.cso");
 		const auto dsBytes_rwtg = Device::LoadByteCode(L"ds_rwtg.cso");
+		const auto gsBytes_rwtg = Device::LoadByteCode(L"gs_rwtg.cso");
 		m_shaders.insert(std::make_pair(ShaderType::RegularWithTesselationGregory, Shaders{
 				m_device.CreateVertexShader(vsBytes_rwt),
 				m_device.CreateHullShader(hsBytes_rwtg),
 				m_device.CreateDomainShader(dsBytes_rwtg),
-				m_device.CreateGeometryShader(gsBytes_rwtsr),
+				m_device.CreateGeometryShader(gsBytes_rwtg),
 				m_device.CreatePixelShader(psBytes_r),
 				m_device.CreateInputLayout<Vertex_Po>(vsBytes_rwt)
 			}
@@ -148,10 +162,9 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		m_device.deviceContext()->HSSetConstantBuffers(0, 3, hsb);
 		ID3D11Buffer* dsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
 		m_device.deviceContext()->DSSetConstantBuffers(0, 2, dsb);
-		ID3D11Buffer* psb[] = { m_constBuffColor.get() };
-		m_device.deviceContext()->PSSetConstantBuffers(0, 1, psb);
+		ID3D11Buffer* psb[] = { m_constBuffColor.get(), m_constBuffTrimInfo.get() };
+		m_device.deviceContext()->PSSetConstantBuffers(0, 2, psb);
 	}
-
 	// STATES
 	RasterizerDescription rsdesc;
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
@@ -167,6 +180,12 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	rsdesc.FillMode = D3D11_FILL_WIREFRAME;
 	m_rastStateWireframe = m_device.CreateRasterizerState(rsdesc);
 
+	m_sampState = m_device.CreateSamplerState(SamplerDescription());
+	auto s_ptr = m_sampState.get();
+	m_device.deviceContext()->PSSetSamplers(0, 1, &s_ptr);
+
+	BindTrimTextures();
+
 	// GLOBAL
 	m_axesModel->Initialize(m_device);
 	m_cubeModel->Initialize(m_device);
@@ -178,6 +197,11 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_UI->selection.color = { 0.0f, 0.0f, 1.0f, 1.0f };
 	m_UI->selection.SetModel(m_pointModel.get());
+}
+
+void Application::BindTrimTextures() {
+	ID3D11ShaderResourceView* psr[] = { m_UI->intersection.uv1TrimTexSRV.get(), m_UI->intersection.uv2TrimTexSRV.get() };
+	m_device.deviceContext()->PSSetShaderResources(0, 2, psr);
 }
 
 void Application::Initialize() {
@@ -394,6 +418,15 @@ void Application::Render() {
 			}
 		}
 
+		auto trimInfo = m_UI->intersection.GetTrimInfo(obj->id);
+		TrimmingInfo ti;
+		if (trimInfo.first == -1) {
+			ti = { 0, 0, 0, 0 };
+		} else {
+			ti = { 1, trimInfo.first, trimInfo.second, 0 };
+		}
+		m_device.UpdateBuffer(m_constBuffTrimInfo, ti);
+
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(obj->modelMatrix()));
 		// TODO : to improve performance, change internals of Contains
 		if (m_UI->selection.Contains(obj->id)) {
@@ -407,7 +440,8 @@ void Application::Render() {
 		auto div = dynamic_cast<Divisable*>(obj.get());
 		if (nullptr != div) {
 			unsigned int divisions = div->GetDivisions();
-			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+			auto [uPatches, vPatches] = div->GetUVPatches();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, uPatches, vPatches, 0 });
 		}
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 	}
@@ -417,6 +451,7 @@ void Application::Render() {
 			m_UI->updatePreview = false;
 			m_UI->intersection.UpdateMesh(m_device);
 			m_UI->intersection.UpdateUVPlanes(m_device);
+			BindTrimTextures();
 		}
 
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(gmod::matrix4<float>::identity()));
@@ -450,10 +485,11 @@ void app::Application::RenderStereoscopic(int sign, ImVec4& color) {
 		if (obj->geometryChanged || m_firstPass) {
 			obj->UpdateMesh(m_device);
 		}
-		auto surf = dynamic_cast<Surface*>(obj.get());
-		if (nullptr != surf) {
-			unsigned int divisions = surf->GetDivisions();
-			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, { 0.0f, 0.0f, 0.0f } });
+		auto div = dynamic_cast<Divisable*>(obj.get());
+		if (nullptr != div) {
+			unsigned int divisions = div->GetDivisions();
+			auto [uPatches, vPatches] = div->GetUVPatches();
+			m_device.UpdateBuffer(m_constBuffTessConst, TessellationConstants{ divisions, uPatches, vPatches, 0 });
 		}
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 

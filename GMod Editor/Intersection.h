@@ -7,11 +7,20 @@
 namespace app {
 	class Intersection {
 	public:
+		// TRIMMING
+		enum class TrimDisplayMode {
+			Whole, Inside, Outside
+		};
+		const std::array<const char*, 3> trimDisplayModes = { "Whole", "Inside", "Outside" };
+		mini::dx_ptr<ID3D11ShaderResourceView> uv1TrimTexSRV;
+		mini::dx_ptr<ID3D11ShaderResourceView> uv2TrimTexSRV;
+
 		std::array<float, 4> color = { 0.0f, 0.0f, 1.0f, 1.0f };
 		int intersectionCurveControlPoints = 10;
 
 		bool availible = false;
 		bool showUVPlanes = false;
+		bool showTrimTextures = false;
 		bool useCursorAsStart = false;
 		gmod::vector3<double> cursorPosition;
 
@@ -32,11 +41,15 @@ namespace app {
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;
 		void UpdateUVPlanes(const Device& device);
 		void RenderUVPlanes();
-		//void ApplyTrimming();
+		std::pair<unsigned int, unsigned int> GetTrimInfo(int id) const;
 
 		Intersection();
 		void Clear();
-		unsigned int FindIntersection(std::pair<const IGeometrical*, const IGeometrical*> surfaces);
+		struct IDIG {
+			int id = -1;
+			const IGeometrical* s = nullptr;
+		};
+		unsigned int FindIntersection(std::pair<IDIG, IDIG> surfaces);
 		bool IntersectionCurveAvailible() const;
 		void CreateIntersectionCurve(std::vector<std::unique_ptr<Object>>& sceneObjects);
 		void CreateInterpolationCurve(std::vector<std::unique_ptr<Object>>& sceneObjects);
@@ -53,8 +66,18 @@ namespace app {
 		std::vector<uint8_t> m_uv2Image;
 		mini::dx_ptr<ID3D11ShaderResourceView> m_uv1PrevTexSRV;
 		mini::dx_ptr<ID3D11ShaderResourceView> m_uv2PrevTexSRV;
-		mini::dx_ptr<ID3D11ShaderResourceView> m_uv1TrimTexSRV;
-		mini::dx_ptr<ID3D11ShaderResourceView> m_uv2TrimTexSRV;
+
+		void UpdateTrimTexture(std::vector<uint8_t>& img);
+		void ThickenCurve(std::vector<uint8_t>& img) const;
+		bool IsBlack(std::vector<uint8_t>& img, int x, int y) const;
+		std::optional<std::pair<int, int>> FindStartingPixel(std::vector<uint8_t>& img) const;
+		void FloodFill(std::vector<uint8_t>& img, int startX, int startY);
+
+		// TRIMMING
+		int m_s1ID = -1;
+		int m_s2ID = -1;
+		TrimDisplayMode m_trimModeS1 = TrimDisplayMode::Whole;
+		TrimDisplayMode m_trimModeS2 = TrimDisplayMode::Whole;
 
 		const IGeometrical* m_s1 = nullptr;
 		const IGeometrical* m_s2 = nullptr;

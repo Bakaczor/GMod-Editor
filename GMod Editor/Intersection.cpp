@@ -3,12 +3,19 @@
 #include "Debug.h"
 #include "Intersection.h"
 #include <numeric>
+#include <queue>
 
 using namespace app;
 
 void Intersection::RenderUVPlanes() {
-	ImTextureID texID1 = reinterpret_cast<ImTextureID>(m_uv1PrevTexSRV.get());
-	ImTextureID texID2 = reinterpret_cast<ImTextureID>(m_uv2PrevTexSRV.get());
+	ImTextureID texID1, texID2;
+	if (showTrimTextures) {
+		texID1 = reinterpret_cast<ImTextureID>(uv1TrimTexSRV.get());
+		texID2 = reinterpret_cast<ImTextureID>(uv2TrimTexSRV.get());
+	} else {
+		texID1 = reinterpret_cast<ImTextureID>(m_uv1PrevTexSRV.get());
+		texID2 = reinterpret_cast<ImTextureID>(m_uv2PrevTexSRV.get());
+	}
 
 	ImGui::SeparatorText("Surface 1 UV Plane");
 	ImGui::Image(texID1, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
@@ -16,8 +23,35 @@ void Intersection::RenderUVPlanes() {
 	ImGui::SeparatorText("Surface 2 UV Plane");
 	ImGui::Image(texID2, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
 
+	if (ImGui::Button("Switch Textures", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		showTrimTextures = !showTrimTextures;
+	}
+
 	if (ImGui::Button("Hide UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
 		showUVPlanes = false;
+	}
+
+	ImGui::SeparatorText("Trimming");
+
+	int current1 = static_cast<int>(m_trimModeS1);
+	ImGui::Text("Surface 1 Display");
+	if (ImGui::Combo("###Surface1Display", &current1, trimDisplayModes.data(), trimDisplayModes.size())) {
+		m_trimModeS1 = static_cast<TrimDisplayMode>(current1);
+	}
+	ImGui::Text("Surface 2 Display");
+	int current2 = static_cast<int>(m_trimModeS2);
+	if (ImGui::Combo("###Surface2Display", &current2, trimDisplayModes.data(), trimDisplayModes.size())) {
+		m_trimModeS2 = static_cast<TrimDisplayMode>(current2);
+	}
+}
+
+std::pair<unsigned int, unsigned int> Intersection::GetTrimInfo(int id) const {
+	if (id == m_s1ID) {
+		return std::make_pair(1, static_cast<unsigned int>(m_trimModeS1));
+	} else if (id == m_s2ID) {
+		return std::make_pair(2, static_cast<unsigned int>(m_trimModeS2));
+	} else {
+		return std::make_pair(-1, -1);
 	}
 }
 
@@ -34,13 +68,12 @@ void Intersection::UpdateUVPlanes(const Device& device) {
 		int y = static_cast<int>((v - bounds.vMin) / (bounds.vMax - bounds.vMin) * (m_texHeight - 1));
 		return std::pair(x, y);
 	};
-
 	for (const auto& p : m_pointsOfIntersection) {
 		auto [x1, y1] = mapUVToPixel(p.uvs.u1, p.uvs.v1, m_s1->ParametricBounds());
 		auto [x2, y2] = mapUVToPixel(p.uvs.u2, p.uvs.v2, m_s2->ParametricBounds());
 
 		size_t idx1 = 4 * (y1 * m_texWidth + x1);
-		size_t idx2 = 4 * (y2 * m_texHeight + x2);
+		size_t idx2 = 4 * (y2 * m_texWidth + x2);
 
 		m_uv1Image[idx1 + 0] = 0;
 		m_uv1Image[idx1 + 1] = 0;
@@ -52,17 +85,30 @@ void Intersection::UpdateUVPlanes(const Device& device) {
 		m_uv2Image[idx2 + 2] = 0;
 		m_uv2Image[idx2 + 3] = 255;
 	}
+	{
+		auto tex1 = device.CreateTexture(m_texDesc);
+		auto tex2 = device.CreateTexture(m_texDesc);
 
-	auto tex1 = device.CreateTexture(m_texDesc);
-	auto tex2 = device.CreateTexture(m_texDesc);
+		device.deviceContext()->UpdateSubresource(tex1.get(), 0, nullptr, m_uv1Image.data(), m_texWidth * 4, 0);
+		device.deviceContext()->UpdateSubresource(tex2.get(), 0, nullptr, m_uv2Image.data(), m_texWidth * 4, 0);
 
-	device.deviceContext()->UpdateSubresource(tex1.get(), 0, nullptr, m_uv1Image.data(), m_texWidth * 4, 0);
-	device.deviceContext()->UpdateSubresource(tex2.get(), 0, nullptr, m_uv2Image.data(), m_texWidth * 4, 0);
+		m_uv1PrevTexSRV = device.CreateShaderResourceView(tex1);
+		m_uv2PrevTexSRV = device.CreateShaderResourceView(tex2);
+	}
+	{
+		UpdateTrimTexture(m_uv1Image);
+		UpdateTrimTexture(m_uv2Image);
 
-	m_uv1PrevTexSRV = device.CreateShaderResourceView(tex1);
-	m_uv2PrevTexSRV = device.CreateShaderResourceView(tex2);
+		auto tex1 = device.CreateTexture(m_texDesc);
+		auto tex2 = device.CreateTexture(m_texDesc);
+
+		device.deviceContext()->UpdateSubresource(tex1.get(), 0, nullptr, m_uv1Image.data(), m_texWidth * 4, 0);
+		device.deviceContext()->UpdateSubresource(tex2.get(), 0, nullptr, m_uv2Image.data(), m_texWidth * 4, 0);
+
+		uv1TrimTexSRV = device.CreateShaderResourceView(tex1);
+		uv2TrimTexSRV = device.CreateShaderResourceView(tex2);
+	}
 }
-
 
 bool Intersection::IntersectionCurveAvailible() const {
 	return m_intersectionPolyline != nullptr;
@@ -119,6 +165,97 @@ void Intersection::CreateInterpolationCurve(std::vector<std::unique_ptr<Object>>
 	}
 }
 
+void Intersection::UpdateTrimTexture(std::vector<uint8_t>& img) {
+	ThickenCurve(img);
+	auto start = FindStartingPixel(img);
+	if (!start.has_value()) { return; }
+	auto [sx, sy] = start.value();
+	FloodFill(img, sx, sy);
+}
+
+void Intersection::ThickenCurve(std::vector<uint8_t>& img) const {
+	std::vector<uint8_t> copy = img;
+
+	auto isBlack = [](const uint8_t* pixel) {
+		return pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0;
+	};
+
+	auto setBlack = [](uint8_t* pixel) {
+		pixel[0] = pixel[1] = pixel[2] = 0;
+		pixel[3] = 255;
+	};
+
+	for (int y = 1; y < m_texHeight - 1; ++y) {
+		for (int x = 1; x < m_texWidth - 1; ++x) {
+			size_t idx = 4 * (y * m_texWidth + x);
+			if (isBlack(&copy[idx])) {
+				setBlack(&img[4 * ((y - 1) * m_texWidth + x)]);     // Up
+				setBlack(&img[4 * ((y + 1) * m_texWidth + x)]);     // Down
+				setBlack(&img[4 * (y * m_texWidth + (x - 1))]);     // Left
+				setBlack(&img[4 * (y * m_texWidth + (x + 1))]);     // Right
+			}
+		}
+	}
+}
+
+bool Intersection::IsBlack(std::vector<uint8_t>& img, int x, int y) const {
+	if (x < 0 || x >= m_texWidth || y < 0 || y >= m_texHeight) { return true; }
+	size_t idx = 4 * (y * m_texWidth + x);
+	return img[idx + 0] == 0 && img[idx + 1] == 0 && img[idx + 2] == 0;
+}
+
+std::optional<std::pair<int, int>> Intersection::FindStartingPixel(std::vector<uint8_t>& img) const {
+	for (int y = 0; y < m_texHeight; ++y) {
+		for (int x = 0; x < m_texWidth; ++x) {
+			size_t idx = 4 * (y * m_texWidth + x);
+			if (img[idx + 0] == 255 && img[idx + 1] == 255 && img[idx + 2] == 255) {
+				return std::make_pair(x, y);
+			}
+		}
+	}
+	return std::nullopt;
+}
+
+void Intersection::FloodFill(std::vector<uint8_t>& img, int startX, int startY) {
+	auto fill = [&](int x, int y) -> void {
+		size_t idx = 4 * (y * m_texWidth + x);
+		img[idx + 0] = 0;
+		img[idx + 1] = 0;
+		img[idx + 2] = 0;
+		img[idx + 3] = 255;
+	};
+
+	std::queue<std::pair<int, int>> q;
+	std::vector<bool> visited(m_texWidth * m_texHeight, false);
+
+	q.push({ startX, startY });
+	visited[startY * m_texWidth + startX] = true;
+	fill(startX, startY);
+
+	const std::array<std::pair<int, int>, 4> neighbors = { {
+		{ 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+	} };
+
+	while (!q.empty()) {
+		auto [x, y] = q.front();
+		q.pop();
+
+		for (auto [dx, dy] : neighbors) {
+			int nx = x + dx, ny = y + dy;
+			if (nx < 0 || ny < 0 || nx >= m_texWidth || ny >= m_texHeight) { continue; }
+
+			size_t idx = ny * m_texWidth + nx;
+			if (visited[idx]) { continue; }
+
+			if (!IsBlack(img, nx, ny)) {
+				visited[idx] = true;
+				fill(nx, ny);
+				q.push({ nx, ny });
+			}
+		}
+	}
+}
+
 Intersection::Intersection() : m_texDesc(m_texWidth, m_texHeight) {}
 
 void Intersection::Clear() {
@@ -129,6 +266,8 @@ void Intersection::Clear() {
 	m_intersectionPolyline = nullptr;
 	m_uv1Image.clear();
 	m_uv2Image.clear();
+	m_s1ID = -1;
+	m_s2ID = -1;
 }
 
 void Intersection::UpdateMesh(const Device& device) {
@@ -149,9 +288,11 @@ void Intersection::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, 
 	m_preview.Render(context);
 }
 
-unsigned int Intersection::FindIntersection(std::pair<const IGeometrical*, const IGeometrical*> surfaces) {
-	m_s1 = surfaces.first;
-	m_s2 = surfaces.second;
+unsigned int Intersection::FindIntersection(std::pair<Intersection::IDIG, Intersection::IDIG> surfaces) {
+	m_s1ID = surfaces.first.id;
+	m_s1 = surfaces.first.s;
+	m_s2ID = surfaces.second.id;
+	m_s2 = surfaces.second.s;
 
 	const bool selfIntersection = (m_s2 == nullptr);
 	if (selfIntersection) { m_s2 = m_s1; }
@@ -446,7 +587,6 @@ std::optional<Intersection::UVs> Intersection::ComputeNewtonStep(const UVs& uvs,
 	}
 	const gmod::vector4<double> F = Function(uvs, P0, t, d);
 	gmod::vector4<double> change =  J.value() * F;
-	//DebugPrint("[Change]", change.x(), change.y(), change.z(), change.w());
 
 	UVs newUVs = {
 			uvs.u1 - newtonStep * change.x(),
@@ -479,9 +619,6 @@ std::optional<Intersection::UVs> Intersection::RunNewtonMethod(const UVs& startU
 	const gmod::vector3<double> t = dir * Direction(startUVs);
 	double d = distance;
 	int repeats = 0;
-	//DebugPrint("[P0]", P0.x(), P0.y(), P0.z());
-	//DebugPrint("[t]", t.x(), t.y(), t.z());
-	//DebugPrint("[d]", d);
 
 	bool found = false;
 	while (true) {
@@ -497,7 +634,6 @@ std::optional<Intersection::UVs> Intersection::RunNewtonMethod(const UVs& startU
 
 			if (error < newtonTolerance /* && std::abs(dot(P1 - P0, t) - d) < m_eps */) {
 				DebugPrint("[Newton Iteration]", i);
-				DebugPrint("[Error]", error);
 				found = true;
 				break;
 			}

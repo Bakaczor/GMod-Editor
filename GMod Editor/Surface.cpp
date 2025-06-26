@@ -455,6 +455,11 @@ std::pair<unsigned int, unsigned int> Surface::NumberOfPatches() const {
 	return std::make_pair(aPatch, bPatch);
 }
 
+std::pair<unsigned int, unsigned int> Surface::GetUVPatches() const {
+	auto [aPatch, bPatch] = NumberOfPatches();
+	return std::make_pair(bPatch, aPatch);
+}
+
 std::array<double, 4> Surface::B3(double t) {
 	double tInv = 1 - t;
 	return {
@@ -497,10 +502,11 @@ gmod::vector3<double> Surface::sumBasis(const std::array<gmod::vector3<double>, 
 }
 
 std::array<gmod::vector3<double>, Patch::patchSize> Surface::GetPatch(double u, double v) const {
+	const double eps = 1e-12;
 	auto [aPatch, bPatch] = NumberOfPatches();
 
-	u = std::clamp(u, std::numeric_limits<double>::epsilon(), static_cast<double>(bPatch) - std::numeric_limits<double>::epsilon());
-	v = std::clamp(v, std::numeric_limits<double>::epsilon(), static_cast<double>(aPatch) - std::numeric_limits<double>::epsilon());
+	u = std::clamp(u, eps, static_cast<double>(bPatch) - eps);
+	v = std::clamp(v, eps, static_cast<double>(aPatch) - eps);
 	unsigned int patchIndex = static_cast<unsigned int>(v) * bPatch + static_cast<unsigned int>(u);
 
 	std::array<gmod::vector3<double>, Patch::patchSize> result;

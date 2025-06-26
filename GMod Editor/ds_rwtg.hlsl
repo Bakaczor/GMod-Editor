@@ -11,7 +11,7 @@ cbuffer cbProj : register(b1)
 struct GSInput
 {
     float4 position : SV_POSITION;
-    float2 uv : TEXCOORD;
+    float2 patchUV : UV;
 };
 
 struct DSInput
@@ -123,6 +123,6 @@ GSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, OutputPatch<DSI
     GSInput output;
     float3 pos = P(patch, uv);
     output.position = mul(projMatrix, mul(viewMatrix, float4(pos, 1.0f)));
-    output.uv = uv;
+    output.patchUV = uv;
     return output;
 }

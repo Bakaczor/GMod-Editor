@@ -24,7 +24,15 @@
 namespace app {
 	struct TessellationConstants {
 		uint32_t divisions;  // 4 bytes
-		float padding[3];    // 12 bytes
+		uint32_t uPatches;   // 4 bytes
+		uint32_t vPatches;   // 4 bytes
+		float padding;       // 4 bytes
+	};
+	struct TrimmingInfo {
+		uint32_t apply;			// 4 bytes
+		uint32_t textureID;     // 4 bytes
+		uint32_t trimmingMode;  // 4 bytes
+		float padding;			// 4 bytes
 	};
 
 	class UI;
@@ -108,6 +116,7 @@ namespace app {
 		mini::dx_ptr<ID3D11BlendState> m_blendState;
 		mini::dx_ptr<ID3D11DepthStencilState> m_dssWrite;
 		mini::dx_ptr<ID3D11DepthStencilState> m_dssNoWrite;
+		mini::dx_ptr<ID3D11SamplerState> m_sampState;
 		std::unordered_map<ShaderType, Shaders> m_shaders;
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
@@ -115,6 +124,9 @@ namespace app {
 		mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffTessConst;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffTrimInfo;
+
+		void BindTrimTextures();
 #pragma endregion
 	};
 }
