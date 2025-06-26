@@ -14,6 +14,7 @@ namespace app {
 		const std::array<const char*, 3> trimDisplayModes = { "Whole", "Inside", "Outside" };
 		mini::dx_ptr<ID3D11ShaderResourceView> uv1TrimTexSRV;
 		mini::dx_ptr<ID3D11ShaderResourceView> uv2TrimTexSRV;
+		bool reupload = false;
 
 		std::array<float, 4> color = { 0.0f, 0.0f, 1.0f, 1.0f };
 		int intersectionCurveControlPoints = 10;
@@ -26,12 +27,12 @@ namespace app {
 
 		double gradientStep = 5 * 1e-2; 
 		double gradientTolerance = 5 * 1e-5; 
-		int gradientMaxIterations = 100;
+		int gradientMaxIterations = 1000;
 
 		double newtonStep = 0.5;
-		double newtonTolerance = 5 * 1e-5;
-		int newtonMaxIterations = 5;
-		int newtonMaxRepeats = 8;
+		double newtonTolerance = 5 * 1e-4;
+		int newtonMaxIterations = 10;
+		int newtonMaxRepeats = 6;
 
 		int maxIntersectionPoints = 5000;
 		double distance = 1e-2;
@@ -40,6 +41,7 @@ namespace app {
 		void UpdateMesh(const Device& device);
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;
 		void UpdateUVPlanes(const Device& device);
+		void ReUploadUVPlanes(const Device& device);
 		void RenderUVPlanes();
 		std::pair<unsigned int, unsigned int> GetTrimInfo(int id) const;
 
@@ -68,10 +70,12 @@ namespace app {
 		mini::dx_ptr<ID3D11ShaderResourceView> m_uv2PrevTexSRV;
 
 		void UpdateTrimTexture(std::vector<uint8_t>& img);
+		void UpdateTrimTextureAt(std::vector<uint8_t>& img, int startX, int startY);
 		void ThickenCurve(std::vector<uint8_t>& img) const;
 		bool IsBlack(std::vector<uint8_t>& img, int x, int y) const;
 		std::optional<std::pair<int, int>> FindStartingPixel(std::vector<uint8_t>& img) const;
 		void FloodFill(std::vector<uint8_t>& img, int startX, int startY);
+		void RenderClickableTexture(std::vector<uint8_t>& img, const ImTextureID& texID, const std::string& label);
 
 		// TRIMMING
 		int m_s1ID = -1;

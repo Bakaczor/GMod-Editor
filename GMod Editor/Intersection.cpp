@@ -7,6 +7,21 @@
 
 using namespace app;
 
+void Intersection::RenderClickableTexture(std::vector<uint8_t>& img, const ImTextureID& texID, const std::string& label) {
+	ImGui::SeparatorText(label.c_str());
+	ImVec2 imgSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x);
+	ImVec2 uvPlanePos = ImGui::GetCursorScreenPos();
+	ImGui::Image(texID, imgSize);
+
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+		ImVec2 mousePos = ImGui::GetMousePos();
+		float u = (mousePos.x - uvPlanePos.x) / imgSize.x;
+		float v = (mousePos.y - uvPlanePos.y) / imgSize.y;
+
+		UpdateTrimTextureAt(img, u * (m_texWidth - 1), v * (m_texHeight - 1));
+	}
+}
+
 void Intersection::RenderUVPlanes() {
 	ImTextureID texID1, texID2;
 	if (showTrimTextures) {
@@ -17,11 +32,8 @@ void Intersection::RenderUVPlanes() {
 		texID2 = reinterpret_cast<ImTextureID>(m_uv2PrevTexSRV.get());
 	}
 
-	ImGui::SeparatorText("Surface 1 UV Plane");
-	ImGui::Image(texID1, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
-
-	ImGui::SeparatorText("Surface 2 UV Plane");
-	ImGui::Image(texID2, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
+	RenderClickableTexture(m_uv1Image, texID1, "Surface 1 UV Plane");
+	RenderClickableTexture(m_uv2Image, texID2, "Surface 2 UV Plane");
 
 	if (ImGui::Button("Switch Textures", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
 		showTrimTextures = !showTrimTextures;
@@ -46,13 +58,13 @@ void Intersection::RenderUVPlanes() {
 }
 
 std::pair<unsigned int, unsigned int> Intersection::GetTrimInfo(int id) const {
+	if (!availible) { return std::make_pair(-1, -1); }
 	if (id == m_s1ID) {
 		return std::make_pair(1, static_cast<unsigned int>(m_trimModeS1));
 	} else if (id == m_s2ID) {
 		return std::make_pair(2, static_cast<unsigned int>(m_trimModeS2));
-	} else {
-		return std::make_pair(-1, -1);
 	}
+	return std::make_pair(-1, -1);
 }
 
 void Intersection::UpdateUVPlanes(const Device& device) {
@@ -96,8 +108,10 @@ void Intersection::UpdateUVPlanes(const Device& device) {
 		m_uv2PrevTexSRV = device.CreateShaderResourceView(tex2);
 	}
 	{
-		UpdateTrimTexture(m_uv1Image);
-		UpdateTrimTexture(m_uv2Image);
+		ThickenCurve(m_uv1Image);
+		//UpdateTrimTexture(m_uv1Image);
+		ThickenCurve(m_uv2Image);
+		//UpdateTrimTexture(m_uv2Image);
 
 		auto tex1 = device.CreateTexture(m_texDesc);
 		auto tex2 = device.CreateTexture(m_texDesc);
@@ -108,6 +122,18 @@ void Intersection::UpdateUVPlanes(const Device& device) {
 		uv1TrimTexSRV = device.CreateShaderResourceView(tex1);
 		uv2TrimTexSRV = device.CreateShaderResourceView(tex2);
 	}
+}
+
+void Intersection::ReUploadUVPlanes(const Device& device) {
+	reupload = false;
+	auto tex1 = device.CreateTexture(m_texDesc);
+	auto tex2 = device.CreateTexture(m_texDesc);
+
+	device.deviceContext()->UpdateSubresource(tex1.get(), 0, nullptr, m_uv1Image.data(), m_texWidth * 4, 0);
+	device.deviceContext()->UpdateSubresource(tex2.get(), 0, nullptr, m_uv2Image.data(), m_texWidth * 4, 0);
+
+	uv1TrimTexSRV = device.CreateShaderResourceView(tex1);
+	uv2TrimTexSRV = device.CreateShaderResourceView(tex2);
 }
 
 bool Intersection::IntersectionCurveAvailible() const {
@@ -166,11 +192,17 @@ void Intersection::CreateInterpolationCurve(std::vector<std::unique_ptr<Object>>
 }
 
 void Intersection::UpdateTrimTexture(std::vector<uint8_t>& img) {
-	ThickenCurve(img);
 	auto start = FindStartingPixel(img);
 	if (!start.has_value()) { return; }
 	auto [sx, sy] = start.value();
 	FloodFill(img, sx, sy);
+}
+
+void Intersection::UpdateTrimTextureAt(std::vector<uint8_t>& img, int startX, int startY) {
+	if (startX >= 0 && startX < m_texWidth && startY >= 0 && startY < m_texHeight) {
+		FloodFill(img, startX, startY);
+		reupload = true;
+	}
 }
 
 void Intersection::ThickenCurve(std::vector<uint8_t>& img) const {

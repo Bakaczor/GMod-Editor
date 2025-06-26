@@ -453,6 +453,10 @@ void Application::Render() {
 			m_UI->intersection.UpdateUVPlanes(m_device);
 			BindTrimTextures();
 		}
+		if (m_UI->intersection.reupload) {
+			m_UI->intersection.ReUploadUVPlanes(m_device);
+			BindTrimTextures();
+		}
 
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(gmod::matrix4<float>::identity()));
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->intersection.color.data()));
