@@ -416,6 +416,7 @@ void Application::Render() {
 		if (m_UI->updatePreview) {
 			m_UI->updatePreview = false;
 			m_UI->intersection.UpdateMesh(m_device);
+			m_UI->intersection.UpdateUVPlanes(m_device);
 		}
 
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(gmod::matrix4<float>::identity()));

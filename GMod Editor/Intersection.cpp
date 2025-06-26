@@ -7,11 +7,62 @@
 using namespace app;
 
 void Intersection::RenderUVPlanes() {
-	// UV Planes
+	ImTextureID texID1 = reinterpret_cast<ImTextureID>(m_uv1PrevTexSRV.get());
+	ImTextureID texID2 = reinterpret_cast<ImTextureID>(m_uv2PrevTexSRV.get());
+
+	ImGui::SeparatorText("Surface 1 UV Plane");
+	ImGui::Image(texID1, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
+
+	ImGui::SeparatorText("Surface 2 UV Plane");
+	ImGui::Image(texID2, ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().x));
+
 	if (ImGui::Button("Hide UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
 		showUVPlanes = false;
 	}
 }
+
+void Intersection::UpdateUVPlanes(const Device& device) {
+	m_uv1Image.clear();
+	m_uv2Image.clear();
+	m_uv1Image.resize(m_texWidth * m_texHeight * 4, 0);
+	m_uv2Image.resize(m_texWidth * m_texHeight * 4, 0);
+	std::fill(m_uv1Image.begin(), m_uv1Image.end(), 255);
+	std::fill(m_uv2Image.begin(), m_uv2Image.end(), 255);
+
+	auto mapUVToPixel = [&](double u, double v, const IGeometrical::UVBounds& bounds) {
+		int x = static_cast<int>((u - bounds.uMin) / (bounds.uMax - bounds.uMin) * (m_texWidth - 1));
+		int y = static_cast<int>((v - bounds.vMin) / (bounds.vMax - bounds.vMin) * (m_texHeight - 1));
+		return std::pair(x, y);
+	};
+
+	for (const auto& p : m_pointsOfIntersection) {
+		auto [x1, y1] = mapUVToPixel(p.uvs.u1, p.uvs.v1, m_s1->ParametricBounds());
+		auto [x2, y2] = mapUVToPixel(p.uvs.u2, p.uvs.v2, m_s2->ParametricBounds());
+
+		size_t idx1 = 4 * (y1 * m_texWidth + x1);
+		size_t idx2 = 4 * (y2 * m_texHeight + x2);
+
+		m_uv1Image[idx1 + 0] = 0;
+		m_uv1Image[idx1 + 1] = 0;
+		m_uv1Image[idx1 + 2] = 0;
+		m_uv1Image[idx1 + 3] = 255;
+
+		m_uv2Image[idx2 + 0] = 0;
+		m_uv2Image[idx2 + 1] = 0;
+		m_uv2Image[idx2 + 2] = 0;
+		m_uv2Image[idx2 + 3] = 255;
+	}
+
+	auto tex1 = device.CreateTexture(m_texDesc);
+	auto tex2 = device.CreateTexture(m_texDesc);
+
+	device.deviceContext()->UpdateSubresource(tex1.get(), 0, nullptr, m_uv1Image.data(), m_texWidth * 4, 0);
+	device.deviceContext()->UpdateSubresource(tex2.get(), 0, nullptr, m_uv2Image.data(), m_texWidth * 4, 0);
+
+	m_uv1PrevTexSRV = device.CreateShaderResourceView(tex1);
+	m_uv2PrevTexSRV = device.CreateShaderResourceView(tex2);
+}
+
 
 bool Intersection::IntersectionCurveAvailible() const {
 	return m_intersectionPolyline != nullptr;
@@ -32,7 +83,7 @@ void Intersection::CreateIntersectionCurve(std::vector<std::unique_ptr<Object>>&
 	const unsigned int numCtrl = intersectionCurveControlPoints;
 	std::vector<size_t> selectedIndices;
 
-	selectedIndices.push_back(0); // Always include first point
+	selectedIndices.push_back(0); // always include first point
 	for (unsigned int i = 1; i < numCtrl - 1; ++i) {
 		const double targetLength = (static_cast<double>(i) / (numCtrl - 1)) * totalLength;
 
@@ -45,7 +96,7 @@ void Intersection::CreateIntersectionCurve(std::vector<std::unique_ptr<Object>>&
 		}
 		selectedIndices.push_back(idx);
 	}
-	selectedIndices.push_back(totalPoints - 1); // Always include last point
+	selectedIndices.push_back(totalPoints - 1); // always include last point
 
 	std::vector<Object*> controlPoints;
 	for (size_t& idx : selectedIndices) {
@@ -68,12 +119,16 @@ void Intersection::CreateInterpolationCurve(std::vector<std::unique_ptr<Object>>
 	}
 }
 
+Intersection::Intersection() : m_texDesc(m_texWidth, m_texHeight) {}
+
 void Intersection::Clear() {
 	availible = false;
 	m_s1 = nullptr;
 	m_s2 = nullptr;
 	m_pointsOfIntersection.clear();
 	m_intersectionPolyline = nullptr;
+	m_uv1Image.clear();
+	m_uv2Image.clear();
 }
 
 void Intersection::UpdateMesh(const Device& device) {

@@ -53,7 +53,7 @@ std::pair<const IGeometrical*, const IGeometrical*> UI::GetIntersectingSurfaces(
 
 void UI::RenderRightPanel(bool firstPass, Camera& camera) {
 	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
-	const float width = 250.f;
+	const float width = 275.f;
 	const float height = viewportSize.y;
 
 	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);

@@ -28,10 +28,13 @@ namespace app {
 		double distance = 1e-2;
 		double closingPointTolerance = 5 * 1e-3; 
 
-		void RenderUVPlanes();
 		void UpdateMesh(const Device& device);
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;
+		void UpdateUVPlanes(const Device& device);
+		void RenderUVPlanes();
+		//void ApplyTrimming();
 
+		Intersection();
 		void Clear();
 		unsigned int FindIntersection(std::pair<const IGeometrical*, const IGeometrical*> surfaces);
 		bool IntersectionCurveAvailible() const;
@@ -41,6 +44,17 @@ namespace app {
 		const int m_gridCells = 8;
 		const double m_eps = 1e-12;
 		Mesh m_preview;
+
+		// UV PLANES
+		const UINT m_texWidth = 256U;
+		const UINT m_texHeight = 256U;
+		const Texture2DDescription m_texDesc;
+		std::vector<uint8_t> m_uv1Image;
+		std::vector<uint8_t> m_uv2Image;
+		mini::dx_ptr<ID3D11ShaderResourceView> m_uv1PrevTexSRV;
+		mini::dx_ptr<ID3D11ShaderResourceView> m_uv2PrevTexSRV;
+		mini::dx_ptr<ID3D11ShaderResourceView> m_uv1TrimTexSRV;
+		mini::dx_ptr<ID3D11ShaderResourceView> m_uv2TrimTexSRV;
 
 		const IGeometrical* m_s1 = nullptr;
 		const IGeometrical* m_s2 = nullptr;

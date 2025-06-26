@@ -34,20 +34,19 @@ Texture2DDescription::Texture2DDescription(UINT width, UINT height) {
 	ZeroMemory(this, sizeof(Texture2DDescription));
 	Width = width;
 	Height = height;
-	//MipLevels = 0;
+	MipLevels = 1;
 	ArraySize = 1;
 	Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Usage = D3D11_USAGE_DEFAULT;
 	BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	//CPUAccessFlags = 0;
-	//MiscFlags = 0;
+	CPUAccessFlags = 0;
+	MiscFlags = 0;
 }
 
 Texture2DDescription Texture2DDescription::DepthStencilDescription(UINT width, UINT height) {
 	Texture2DDescription desc(width, height);
-	desc.MipLevels = 1;
 	desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	return desc;
@@ -55,7 +54,6 @@ Texture2DDescription Texture2DDescription::DepthStencilDescription(UINT width, U
 
 Texture2DDescription Texture2DDescription::DynamicTextureDescription(UINT width, UINT height) {
 	Texture2DDescription desc(width, height);
-	desc.MipLevels = 1;
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	return desc;
