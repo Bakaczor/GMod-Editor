@@ -194,6 +194,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="Divisable.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="IGeometrical.h" />

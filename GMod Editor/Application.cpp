@@ -411,6 +411,17 @@ void Application::Render() {
 		}
 		obj->RenderMesh(m_device.deviceContext(), m_shaders);
 	}
+
+	if (m_UI->intersection.availible) {
+		if (m_UI->updatePreview) {
+			m_UI->updatePreview = false;
+			m_UI->intersection.UpdateMesh(m_device);
+		}
+
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(gmod::matrix4<float>::identity()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->intersection.color.data()));
+		m_UI->intersection.RenderMesh(m_device.deviceContext(), m_shaders);
+	}
 }
 
 void app::Application::RenderStereoscopic(int sign, ImVec4& color) {

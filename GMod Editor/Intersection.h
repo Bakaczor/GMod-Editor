@@ -1,59 +1,78 @@
 #pragma once
-#include <vector>
 #include "../gmod/vector3.h"
-#include "Polyline.h"
 #include "IGeometrical.h"
+#include "Polyline.h"
+#include <vector>
 
 namespace app {
 	class Intersection {
 	public:
-		bool closed = false;
-		std::vector<gmod::vector3<double>> pointsOfIntersection;
-
-		int intersectionCurveSamples = 10;
-		Polyline* intersectionCurve = nullptr;
+		std::array<float, 4> color = { 0.0f, 0.0f, 1.0f, 1.0f };
+		int intersectionCurveControlPoints = 10;
 
 		bool availible = false;
 		bool showUVPlanes = false;
 		bool useCursorAsStart = false;
 		gmod::vector3<double> cursorPosition;
 
-		double gradientStep = 1.0;
-		int gradientMaxIterations = 1000;
-		double gradientTolerance = 1e-3;
+		double gradientStep = 5 * 1e-2; 
+		double gradientTolerance = 5 * 1e-5; 
+		int gradientMaxIterations = 100;
 
-		double newtonStep = 1e-3;
-		int newtonMaxIterations = 4;
-		double newtonTolerance = 1e-3;
+		double newtonStep = 0.5;
+		double newtonTolerance = 5 * 1e-5;
+		int newtonMaxIterations = 5;
+		int newtonMaxRepeats = 8;
 
-		unsigned int FindIntersection(std::pair<const IGeometrical*, const IGeometrical*> surfaces);
+		int maxIntersectionPoints = 5000;
+		double distance = 1e-2;
+		double closingPointTolerance = 5 * 1e-3; 
+
+		void RenderUVPlanes();
+		void UpdateMesh(const Device& device);
+		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;
+
 		void Clear();
+		unsigned int FindIntersection(std::pair<const IGeometrical*, const IGeometrical*> surfaces);
+		bool IntersectionCurveAvailible() const;
+		void CreateIntersectionCurve(std::vector<std::unique_ptr<Object>>& sceneObjects);
+		void CreateInterpolationCurve(std::vector<std::unique_ptr<Object>>& sceneObjects);
 	private:
-		const static int m_gridU = 10;
-		const static int m_gridV = 10;
-		const static double m_boundMarginPercent;
-		const static double m_uvChangeMultiplayer;
-		const static unsigned int m_maxIntersections = 2000;
+		const int m_gridCells = 8;
+		const double m_eps = 1e-12;
+		Mesh m_preview;
 
-		static std::array<double, 4> ComputeGradient(const IGeometrical* s1, const IGeometrical* s2, double u1, double v1, double u2, double v2, gmod::vector3<double>& diff);
-		static bool IsInBounds(double u, double v, const IGeometrical::UVBounds& b, double margin = 0.0);
-		
-		static gmod::vector3<double> Direction(const gmod::vector3<double>& du1, const gmod::vector3<double>& du2, const gmod::vector3<double>& dv1, const gmod::vector3<double>& dv2);
-		struct NewtonData {
-			const IGeometrical* s;
-			double u;
-			double v;
-			double uNew;
-			double vNew;
+		const IGeometrical* m_s1 = nullptr;
+		const IGeometrical* m_s2 = nullptr;
+		struct UVs {
+			double u1;
+			double v1; 
+			double u2; 
+			double v2;
 		};
-		static gmod::vector4<double> Function(NewtonData& data1, NewtonData& data2, double dist);
-		static std::optional<gmod::matrix4<double>> JacobianInverted(NewtonData& data1, NewtonData& data2);
-		static std::optional<gmod::vector4<double>> ComputeNewtonStep(NewtonData& data1, NewtonData& data2, double dist);
 
-		unsigned int RunGradientMethod(const IGeometrical* s1, const IGeometrical* s2, double u1, double v1, double u2, double v2);
-		bool ComputeNewUV(NewtonData& data, double uChange, double vChange, bool backtracked);
+		bool m_closed = false;
+		struct PointOfIntersection {
+			UVs uvs;
+			gmod::vector3<double> pos;
+		};
+		std::vector<PointOfIntersection> m_pointsOfIntersectionForward;
+		std::vector<PointOfIntersection> m_pointsOfIntersectionBackward;
+		Polyline* m_intersectionPolyline = nullptr;
 
-		bool RunNewtonMethod(NewtonData& d1, NewtonData& d2);
-		unsigned int FindIntersectionPoints(const IGeometrical* s1, const IGeometrical* s2, double u1, double v1, double u2, double v2);
+		UVs LocalizeStart(bool selfIntersection) const;
+		UVs LocalizeStartWithCursor(bool selfIntersection) const;
+
+		static std::optional<std::pair<double, double>> ValidateUVs(double newU, double newV, const IGeometrical* s);
+		std::array<double, 4> ComputeGradient(const UVs& uvs, const gmod::vector3<double>& diff) const;
+		std::optional<UVs> RunGradientMethod(UVs bestUVs) const;
+		
+		gmod::vector3<double> Direction(const UVs& uvs) const;
+		gmod::vector4<double> Function(const UVs& uvs, const gmod::vector3<double>& P0, const gmod::vector3<double>& t, double d) const;
+		std::optional<gmod::matrix4<double>> JacobianInverted(const UVs& uvs, const gmod::vector3<double>& t) const;
+		std::optional<UVs> ComputeNewtonStep(const UVs& uvs, const gmod::vector3<double>& P0, const gmod::vector3<double>& t, double d) const;
+		std::optional<Intersection::UVs> RunNewtonMethod(const UVs& startUVs, int dir) const;
+
+		bool FindPointsOfIntersection(UVs startUVs);
 	};
 }

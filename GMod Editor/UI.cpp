@@ -254,74 +254,97 @@ void UI::RenderCursor() {
 
 void UI::RenderIntersections() {
 	ImGui::BeginChild("IntersectionsWindow", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_NoBackground);
-	double step = 0.001f;
-	double stepFast = 0.1f;
+
 	ImGui::Text("Gradient Method Step");
-	ImGui::InputDouble("###GradientMethodStep", &m_intersection.gradientStep, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Gradient Method Max Iterations");
-	ImGui::InputInt("###GradientMethodMaxIterations", &m_intersection.gradientMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::InputDouble("###GradientMethodStep", &intersection.gradientStep, 1e-3, 1e-1, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 	ImGui::Text("Gradient Method Tolerance");
-	ImGui::InputDouble("###GradientMethodTolerance", &m_intersection.gradientTolerance, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::InputDouble("###GradientMethodTolerance", &intersection.gradientTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Gradient Method Max Iterations");
+	ImGui::InputInt("###GradientMethodMaxIterations", &intersection.gradientMaxIterations, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+
+	ImGui::Separator();
+
 	ImGui::Text("Newton Method Step");
-	ImGui::InputDouble("###NewtonMethodStep", &m_intersection.newtonStep, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Text("Newton Method Max Iterations");
-	ImGui::InputInt("###NewtonMethodMaxIterations", &m_intersection.newtonMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::InputDouble("###NewtonMethodStep", &intersection.newtonStep, 1e-2, 1e-1, "%.2f", ImGuiInputTextFlags_CharsDecimal);
 	ImGui::Text("Newton Method Tolerance");
-	ImGui::InputDouble("###NewtonMethodTolerance", &m_intersection.newtonTolerance, step, stepFast, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-	ImGui::Checkbox("Use Cursor as Start", &m_intersection.useCursorAsStart);
+	ImGui::InputDouble("###NewtonMethodTolerance", &intersection.newtonTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Newton Method Max Iterations");
+	ImGui::InputInt("###NewtonMethodMaxIterations", &intersection.newtonMaxIterations, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Newton Method Max Repeats");
+	ImGui::InputInt("###NewtonMethodMaxRepeats", &intersection.newtonMaxRepeats, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+
+	ImGui::Separator();
+
+	ImGui::Text("Max Intersection Points");
+	ImGui::InputInt("###MaxIntersectionPoints", &intersection.maxIntersectionPoints, 100, 1000, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Distance");
+	ImGui::InputDouble("###Distance", &intersection.distance, 1e-3, 1e-2, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Closing Point Tolerance");
+	ImGui::InputDouble("###ClosingPointTolerance", &intersection.closingPointTolerance, 1e-4, 1e-3, "%.4f", ImGuiInputTextFlags_CharsDecimal);
+
+	ImGui::Separator();
+
+	ImGui::Checkbox("Use Cursor as Start", &intersection.useCursorAsStart);
+	ImGui::ColorEdit3("Color", reinterpret_cast<float*>(&intersection.color));
+
+	ImGui::Separator();
 
 	if (ImGui::Button("Find Intersection", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		intersection.Clear();
+		m_intersectionInfo = "No intersection";
 		auto surfaces = GetIntersectingSurfaces();
 		if (surfaces.first != nullptr) {
-			m_intersection.Clear();
-			if (m_intersection.useCursorAsStart) {
-				m_intersection.cursorPosition = cursor.transform.position();
+			if (intersection.useCursorAsStart) {
+				intersection.cursorPosition = cursor.transform.position();
 			}
-			m_intersection.FindIntersection(surfaces);
+			unsigned int res = intersection.FindIntersection(surfaces);
+			if (res == 0) {
+				m_intersectionInfo = "Intersection found";
+				updatePreview = true;
+			} else if (res == 1) {
+				m_intersectionInfo = "Could not locate start";
+			} else if (res == 2) {
+				m_intersectionInfo = "Point search failed";
+			}
 		}
 	}
+	ImGui::SeparatorText(m_intersectionInfo.c_str());
 
-	if (!m_intersection.availible) {
+	if (!intersection.availible) {
 		ImGui::BeginDisabled();
 	}
 
 	if (ImGui::Button("Show UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
-		m_intersection.showUVPlanes = true;
+		intersection.showUVPlanes = true;
 	}
 
-	if (m_intersection.showUVPlanes) {
-		RenderUVPlanes();
+	if (intersection.showUVPlanes) {
+		intersection.RenderUVPlanes();
 	}
 
 	ImGui::Separator();
 
-	ImGui::Text("Intersection Curve Samples");
-	ImGui::InputInt("###IntersectionCurveSamples", &m_intersection.intersectionCurveSamples, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+	ImGui::Text("Intersection Curve Control Points");
+	ImGui::InputInt("###IntersectionCurveControlPoints", &intersection.intersectionCurveControlPoints, 1, 10, ImGuiInputTextFlags_CharsDecimal);
 	if (ImGui::Button("Create Intersection Curve", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
-
+		intersection.CreateIntersectionCurve(sceneObjects);
 	}
 
-	if (!m_intersection.intersectionCurve) {
+	if (!intersection.IntersectionCurveAvailible()) {
 		ImGui::BeginDisabled();
 	}
 	if (ImGui::Button("Create Interpolation Curve", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
-
+		intersection.CreateInterpolationCurve(sceneObjects);
 	}
-	if (!m_intersection.intersectionCurve) {
+	if (!intersection.IntersectionCurveAvailible()) {
 		ImGui::EndDisabled();
 	}
 
-	if (!m_intersection.availible) {
+	if (!intersection.availible) {
 		ImGui::EndDisabled();
 	}
 
 	ImGui::EndChild();
-}
-
-void UI::RenderUVPlanes() {
-	if (ImGui::Button("Hide UV Planes", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
-		m_intersection.showUVPlanes = false;
-	}
 }
 
 void UI::RenderObjectTable() {
@@ -397,6 +420,7 @@ void UI::RenderObjectTable() {
 	}
 	if (ImGui::Button("Clear", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f))) {
 		sceneObjects.clear();
+		intersection.availible = false;
 	}
 	ImGui::BeginDisabled();
 	ImGui::Checkbox("Include Patch Boundaries", &m_includePatchBoundaries);

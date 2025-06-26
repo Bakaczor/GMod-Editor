@@ -61,6 +61,10 @@ namespace app {
 		float stereoD = 0.01f;
 		float stereoF = 1.f;
 
+		// INTERSECTION
+		bool updatePreview = false;
+		Intersection intersection;
+
 		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
@@ -78,15 +82,13 @@ namespace app {
 
 		bool m_includePatchBoundaries = true;
 
-		// INTERSECTIONS
-		Intersection m_intersection;
+		std::string m_intersectionInfo = "Intersection info";
 		std::pair<const IGeometrical*, const IGeometrical*> GetIntersectingSurfaces() const;
 
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
 		void RenderIntersections();
-		void RenderUVPlanes();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);

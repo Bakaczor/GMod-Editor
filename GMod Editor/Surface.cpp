@@ -499,8 +499,8 @@ gmod::vector3<double> Surface::sumBasis(const std::array<gmod::vector3<double>, 
 std::array<gmod::vector3<double>, Patch::patchSize> Surface::GetPatch(double u, double v) const {
 	auto [aPatch, bPatch] = NumberOfPatches();
 
-	u = std::clamp(u, 0.0, static_cast<double>(bPatch));
-	v = std::clamp(v, 0.0, static_cast<double>(aPatch));
+	u = std::clamp(u, std::numeric_limits<double>::epsilon(), static_cast<double>(bPatch) - std::numeric_limits<double>::epsilon());
+	v = std::clamp(v, std::numeric_limits<double>::epsilon(), static_cast<double>(aPatch) - std::numeric_limits<double>::epsilon());
 	unsigned int patchIndex = static_cast<unsigned int>(v) * bPatch + static_cast<unsigned int>(u);
 
 	std::array<gmod::vector3<double>, Patch::patchSize> result;
