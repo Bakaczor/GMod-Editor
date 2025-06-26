@@ -56,8 +56,7 @@ namespace app {
 			UVs uvs;
 			gmod::vector3<double> pos;
 		};
-		std::vector<PointOfIntersection> m_pointsOfIntersectionForward;
-		std::vector<PointOfIntersection> m_pointsOfIntersectionBackward;
+		std::vector<PointOfIntersection> m_pointsOfIntersection;
 		Polyline* m_intersectionPolyline = nullptr;
 
 		UVs LocalizeStart(bool selfIntersection) const;

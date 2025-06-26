@@ -18,39 +18,44 @@ bool Intersection::IntersectionCurveAvailible() const {
 }
 
 void Intersection::CreateIntersectionCurve(std::vector<std::unique_ptr<Object>>& sceneObjects) {
-	std::vector<Object*> controlPoints;
-	std::vector<PointOfIntersection> samples;
-	if (m_closed) {
-		samples = m_pointsOfIntersectionForward;
-	} else {
-		samples = m_pointsOfIntersectionBackward;
-		std::reverse(samples.begin(), samples.end());
-		samples.insert(samples.end(), m_pointsOfIntersectionForward.begin(), m_pointsOfIntersectionForward.end());
-	}
-	{
-		auto& first = samples.front();
-		auto obj = std::make_unique<Point>(Application::m_pointModel.get());
-		obj->SetTranslation(first.pos.x(), first.pos.y(), first.pos.z());
-		controlPoints.push_back(obj.get());
-		sceneObjects.push_back(std::move(obj));
-	}
-	const unsigned int n_1 = intersectionCurveControlPoints - 1;
-	for (unsigned int i = 1; i < n_1; ++i) {
-		const unsigned int idx = std::round((static_cast<double>(i) / n_1) * (samples.size() - 1));
-		auto& p = samples.at(idx);
+	const size_t totalPoints = m_pointsOfIntersection.size();
+	if (totalPoints < 2) return;
 
+	std::vector<double> cumulativeLength(totalPoints, 0.0);
+	for (size_t i = 1; i < totalPoints; ++i) {
+		cumulativeLength[i] = cumulativeLength[i - 1] + (m_pointsOfIntersection[i].pos - m_pointsOfIntersection[i - 1].pos).length();
+	}
+
+	const double totalLength = cumulativeLength.back();
+	if (totalLength < m_eps) return;
+
+	const unsigned int numCtrl = intersectionCurveControlPoints;
+	std::vector<size_t> selectedIndices;
+
+	selectedIndices.push_back(0); // Always include first point
+	for (unsigned int i = 1; i < numCtrl - 1; ++i) {
+		const double targetLength = (static_cast<double>(i) / (numCtrl - 1)) * totalLength;
+
+		auto it = std::lower_bound(cumulativeLength.begin(), cumulativeLength.end(), targetLength);
+		size_t idx = std::distance(cumulativeLength.begin(), it);
+
+		if (idx <= selectedIndices.back()) {
+			idx = selectedIndices.back() + 1;
+			if (idx >= totalPoints - 1) break;
+		}
+		selectedIndices.push_back(idx);
+	}
+	selectedIndices.push_back(totalPoints - 1); // Always include last point
+
+	std::vector<Object*> controlPoints;
+	for (size_t& idx : selectedIndices) {
+		const auto& pos = m_pointsOfIntersection[idx].pos;
 		auto obj = std::make_unique<Point>(Application::m_pointModel.get());
-		obj->SetTranslation(p.pos.x(), p.pos.y(), p.pos.z());
+		obj->SetTranslation(pos.x(), pos.y(), pos.z());
 		controlPoints.push_back(obj.get());
 		sceneObjects.push_back(std::move(obj));
 	}
-	{
-		auto& last = samples.back();
-		auto obj = std::make_unique<Point>(Application::m_pointModel.get());
-		obj->SetTranslation(last.pos.x(), last.pos.y(), last.pos.z());
-		controlPoints.push_back(obj.get());
-		sceneObjects.push_back(std::move(obj));
-	}
+
 	auto obj = std::make_unique<Polyline>(controlPoints);
 	m_intersectionPolyline = obj.get();
 	sceneObjects.push_back(std::move(obj));
@@ -67,27 +72,18 @@ void Intersection::Clear() {
 	availible = false;
 	m_s1 = nullptr;
 	m_s2 = nullptr;
-	m_pointsOfIntersectionForward.clear();
+	m_pointsOfIntersection.clear();
 	m_intersectionPolyline = nullptr;
 }
 
 void Intersection::UpdateMesh(const Device& device) {
-	int n = m_pointsOfIntersectionForward.size() + m_pointsOfIntersectionBackward.size();
-
 	std::vector<Vertex_Po> verts;
-	verts.reserve(n);
-	for (int i = 0; i < m_pointsOfIntersectionForward.size(); ++i) {
-		const auto& pos = m_pointsOfIntersectionForward[i].pos;
-		verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
-	}
-	if (!m_closed) {
-		for (int i = m_pointsOfIntersectionBackward.size() - 1; i >= 0; --i) {
-			const auto& pos = m_pointsOfIntersectionBackward[i].pos;
-			verts.push_back({ DirectX::XMFLOAT3(pos.x(), pos.y(), pos.z()) });
-		}
+	verts.reserve(m_pointsOfIntersection.size());
+	for (auto& p : m_pointsOfIntersection) {
+		verts.push_back({ DirectX::XMFLOAT3(p.pos.x(), p.pos.y(), p.pos.z()) });
 	}
 
-	std::vector<USHORT> idxs(n);
+	std::vector<USHORT> idxs(m_pointsOfIntersection.size());
 	std::iota(idxs.begin(), idxs.end(), 0);
 
 	m_preview.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
@@ -244,13 +240,13 @@ std::optional<std::pair<double, double>> Intersection::ValidateUVs(double newU, 
 
 	if (newU < uMin) {
 		if (wrapU) {
-			validUVs.first = uMax;
+			validUVs.first = uMax - std::numeric_limits<double>::epsilon();
 		} else {
 			return std::nullopt;
 		}
 	} else if (newU > uMax) {
 		if (wrapU) {
-			validUVs.first = uMin;
+			validUVs.first = uMin + std::numeric_limits<double>::epsilon();
 		} else {
 			return std::nullopt;
 		}
@@ -258,13 +254,13 @@ std::optional<std::pair<double, double>> Intersection::ValidateUVs(double newU, 
 
 	if (newV < vMin) {
 		if (wrapV) {
-			validUVs.second = vMax;
+			validUVs.second = vMax - std::numeric_limits<double>::epsilon();
 		} else {
 			return std::nullopt;
 		}
 	} else if (newV > vMax) {
 		if (wrapV) {
-			validUVs.second = vMin;
+			validUVs.second = vMin + std::numeric_limits<double>::epsilon();
 		} else {
 			return std::nullopt;
 		}
@@ -466,13 +462,16 @@ std::optional<Intersection::UVs> Intersection::RunNewtonMethod(const UVs& startU
 }
 
 bool Intersection::FindPointsOfIntersection(UVs startUVs) {
+	std::vector<PointOfIntersection> pointsOfIntersectionForward;
+	std::vector<PointOfIntersection> pointsOfIntersectionBackward;
+
 	m_closed = false;
-	m_pointsOfIntersectionForward.push_back({ startUVs, m_s1->Point(startUVs.u1, startUVs.v1) });
-	auto& start = m_pointsOfIntersectionForward.front();
+	pointsOfIntersectionForward.push_back({ startUVs, m_s1->Point(startUVs.u1, startUVs.v1) });
+	auto start = pointsOfIntersectionForward[0].pos;
 
 	int dir = 1;
 	UVs nextUVs = startUVs;
-	auto& pointList = m_pointsOfIntersectionForward;
+	auto& pointList = pointsOfIntersectionForward;
 	for (unsigned int p = 0; p < maxIntersectionPoints; ++p) {
 		auto result = RunNewtonMethod(nextUVs, dir);
 		// reached the end of UV plane
@@ -481,7 +480,7 @@ bool Intersection::FindPointsOfIntersection(UVs startUVs) {
 			if (dir == 1) {
 				DebugPrint("[Switch Iteration]", p);
 				dir = -1;
-				pointList = m_pointsOfIntersectionBackward;
+				pointList = pointsOfIntersectionBackward;
 				continue;
 			} else {
 				DebugPrint("[End Iteration]", p);
@@ -492,12 +491,21 @@ bool Intersection::FindPointsOfIntersection(UVs startUVs) {
 			pointList.push_back({ nextUVs, m_s1->Point(nextUVs.u1, nextUVs.v1) });
 
 			// let algorithm find some points before checking for loop
-			if (dir == 1 && p > 10 && (m_pointsOfIntersectionForward.back().pos - start.pos).length() < closingPointTolerance) {
+			if (dir == 1 && p > 10 && (pointsOfIntersectionForward.back().pos - start).length() < closingPointTolerance) {
 				DebugPrint("[Closed Iteration]", p);
 				m_closed = true;
 				break;
 			}
 		}
 	}
-	return m_pointsOfIntersectionForward.size() > 1;
+
+	if (m_closed) {
+		m_pointsOfIntersection = pointsOfIntersectionForward;
+	} else {
+		m_pointsOfIntersection = pointsOfIntersectionBackward;
+		std::reverse(m_pointsOfIntersection.begin(), m_pointsOfIntersection.end());
+		m_pointsOfIntersection.insert(m_pointsOfIntersection.end(), pointsOfIntersectionForward.begin(), pointsOfIntersectionForward.end());
+	}
+
+	return pointsOfIntersectionForward.size() > 1;
 }

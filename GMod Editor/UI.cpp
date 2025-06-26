@@ -472,6 +472,7 @@ void UI::RenderObjectTable() {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			bool selected = selection.Contains(obj->id);
+			ImGui::PushID(obj->id);
 			if (ImGui::Selectable(obj->name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns)) {
 				if (ImGui::GetIO().KeyCtrl) {
 					if (selected) {
@@ -490,6 +491,7 @@ void UI::RenderObjectTable() {
 					selection.AddObject(obj.get());
 				}
 			}
+			ImGui::PopID();
 			ImGui::TableNextColumn();
 			ImGui::Text(obj->type().c_str());
 		}
