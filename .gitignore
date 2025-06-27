@@ -3,3 +3,4 @@
 **/x64
 *.cso
 **/vcpkg_installed
+*.ini
