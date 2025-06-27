@@ -20,14 +20,15 @@ namespace app {
 		std::array<float, 4> color = { 1.0f, 1.0f, 1.0f, 1.0f };
 		bool geometryChanged = false;
 		bool deletable = true;
+		bool intersectable = false;
 
 		Object();
 		virtual ~Object();
 		virtual void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const = 0;
 		virtual void UpdateMesh(const Device& device);
 		virtual void RenderProperties();
-		void RenderPosition(float step = 0.001f, float stepFast = 0.1f);
 		virtual std::optional<std::vector<std::unique_ptr<Object>>*> GetSubObjects();
+		void RenderPosition(float step = 0.001f, float stepFast = 0.1f);
 
 		static void FixGlobalObjectId(const std::vector<std::unique_ptr<Object>>& sceneObjects);
 #pragma region PARENTS

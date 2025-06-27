@@ -62,6 +62,16 @@ mini::dx_ptr<ID3D11DepthStencilState> Device::CreateDepthStencilState(const Dept
 	return result;
 }
 
+mini::dx_ptr<ID3D11SamplerState> Device::CreateSamplerState(const SamplerDescription& desc) const {
+	ID3D11SamplerState* temp = nullptr;
+	auto hr = m_device->CreateSamplerState(&desc, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11SamplerState> result(temp);
+	return result;
+}
+
 #pragma region VIEWS
 mini::dx_ptr<ID3D11RenderTargetView> Device::CreateRenderTargetView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
 	ID3D11RenderTargetView* temp;

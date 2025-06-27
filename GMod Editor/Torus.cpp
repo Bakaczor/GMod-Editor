@@ -6,6 +6,7 @@ using namespace app;
 unsigned short Torus::m_globalTorusNum = 0;
 
 Torus::Torus(double R, double r, unsigned int uParts, unsigned int vParts) : m_R(R), m_r(r), m_uParts(uParts), m_vParts(vParts) {
+	intersectable = true;
 	m_type = "Torus";
 	std::ostringstream os;
 	os << "torus_" << m_globalTorusNum;
@@ -51,12 +52,12 @@ void Torus::Set_vParts(int vParts) {
 }
 
 void Torus::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
-	map.at(ShaderType::Regular).Set(context);
+	map.at(ShaderType::RegularWithUVs).Set(context);
 	m_mesh.Render(context);
 }
 
 void Torus::UpdateMesh(const Device& device) {
-	std::vector<Vertex_Po> verts;
+	std::vector<Vertex_PoUVs> verts;
 	verts.reserve(m_vertices.size());
 
 	const unsigned int idxsNum = 2 * m_edges.size();
@@ -64,11 +65,14 @@ void Torus::UpdateMesh(const Device& device) {
 	idxs.reserve(idxsNum);
 
 	for (const auto& vertex : m_vertices) {
-		Vertex_Po v;
+		Vertex_PoUVs v;
 		v.position = DirectX::XMFLOAT3(
 			static_cast<float>(vertex.x),
 			static_cast<float>(vertex.y),
 			static_cast<float>(vertex.z));
+		v.uv = DirectX::XMFLOAT2(
+			static_cast<float>(vertex.u),
+			static_cast<float>(vertex.v));
 		verts.push_back(v);
 	}
 
@@ -249,7 +253,9 @@ void Torus::RecalculateGeometry() {
 			VERTEX vertex{
 				.x = cosv * ring,
 				.y = m_r * sinu,
-				.z = sinv * ring
+				.z = sinv * ring,
+				.u = u / PI2,
+				.v = v / PI2
 			};
 			m_vertices.push_back(vertex);
 		}
