@@ -34,6 +34,7 @@ namespace app {
 		const Patch& GetPatch(int idx) const;
 		void ClearControlPoints();
 		virtual std::pair<unsigned int, unsigned int> NumberOfPatches() const;
+		virtual std::pair<unsigned int, unsigned int> GetUVPatches() const override;
 
 #pragma region IGEOMETRICAL
 		virtual XYZBounds WorldBounds() const override;

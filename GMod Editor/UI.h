@@ -7,6 +7,7 @@
 #include "SerializationManager.h"
 #include "SurfaceBuilder.h"
 #include <memory>
+#include "Intersection.h"
 
 namespace app {
 	class Application;
@@ -60,6 +61,10 @@ namespace app {
 		float stereoD = 0.01f;
 		float stereoF = 1.f;
 
+		// INTERSECTION
+		bool updatePreview = false;
+		Intersection intersection;
+
 		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
@@ -77,9 +82,14 @@ namespace app {
 
 		bool m_includePatchBoundaries = true;
 
+		std::string m_intersectionInfo = "Intersection info";
+		ImVec4 m_intersectionInfoColor = { 1.f, 1.f, 1.f, 1.f };
+		std::pair<Intersection::IDIG, Intersection::IDIG> GetIntersectingSurfaces() const;
+
 		void RenderRightPanel(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
+		void RenderIntersections();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);

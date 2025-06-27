@@ -11,7 +11,9 @@ cbuffer cbProj : register(b1)
 cbuffer cbTessConst : register(b2)
 {
     uint divisions;
-    float3 padding;
+    uint uPatches;
+    uint vPatches;
+    float padding;
 };
 
 struct HSInput
@@ -28,6 +30,9 @@ struct HSConstOutput
 {
     float EdgeTess[4] : SV_TessFactor; 
     float InsideTess[2] : SV_InsideTessFactor; 
+    uint patchID : ID;
+    uint uPatches : USIZE;
+    uint vPatches : VSIZE;
 };
 
 #define NUM_CONTROL_POINTS 16
@@ -37,6 +42,9 @@ HSConstOutput ConstantHS(InputPatch<HSInput, NUM_CONTROL_POINTS> patch, uint pat
     HSConstOutput output;
     output.EdgeTess[0] = output.EdgeTess[1] = output.EdgeTess[2] = output.EdgeTess[3] = divisions - 1;
     output.InsideTess[0] = output.InsideTess[1] = divisions - 1;
+    output.patchID = patchID;
+    output.uPatches = uPatches;
+    output.vPatches = vPatches;
     return output;
 }
 

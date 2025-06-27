@@ -6,6 +6,7 @@ using namespace app;
 unsigned short BSurface::m_globalBSurfaceNum = 0;
 
 BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) {
+	intersectable = true;
 	m_surfaceType = type;
 	m_aPoints = aPoints;
 	m_bPoints = bPoints;

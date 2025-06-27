@@ -67,6 +67,9 @@
     <Filter Include="Pliki zasobów\RegularWithTesselationGregory">
       <UniqueIdentifier>{586a05fd-6dfb-4931-8685-5e3ce3e3c2ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki zasobów\RegularWithUVs">
+      <UniqueIdentifier>{972950fd-132f-4f2e-94ff-32d6f94f850f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -177,6 +180,12 @@
     <ClInclude Include="IGeometrical.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
+    <ClInclude Include="Intersection.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="Debug.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -278,6 +287,9 @@
     <ClCompile Include="Gregory.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
+    <ClCompile Include="Intersection.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">
@@ -329,6 +341,15 @@
       <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
     </FxCompile>
     <FxCompile Include="ds_rwtg.hlsl">
+      <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_rwuvs.hlsl">
+      <Filter>Pliki zasobów\RegularWithUVs</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_rwuvs.hlsl">
+      <Filter>Pliki zasobów\RegularWithUVs</Filter>
+    </FxCompile>
+    <FxCompile Include="gs_rwtg.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
     </FxCompile>
   </ItemGroup>

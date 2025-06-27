@@ -7,7 +7,7 @@ using namespace app;
 unsigned short Gregory::m_globalGregoryNum = 0;
 
 Gregory::Gregory(const std::array<Edge, 3>& edges, const std::vector<Surface*>& surfaces) {
-	m_divisions = Patch::rowSize;
+	m_divisions = 2 * Patch::rowSize;
 	m_type = "Gregory";
 	std::ostringstream os;
 	os << "gregory_" << m_globalGregoryNum;

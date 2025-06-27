@@ -227,6 +227,7 @@ std::vector<Surface::Cycle3> Surface::FindUniqueTrianglesInGraph(const std::unor
 #pragma endregion
 
 Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(SurfaceType::Flat) {
+	intersectable = true;
 	m_divisions = Patch::rowSize;
 	m_type = "Surface";
 	std::ostringstream os;
@@ -239,6 +240,7 @@ Surface::Surface(bool increment) : m_aPoints(0), m_bPoints(0), m_surfaceType(Sur
 
 Surface::Surface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, int id) :
 	m_surfaceType(type), m_aPoints(aPoints), m_bPoints(bPoints) {
+	intersectable = true;
 	m_divisions = divisions;
 	// required, since Gregory patches require id set at construction stage
 	if (id != -1) {
@@ -453,6 +455,11 @@ std::pair<unsigned int, unsigned int> Surface::NumberOfPatches() const {
 	return std::make_pair(aPatch, bPatch);
 }
 
+std::pair<unsigned int, unsigned int> Surface::GetUVPatches() const {
+	auto [aPatch, bPatch] = NumberOfPatches();
+	return std::make_pair(bPatch, aPatch);
+}
+
 std::array<double, 4> Surface::B3(double t) {
 	double tInv = 1 - t;
 	return {
@@ -495,10 +502,11 @@ gmod::vector3<double> Surface::sumBasis(const std::array<gmod::vector3<double>, 
 }
 
 std::array<gmod::vector3<double>, Patch::patchSize> Surface::GetPatch(double u, double v) const {
+	const double eps = 1e-12;
 	auto [aPatch, bPatch] = NumberOfPatches();
 
-	u = std::clamp(u, 0.0, static_cast<double>(bPatch));
-	v = std::clamp(v, 0.0, static_cast<double>(aPatch));
+	u = std::clamp(u, eps, static_cast<double>(bPatch) - eps);
+	v = std::clamp(v, eps, static_cast<double>(aPatch) - eps);
 	unsigned int patchIndex = static_cast<unsigned int>(v) * bPatch + static_cast<unsigned int>(u);
 
 	std::array<gmod::vector3<double>, Patch::patchSize> result;

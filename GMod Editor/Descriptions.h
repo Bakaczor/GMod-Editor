@@ -48,4 +48,7 @@ namespace app {
 		DepthStencilDescription();
 	};
 
+	struct SamplerDescription : D3D11_SAMPLER_DESC {
+		SamplerDescription();
+	};
 }

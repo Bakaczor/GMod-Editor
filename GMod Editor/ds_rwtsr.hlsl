@@ -11,6 +11,7 @@ cbuffer cbProj : register(b1)
 struct GSInput
 {
     float4 position : SV_POSITION;
+    float2 patchUV : UV;
     float2 uv : TEXCOORD;
 };
 
@@ -23,6 +24,9 @@ struct HSConstOutput
 {
     float EdgeTess[4] : SV_TessFactor;
     float InsideTess[2] : SV_InsideTessFactor;
+    uint patchID : ID;
+    uint uPatches : USIZE;
+    uint vPatches : VSIZE;
 };
 
 #define NUM_CONTROL_POINTS 16
@@ -73,6 +77,13 @@ GSInput main(HSConstOutput input, float2 uv : SV_DomainLocation, OutputPatch<DSI
     GSInput output;
     float3 pos = P(patch, uv);
     output.position = mul(projMatrix, mul(viewMatrix, float4(pos, 1.0f)));
-    output.uv = uv;
+    output.patchUV = uv;
+    
+    int uID = input.patchID % input.uPatches;
+    int vID = input.patchID / input.uPatches;
+    output.uv = float2(uv.y + uID, uv.x + vID);
+    output.uv.x /= input.uPatches;
+    output.uv.y /= input.vPatches;
+    
     return output;
 }

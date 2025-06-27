@@ -41,7 +41,15 @@ namespace app {
 		int m_uParts, m_vParts;
 
 		Mesh m_mesh;
+		struct VERTEX {
+			double x, y, z;
+			double u, v;
+		};
 		std::vector<VERTEX> m_vertices;
+		struct EDGE {
+			USHORT v1;
+			USHORT v2;
+		};
 		std::vector<EDGE> m_edges;
 
 		void RecalculateGeometry();

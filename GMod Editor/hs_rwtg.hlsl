@@ -11,7 +11,9 @@ cbuffer cbProj : register(b1)
 cbuffer cbTessConst : register(b2)
 {
     uint divisions;
-    float3 padding;
+    uint uPatches;
+    uint vPatches;
+    float padding;
 };
 
 struct HSInput

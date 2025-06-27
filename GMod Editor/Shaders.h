@@ -15,7 +15,7 @@ namespace app {
 	};
 
 	enum class ShaderType {
-		Regular, RegularWithColors,
+		Regular, RegularWithColors, RegularWithUVs,
 		RegularWithTesselation, RegularWithTesselationBSpline, RegularWithTesselationCISpline,
 		RegularWithTesselationSurface, RegularWithTesselationBSurface, RegularWithTesselationGregory
 	};
