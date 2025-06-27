@@ -24,19 +24,20 @@ namespace app {
 		bool showTrimTextures = false;
 		bool useCursorAsStart = false;
 		gmod::vector3<double> cursorPosition;
+		int minUVOffset = 2;
 
 		double gradientStep = 5 * 1e-2; 
 		double gradientTolerance = 5 * 1e-5; 
-		int gradientMaxIterations = 1000;
+		int gradientMaxIterations = 10000;
 
 		double newtonStep = 0.5;
 		double newtonTolerance = 5 * 1e-4;
-		int newtonMaxIterations = 10;
-		int newtonMaxRepeats = 6;
+		int newtonMaxIterations = 6;
+		int newtonMaxRepeats = 7;
 
-		int maxIntersectionPoints = 5000;
+		int maxIntersectionPoints = 40000;
 		double distance = 1e-2;
-		double closingPointTolerance = 5 * 1e-3; 
+		double closingPointTolerance = 1e-3; 
 
 		void UpdateMesh(const Device& device);
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;

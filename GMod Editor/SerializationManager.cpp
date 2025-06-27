@@ -491,6 +491,9 @@ bool SerializationManager::Contains(int id, std::vector<std::unique_ptr<Object>>
 
 std::vector<Object*> SerializationManager::ParseControlPoints(const json::value& controlPoints, const std::unordered_map<int, Object*>& scenePoints) {
     std::vector<Object*> objects;
+    if (controlPoints.is_null()) {
+        return objects;
+    }
     for (const auto& cp : controlPoints.as_array()) {
         int id = cp.at("id").as_int64();
         objects.push_back(scenePoints.at(id));

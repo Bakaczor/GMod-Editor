@@ -372,7 +372,7 @@ Intersection::UVs Intersection::LocalizeStart(bool selfIntersection) const {
 				double v2 = bounds2.vMin + 0.5 * dv2;
 				for (int l = 0; l < m_gridCells; ++l, v2 += dv2) {
 					// skip same index cells for self-intersections
-					if (selfIntersection && i == k && j == l) { continue; }
+					if (selfIntersection && (std::abs(i - k) < minUVOffset || std::abs(j - l) < minUVOffset)) { continue; }
 
 					auto p1 = m_s1->Point(u1, v1);
 					auto p2 = m_s2->Point(u2, v2);
@@ -438,7 +438,7 @@ Intersection::UVs Intersection::LocalizeStartWithCursor(bool selfIntersection) c
 		double v2 = bounds2.vMin + 0.5 * dv2;
 		for (int l = 0; l < gridCells; ++l, v2 += dv2) {
 			// skip same index cells for self-intersections
-			if (selfIntersection && bestI == k && bestJ == l) { continue; }
+			if (selfIntersection && (std::abs(bestI - k) < minUVOffset || std::abs(bestJ - l) < minUVOffset)) { continue; }
 
 			auto p2 = m_s2->Point(u2, v2);
 			double d2 = (p2 - cursorPosition).length();
@@ -665,7 +665,7 @@ std::optional<Intersection::UVs> Intersection::RunNewtonMethod(const UVs& startU
 			double error = (Q1 - P1).length();
 
 			if (error < newtonTolerance /* && std::abs(dot(P1 - P0, t) - d) < m_eps */) {
-				DebugPrint("[Newton Iteration]", i);
+				DebugPrint("[Newton : Iteration | Error]", i, error);
 				found = true;
 				break;
 			}

@@ -257,6 +257,11 @@ void UI::RenderCursor() {
 void UI::RenderIntersections() {
 	ImGui::BeginChild("IntersectionsWindow", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), true, ImGuiWindowFlags_NoBackground);
 	if (ImGui::CollapsingHeader("Parameters")) {
+		ImGui::Text("Min UV Offset");
+		ImGui::InputInt("###MinUVOffset", &intersection.minUVOffset, 1, 10, ImGuiInputTextFlags_CharsDecimal);
+
+		ImGui::Separator();
+
 		ImGui::Text("Gradient Method Step");
 		ImGui::InputDouble("###GradientMethodStep", &intersection.gradientStep, 1e-3, 1e-1, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::Text("Gradient Method Tolerance");
