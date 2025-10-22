@@ -186,6 +186,18 @@
     <ClInclude Include="Debug.h">
       <Filter>Pliki nagłówkowe\app</Filter>
     </ClInclude>
+    <ClInclude Include="DirLight.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="Display.h">
+      <Filter>Pliki nagłówkowe\d3dx</Filter>
+    </ClInclude>
+    <ClInclude Include="PathParser.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
+    <ClInclude Include="PathAnimator.h">
+      <Filter>Pliki nagłówkowe\app</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -288,6 +300,9 @@
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
     <ClCompile Include="Intersection.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="PathParser.cpp">
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
   </ItemGroup>

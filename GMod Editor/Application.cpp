@@ -381,13 +381,15 @@ void Application::RenderUI() {
 }
 
 void Application::Render() {
-	m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
-	m_UI->cursor.RenderMesh(m_device.deviceContext(), m_shaders);
+	if (m_UI->showCAD) {
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->cursor.transform.modelMatrix()));
+		m_UI->cursor.RenderMesh(m_device.deviceContext(), m_shaders);
 
-	if (!m_UI->selection.Empty()) {
-		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->selection.modelMatrix()));
-		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->selection.color.data()));
-		m_UI->selection.RenderMesh(m_device.deviceContext(), m_shaders);
+		if (!m_UI->selection.Empty()) {
+			m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->selection.modelMatrix()));
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->selection.color.data()));
+			m_UI->selection.RenderMesh(m_device.deviceContext(), m_shaders);
+		}
 	}
 
 	if (m_UI->showAxes) {

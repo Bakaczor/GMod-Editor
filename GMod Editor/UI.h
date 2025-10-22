@@ -1,13 +1,14 @@
 #pragma once
+#include "framework.h"
 #include <imgui.h>
 #include "Cursor.h"
-#include "framework.h"
 #include "Object.h"
 #include "ObjectGroup.h"
 #include "SerializationManager.h"
 #include "SurfaceBuilder.h"
-#include <memory>
 #include "Intersection.h"
+#include "PathParser.h"
+#include <memory>
 
 namespace app {
 	class Application;
@@ -54,16 +55,38 @@ namespace app {
 		bool hideControlPoints = false;
 		bool stereoscopicView = false;
 		bool stereoscopicChanged = false;
-		ImVec4 bkgdColor = ImVec4(0.2f, 0.2f, 0.2f, 0.f);
+		ImVec4 bkgdColor = ImVec4(0.2f, 0.2f, 0.2f, 1.f);
 		ImVec4 slctdColor = ImVec4(1.f, 1.f, 0.f, 1.f);
 		ImVec4 stereoCyan = ImVec4(0.f, 1.f, 1.f, 1.f);
 		ImVec4 stereoRed = ImVec4(1.f, 0.f, 0.f, 1.f);
 		float stereoD = 0.01f;
 		float stereoF = 1.f;
+		bool showCAD = true;
 
 		// INTERSECTION
 		bool updatePreview = false;
 		Intersection intersection;
+
+		// CAM
+		struct Display {
+			std::array<float, 3> direction = { 0.f, -1.f, 0.f };
+			ImVec4 color = ImVec4(1.f, 1.f, 1.f, 1.f);
+			std::array<float, 3> weights = { 1.f, 1.f, 1.f };
+			std::array<float, 3> ambient = { 1.f, 1.f, 1.f };
+			std::array<float, 3> diffuse = { 1.f, 1.f, 1.f };
+			std::array<float, 3> specular = { 1.f, 1.f, 1.f };
+			float shininess = 1.f;
+		} display;
+
+		// milling (all in millimetres)
+		enum class MillingType {
+			Spherical, Cylindric
+		};
+		float millingPartRadius = 0.0f;
+		float millingPartHeight = 0.0f;
+		float nonMillingPartRadius = 0.0f;
+		float totalCutterLength = 0.0f;
+		float maxHorizontalDeviationAngle = 0.0f;
 
 		UI();
 		void Render(bool firstPass, Camera& camera);
@@ -74,6 +97,12 @@ namespace app {
 		int m_selectedObjGrpType = 0;
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
+
+		int m_selectedMillingType = 0;
+		const static std::vector<MillingType> m_millingTypes;
+		const static std::vector<const char*> m_millingTypeNames;
+
+		PathParser m_pathParser;
 
 		SurfaceBuilder m_surfaceBuilder;
 		bool m_showSurfaceBuilder = false;
@@ -86,19 +115,25 @@ namespace app {
 		ImVec4 m_intersectionInfoColor = { 1.f, 1.f, 1.f, 1.f };
 		std::pair<Intersection::IDIG, Intersection::IDIG> GetIntersectingSurfaces() const;
 
-		void RenderRightPanel(bool firstPass, Camera& camera);
+		void RenderRightPanel_CAD(bool firstPass, Camera& camera);
 		void RenderTransforms();
 		void RenderCursor();
 		void RenderIntersections();
 		void RenderObjectTable();
 		void RenderProperties();
 		void RenderSettings(bool firstPass);
-		void RenderIO();
+		void RenderIO_CAD();
 
-		std::string OpenFileDialog();
+		void RenderRightPanel_CAM(bool firstPass, Camera& camera);
+		void RenderIO_CAM();
+
+		std::string OpenFileDialog_CAD();
 		void LoadJSONFile(const std::string& path);
-		std::string SaveFileDialog();
+		std::string SaveFileDialog_CAD();
 		void SaveScene(const std::string& path);
+
+		std::string OpenFileDialog_CAM();
+		void LoadPathFile(const std::string& path);
 
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();

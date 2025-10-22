@@ -195,12 +195,16 @@
     <ClInclude Include="CubeModel.h" />
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="DirLight.h" />
+    <ClInclude Include="Display.h" />
     <ClInclude Include="Divisable.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="IGeometrical.h" />
     <ClInclude Include="Gregory.h" />
     <ClInclude Include="Intersection.h" />
     <ClInclude Include="Patch.h" />
+    <ClInclude Include="PathAnimator.h" />
+    <ClInclude Include="PathParser.h" />
     <ClInclude Include="SerializationManager.h" />
     <ClInclude Include="Spline.h" />
     <ClInclude Include="Data.h" />
@@ -237,6 +241,7 @@
     <ClCompile Include="Gregory.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Patch.cpp" />
+    <ClCompile Include="PathParser.cpp" />
     <ClCompile Include="SerializationManager.cpp" />
     <ClCompile Include="Spline.cpp" />
     <ClCompile Include="Data.cpp" />

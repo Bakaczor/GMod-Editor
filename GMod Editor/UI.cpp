@@ -23,9 +23,14 @@ const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Splin
 UI::UI() : m_surfaceBuilder(sceneObjects) {}
 
 void UI::Render(bool firstPass, Camera& camera) {
-	RenderRightPanel(firstPass, camera);
+	if (showCAD) {
+		RenderRightPanel_CAD(firstPass, camera);
+		RenderIO_CAD();
+	} else {
+		RenderRightPanel_CAM(firstPass, camera);
+		RenderIO_CAM();
+	}
 	RenderSettings(firstPass);
-	RenderIO();
 }
 
 std::pair<Intersection::IDIG, Intersection::IDIG> UI::GetIntersectingSurfaces() const {
@@ -53,7 +58,11 @@ std::pair<Intersection::IDIG, Intersection::IDIG> UI::GetIntersectingSurfaces() 
 	return std::make_pair(Intersection::IDIG(), Intersection::IDIG());
 }
 
-void UI::RenderRightPanel(bool firstPass, Camera& camera) {
+void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
+
+}
+
+void UI::RenderRightPanel_CAD(bool firstPass, Camera& camera) {
 	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
 	const float width = 275.f;
 	const float height = viewportSize.y;
@@ -651,11 +660,20 @@ void UI::RenderSettings(bool firstPass) {
 			ImGui::SetNextItemWidth(125.f);
 			ImGui::InputFloat("f", &stereoF, 0.001f, 0.01f, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 		}
+		if (showCAD) {
+			if (ImGui::Button("Switch to CAM", ImVec2(size.x, 0))) {
+				showCAD = false;
+			}
+		} else {
+			if (ImGui::Button("Switch to CAD", ImVec2(size.x, 0))) {
+				showCAD = true;
+			}
+		}
 	}
 	ImGui::End();
 }
 
-void UI::RenderIO() {
+void UI::RenderIO_CAD() {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(ImVec2(0.f, viewport->Size.y - 35.f), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
@@ -663,14 +681,14 @@ void UI::RenderIO() {
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
 
 	if (ImGui::Button("Save", ImVec2(90.f, 0.f))) {
-		std::string file = SaveFileDialog();
+		std::string file = SaveFileDialog_CAD();
 		if (!file.empty()) {
 			SaveScene(file);
 		}
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Load", ImVec2(90.f, 0.f))) {
-		std::string file = OpenFileDialog();
+		std::string file = OpenFileDialog_CAD();
 		if (!file.empty()) {
 			LoadJSONFile(file);
 		}
@@ -678,12 +696,42 @@ void UI::RenderIO() {
 	ImGui::End();
 }
 
-std::string UI::OpenFileDialog() {
+void UI::RenderIO_CAM() {
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(0.f, viewport->Size.y - 35.f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
+	ImGui::Begin("io-buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
+
+	ImGui::SameLine();
+	if (ImGui::Button("Load Path", ImVec2(150.f, 0.f))) {
+		std::string file = OpenFileDialog_CAM();
+		if (!file.empty()) {
+			LoadPathFile(file);
+		}
+	}
+	ImGui::End();
+}
+
+std::string UI::OpenFileDialog_CAD() {
 	char const* filters[1] = { "*.json" };
 	char const* file = tinyfd_openFileDialog(
 		"Open JSON file",   // Title
 		"",                 // Default dir
 		1,                  // Filter count
+		filters,            // File extensions
+		nullptr,            // Filter description
+		0                   // Single select
+	);
+	return file ? file : "";
+}
+
+std::string UI::OpenFileDialog_CAM() {
+	char const* filters[2] = { "*.k*", "*.f*" };
+	char const* file = tinyfd_openFileDialog(
+		"Open path file",   // Title
+		"",                 // Default dir
+		2,                  // Filter count
 		filters,            // File extensions
 		nullptr,            // Filter description
 		0                   // Single select
@@ -707,7 +755,22 @@ void UI::LoadJSONFile(const std::string& path) {
 	}
 }
 
-std::string UI::SaveFileDialog() {
+void UI::LoadPathFile(const std::string& path) {
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file for reading: " + path);
+	}
+	try {
+		m_pathParser.Clear();
+		m_pathParser.Parse(file);
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Parsing error: " + std::string(e.what()));
+	} catch (...) {
+		throw std::runtime_error("Path file parse error.");
+	}
+}
+
+std::string UI::SaveFileDialog_CAD() {
 	char const* filters[1] = { "*.json" };
 	char const* file = tinyfd_saveFileDialog(
 		"Save scene as...",   
