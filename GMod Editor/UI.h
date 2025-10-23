@@ -81,6 +81,8 @@ namespace app {
 			float shininess = 1.f;
 		} display;
 
+		Milling milling;
+
 		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
@@ -91,11 +93,6 @@ namespace app {
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
 
-		int m_selectedCutterType = 0;
-		const static std::vector<CutterType> m_cutterTypes;
-		const static std::vector<const char*> m_cutterTypeNames;
-
-		Milling m_milling;
 		PathAnimator m_pathAnimator;
 		PathParser m_pathParser;
 

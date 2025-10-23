@@ -326,6 +326,9 @@
     <ClCompile Include="Milling.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
+    <ClCompile Include="Cutter.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="vs_rwc.hlsl">

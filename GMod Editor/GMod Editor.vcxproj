@@ -241,6 +241,7 @@
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="CubeModel.cpp" />
     <ClCompile Include="Cursor.cpp" />
+    <ClCompile Include="Cutter.cpp" />
     <ClCompile Include="Gregory.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Milling.cpp" />

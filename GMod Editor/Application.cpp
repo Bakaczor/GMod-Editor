@@ -464,6 +464,17 @@ void Application::Render() {
 		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->intersection.color.data()));
 		m_UI->intersection.RenderMesh(m_device.deviceContext(), m_shaders);
 	}
+
+	if (!m_UI->showCAD) {
+		if (m_UI->milling.cutter.propertiesChanged) {
+			m_UI->milling.cutter.UpdateMesh(m_device);
+		}
+		if (m_UI->milling.cutter.showCutter) {
+			m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->milling.cutter.modelMatrix()));
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->milling.cutter.color.data()));
+			m_UI->milling.cutter.RenderMesh(m_device.deviceContext(), m_shaders);
+		}
+	}
 }
 
 void app::Application::RenderStereoscopic(int sign, ImVec4& color) {
