@@ -70,6 +70,12 @@
     <Filter Include="Pliki zasobów\RegularWithUVs">
       <UniqueIdentifier>{972950fd-132f-4f2e-94ff-32d6f94f850f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki nagłówkowe\CAM">
+      <UniqueIdentifier>{e7ae4c04-0a68-488d-a8d8-4dd4ee0d6898}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\CAM">
+      <UniqueIdentifier>{70a0aa8d-e9bd-4b1b-8803-ba325c481674}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -192,11 +198,20 @@
     <ClInclude Include="Display.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
     </ClInclude>
-    <ClInclude Include="PathParser.h">
-      <Filter>Pliki nagłówkowe\app</Filter>
+    <ClInclude Include="Cutter.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
+    <ClInclude Include="Milling.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
     <ClInclude Include="PathAnimator.h">
-      <Filter>Pliki nagłówkowe\app</Filter>
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
+    <ClInclude Include="PathParser.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
+    <ClInclude Include="CutterType.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -303,7 +318,13 @@
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
     <ClCompile Include="PathParser.cpp">
-      <Filter>Pliki źródłowe\app</Filter>
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="PathAnimator.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="Milling.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

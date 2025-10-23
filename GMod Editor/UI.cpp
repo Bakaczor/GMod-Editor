@@ -19,6 +19,8 @@ const std::vector<UI::ObjectType> UI::m_objectTypes = { ObjectType::Cube, Object
 const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point", "Surface", "BSurface" };
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
+const std::vector<CutterType> UI::m_cutterTypes = { CutterType::Spherical, CutterType::Cylindrical };
+const std::vector<const char*> UI::m_cutterTypeNames = { "Spherical", "Cylindrical" };
 
 UI::UI() : m_surfaceBuilder(sceneObjects) {}
 
@@ -59,7 +61,172 @@ std::pair<Intersection::IDIG, Intersection::IDIG> UI::GetIntersectingSurfaces() 
 }
 
 void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
+	ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
+	const float width = 275.f;
+	const float height = viewportSize.y;
 
+	ImGui::SetNextWindowPos(ImVec2(viewportSize.x - width, 0.0f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
+	ImGui::SetNextWindowBgAlpha(1.f);
+
+	ImGui::Begin("Right panel", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Cutter settings");
+	ImGui::Spacing();
+
+	ImGui::Text("Cutter type: ");
+	if (ImGui::Combo("##cutter_type", &m_selectedCutterType, m_cutterTypeNames.data(), m_cutterTypeNames.size())) {
+		m_milling.cutterType = m_cutterTypes[m_selectedCutterType];
+	}
+	ImGui::Spacing();
+
+	float inputWidth = 100.f;
+	ImGui::Columns(2, "cutter_settings", false);
+	ImGui::SetColumnWidth(0, 150.f);
+
+	ImGui::Text("diameter [mm]:"); ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##diameter", &m_milling.millingPartDiameter, 0.01f, 1.f); 
+	ImGui::NextColumn();
+
+	if (m_milling.cutterType == CutterType::Cylindrical) {
+		ImGui::Text("height [mm]:");  ImGui::NextColumn();
+		ImGui::SetNextItemWidth(inputWidth);
+		ImGui::InputFloat("##height", &m_milling.millingPartHeight, 0.01f, 1.f);
+		ImGui::NextColumn();
+	}
+
+	ImGui::Text("total length [mm]:");  ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##total_length", &m_milling.totalCutterLength, 0.01f, 1.f);
+	ImGui::NextColumn();
+
+	ImGui::Text("max angle [deg]:");  ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##max_angle", &m_milling.maxHorizontalDeviationAngle, 0.1f, 1.f, "%.2f");
+	ImGui::NextColumn();
+
+	ImGui::Columns(1);
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Milling settings");
+	ImGui::Spacing();
+
+	ImGui::Text("Size [cm]:");
+	ImGui::InputFloat3("##size", m_milling.size.data());
+
+	ImGui::Text("Scene centre:");
+	ImGui::InputFloat3("##scene_centre", m_milling.centre.data());
+
+	ImGui::Checkbox("Use cutter base / centre", &m_milling.useCutterBase);
+	ImGui::Spacing();
+
+	ImGui::Columns(2, "milling_settings", false);
+	ImGui::SetColumnWidth(0, 150.f);
+
+	ImGui::Text("Base thickness [cm]:"); ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##base_thickness", &m_milling.baseThickness, 0.01f, 1.f); ImGui::NextColumn();
+
+	ImGui::Text("Margin [cm]:"); ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##margin", &m_milling.margin, 0.01f, 1.f); ImGui::NextColumn();
+
+	ImGui::Text("Base mesh size:"); ImGui::NextColumn();
+	int bms = m_milling.baseMeshSize;
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputInt("##bms", &bms, 1, 10); ImGui::NextColumn();
+	if (bms > 0) {
+		m_milling.baseMeshSize = bms;
+	}
+	ImGui::Columns(1);
+
+	ImGui::Text("Resolution:");
+	ImGui::Text("X:"); ImGui::SameLine();
+	int resX = m_milling.resolutionX;
+	ImGui::SetNextItemWidth(90.f);
+	ImGui::InputInt("##resolution_X", &resX, 1, 10);
+	if (resX > 0) {
+		m_milling.resolutionX = resX;
+	}
+	ImGui::SameLine();
+	ImGui::Text("Y:"); ImGui::SameLine();
+	int resY = m_milling.resolutionY;
+	ImGui::SetNextItemWidth(90.f);
+	ImGui::InputInt("##resolution_Y", &resY, 1, 10);
+	if (resY > 0) {
+		m_milling.resolutionY = resY;
+	}
+
+	ImGui::Spacing();
+	if (ImGui::Button("Reset scene", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+		m_milling.ResetScene();
+	}
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Animation");
+	ImGui::Spacing();
+
+	ImGui::Columns(2, "animation", false);
+	ImGui::SetColumnWidth(0, 150.f);
+
+	ImGui::Text("Status:"); ImGui::NextColumn();
+	ImGui::TextColored(m_pathAnimator.isRunning ?
+		ImVec4(0.0f, 1.0f, 0.0f, 1.0f) :
+		ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
+		m_pathAnimator.isRunning ? "RUNNING" : "STOPPED"); ImGui::NextColumn();
+
+	ImGui::Text("Step size [mm]:"); ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+	ImGui::InputFloat("##simulationspeed", &m_pathAnimator.stepSize, 1.f, 10.f, "%.1f"); ImGui::NextColumn();
+
+	ImGui::Columns(1);
+	ImGui::Checkbox("Display path", &m_pathAnimator.displayPath);
+	ImGui::Text("Path color:");
+	ImGui::ColorEdit3("##path_color", m_pathAnimator.pathColor.data());
+	ImGui::Spacing();
+
+	ImGui::BeginGroup();
+	float buttonWidth = ImGui::GetContentRegionAvail().x / 2.f - 5.f;
+	if (ImGui::Button("Start", ImVec2(buttonWidth, 0))) {
+		m_pathAnimator.StartAnimation();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Stop", ImVec2(buttonWidth, 0))) {
+		m_pathAnimator.StopAnimation();
+	}
+
+	if (ImGui::Button("Restart", ImVec2(buttonWidth, 0))) {
+		m_pathAnimator.RestartAnimation();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Complete", ImVec2(buttonWidth, 0))) {
+		m_pathAnimator.CompleteAnimation();
+	}
+	ImGui::EndGroup();
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Display settings");
+	ImGui::Spacing();
+
+	ImGui::Text("Light color:");
+	ImGui::ColorEdit3("##light_color", display.color.data());
+	ImGui::Text("Light direction:");
+	ImGui::InputFloat3("##light_direction", display.direction.data());
+	ImGui::Text("Light weights:");
+	ImGui::InputFloat3("##light_weights", display.weights.data());
+	ImGui::Separator();
+	ImGui::Text("Material ambient:");
+	ImGui::InputFloat3("##material_ambient", display.ambient.data());
+	ImGui::Text("Material diffuse:");
+	ImGui::InputFloat3("##material_diffuse", display.diffuse.data());
+	ImGui::Text("Material specular:");
+	ImGui::InputFloat3("##material_specular", display.specular.data());
+	ImGui::Text("Material shininess:");
+	ImGui::InputFloat("##material_shininess", &display.shininess, 0.1f, 1.f, "%.1f");
+
+	ImGui::End();
 }
 
 void UI::RenderRightPanel_CAD(bool firstPass, Camera& camera) {
@@ -703,9 +870,21 @@ void UI::RenderIO_CAM() {
 	ImGui::Begin("io-buttons", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground);
 
-	ImGui::SameLine();
 	if (ImGui::Button("Load Path", ImVec2(150.f, 0.f))) {
 		std::string file = OpenFileDialog_CAM();
+
+		std::string filename = file.substr(file.find_last_of("/\\") + 1);
+		size_t dotPos = filename.find_last_of('.');
+		std::string extension = filename.substr(dotPos + 1);
+
+		if (extension[0] == 'k') {
+			m_selectedCutterType = 0;	
+		} else {
+			m_selectedCutterType = 1;
+		}
+		m_milling.cutterType = m_cutterTypes[m_selectedCutterType];
+		m_milling.millingPartDiameter = std::stoi(extension.substr(1));
+
 		if (!file.empty()) {
 			LoadPathFile(file);
 		}

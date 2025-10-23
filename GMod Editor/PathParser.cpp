@@ -1,7 +1,5 @@
 #include "PathParser.h"
-#include <stdexcept>
 #include <sstream>
-#include <iostream>
 
 using namespace app;
 
@@ -33,7 +31,7 @@ void PathParser::Parse(std::ifstream& file) {
             }
 
             int whole;
-            if (!(iss >> whole) || std::abs(whole) >= 100) {
+            if (!(iss >> whole) || std::abs(whole) >= 1000) {
                 throw std::runtime_error("Line " + std::to_string(lineNumber) + " : invalid coordinate value for " + std::string(1, character));
             } 
 
@@ -129,9 +127,7 @@ void PathParser::Parse(std::ifstream& file) {
         path.push_back(cmd);
     }
 
-    // reset
-    file.clear();
-    file.seekg(0, std::ios::beg);
+    file.close();
 }
 
 void PathParser::Clear() {

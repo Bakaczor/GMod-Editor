@@ -8,6 +8,9 @@
 #include "SurfaceBuilder.h"
 #include "Intersection.h"
 #include "PathParser.h"
+#include "Cutter.h"
+#include "Milling.h"
+#include "PathAnimator.h"
 #include <memory>
 
 namespace app {
@@ -69,24 +72,14 @@ namespace app {
 
 		// CAM
 		struct Display {
+			std::array<float, 3> color = { 1.f, 1.f, 1.f };
 			std::array<float, 3> direction = { 0.f, -1.f, 0.f };
-			ImVec4 color = ImVec4(1.f, 1.f, 1.f, 1.f);
 			std::array<float, 3> weights = { 1.f, 1.f, 1.f };
 			std::array<float, 3> ambient = { 1.f, 1.f, 1.f };
 			std::array<float, 3> diffuse = { 1.f, 1.f, 1.f };
 			std::array<float, 3> specular = { 1.f, 1.f, 1.f };
 			float shininess = 1.f;
 		} display;
-
-		// milling (all in millimetres)
-		enum class MillingType {
-			Spherical, Cylindric
-		};
-		float millingPartRadius = 0.0f;
-		float millingPartHeight = 0.0f;
-		float nonMillingPartRadius = 0.0f;
-		float totalCutterLength = 0.0f;
-		float maxHorizontalDeviationAngle = 0.0f;
 
 		UI();
 		void Render(bool firstPass, Camera& camera);
@@ -98,10 +91,12 @@ namespace app {
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
 
-		int m_selectedMillingType = 0;
-		const static std::vector<MillingType> m_millingTypes;
-		const static std::vector<const char*> m_millingTypeNames;
+		int m_selectedCutterType = 0;
+		const static std::vector<CutterType> m_cutterTypes;
+		const static std::vector<const char*> m_cutterTypeNames;
 
+		Milling m_milling;
+		PathAnimator m_pathAnimator;
 		PathParser m_pathParser;
 
 		SurfaceBuilder m_surfaceBuilder;

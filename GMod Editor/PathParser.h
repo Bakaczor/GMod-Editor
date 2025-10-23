@@ -15,7 +15,7 @@ namespace app {
 			SetClockwise, // M03
 			SetMovementSpeed, // Fxxxx 
 			FastMove, // G00
-			WorkingMove, // G01 - for now, only this one is used
+			WorkingMove, // G01 - for now only this one is used
 			TurnOff, // M05
 			End // M30
 		};
@@ -24,8 +24,8 @@ namespace app {
 			std::string rawCommand;
 			int lineNumber;
 			int commandNumber; // Nxx
-			CommandType type;
-			unsigned short speed = 15; // xxxx - for now, unused
+			CommandType type; // for now, all should be WorkingMove
+			unsigned short speed = 15; // xxxx - for now unused
 			gmod::vector3<float> coordinates; // Xff.fffYff.fffZff.fff
 		};
 
@@ -35,7 +35,7 @@ namespace app {
 		float pathLength = 0.0f;
 
 		// in minutes
-		// float pathTime = 0.0f; - unavailable
+		// float pathTime = 0.0f; // unavailable due to the lack of velocity
 
 		void Parse(std::ifstream& file);
 		void Clear();
