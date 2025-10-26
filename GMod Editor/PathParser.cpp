@@ -118,21 +118,70 @@ void PathParser::Parse(std::ifstream& file) {
                 throw std::runtime_error("Line " + std::to_string(lineNumber) + " : first move command must include all coordinates");
             }
             isFirst = false;
+            cmd.distance = 0.f;
         } else {
-            MillingCommand& prevCmd = path.back();
+            MillingCommand& prevCmd = m_path.back();
             float length = (prevCmd.coordinates - cmd.coordinates).length() / 10.f;
             pathLength += length;
+            cmd.distance = length;
         }
 
-        path.push_back(cmd);
+        m_path.push_back(cmd);
     }
 
     file.close();
 }
 
 void PathParser::Clear() {
-    path.clear();
+    m_path.clear();
     pathLength = 0.f;
+}
+
+std::optional<PathParser::MillingCommand> PathParser::GetNextCommand() {
+    if (m_cmdIt >= m_path.size()) {
+        return std::nullopt;
+    }
+    return m_path[m_cmdIt++];
+}
+
+void PathParser::ResetCommandIterator() {
+    m_cmdIt = 0;
+}
+
+std::optional<PathParser::NextStep> PathParser::GetNextStep(float step) {
+    if (m_stepIt++ == 0) {
+        auto& first = m_path.front();
+        m_stepPos = first.coordinates;
+        return NextStep{ { first.coordinates }, { first.commandNumber } };
+    }
+    if (m_stepIt >= m_path.size()) {
+        return std::nullopt;
+    }
+    // TODO
+    // calculate next set of coordinates and move step and pos accordingly
+    float length = (m_path[m_stepIt].coordinates - m_stepPos).length();
+
+    const int accuracy = 100;
+    if (std::abs(length - step) < 100 * std::numeric_limits<float>::epsilon()) {
+        auto& currCmd = m_path[m_stepIt];
+        m_stepIt++;
+        m_stepPos = currCmd.coordinates;
+        return NextStep{ { currCmd.coordinates }, { currCmd.commandNumber } };
+    }
+    if (length < step) {
+        auto& currCmd = m_path[m_stepIt];
+        gmod::vector3<float> vec = (currCmd.coordinates - m_stepPos).normalized() * step;
+        auto newCoord = currCmd.coordinates + vec;
+        m_stepPos = newCoord;
+        return NextStep{ {newCoord}, {currCmd.commandNumber} };
+    } else {
+        // TODO
+    }
+}
+
+void PathParser::ResetStepIterator() {
+    m_stepIt = 0;
+    m_stepPos = gmod::vector3<float>(0, 0, 0);
 }
 
 void PathParser::ParseN(MillingCommand& cmd, std::istringstream& line, int& lineNumber) {

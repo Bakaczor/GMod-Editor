@@ -1,6 +1,6 @@
 #pragma once
-#include "framework.h"
 #include <array>
+#include "Milling.h"
 
 namespace app {
 	class PathAnimator {
@@ -12,11 +12,14 @@ namespace app {
 		bool displayPath = true;
 		std::array<float, 3> pathColor = { 0.f, 1.f, 0.f };
 
+		PathAnimator(Milling& milling);
+
 		void StartAnimation();
 		void StopAnimation();
 		void RestartAnimation();
 		void CompleteAnimation();
+		void MakeStep();
 	private:
-
+		Milling& m_milling;
 	};
 }

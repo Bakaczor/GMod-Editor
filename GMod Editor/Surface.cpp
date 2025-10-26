@@ -154,19 +154,19 @@ std::vector<Surface::Cycle3> Surface::FindCycles3(const std::vector<Surface*>& s
 	for (int criticalId : criticalPoints) {
 		const BoundaryPoint& cp = boundaryPoints[criticalId];
 		for (auto& [nbr, data] : cp.neighbours) {
-			std::vector<NetPoint> path;
+			std::vector<NetPoint> m_path;
 			NetPoint prev = { cp.thisPoint, cp.data.surfIdPatchIdx };
 			NetPoint current = { nbr, data.surfIdPatchIdx };
-			path.push_back(prev);
+			m_path.push_back(prev);
 
 			while (true) {
-				path.push_back(current);
+				m_path.push_back(current);
 				int currentId = (*current.thisPoint)->id;
 				if (criticalPoints.contains(currentId)) {
 					Edge edge;
 					edge.start = { cp.thisPoint, cp.data.surfIdPatchIdx };
 					edge.end = current;
-					edge.intermediate.assign(path.begin() + 1, path.end() - 1);
+					edge.intermediate.assign(m_path.begin() + 1, m_path.end() - 1);
 					criticalGraph[criticalId].push_back(edge);
 					break;
 				}

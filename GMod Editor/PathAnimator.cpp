@@ -2,6 +2,8 @@
 
 using namespace app;
 
+PathAnimator::PathAnimator(Milling& milling) : m_milling(milling) {}
+
 void PathAnimator::StartAnimation() {
 	isRunning = true;
 }

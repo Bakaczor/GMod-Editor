@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <optional>
 #include "../gmod/vector3.h"
 
 namespace app {
@@ -27,9 +28,8 @@ namespace app {
 			CommandType type; // for now, all should be WorkingMove
 			unsigned short speed = 15; // xxxx - for now unused
 			gmod::vector3<float> coordinates; // Xff.fffYff.fffZff.fff
+			float distance = 0.f;
 		};
-
-		std::vector<MillingCommand> path;
 
 		// in centimetres
 		float pathLength = 0.0f;
@@ -39,7 +39,22 @@ namespace app {
 
 		void Parse(std::ifstream& file);
 		void Clear();
+
+		struct NextStep {
+			std::vector<gmod::vector3<float>> destinations;
+			std::vector<int> associatedCommandNumbers; // for g-code debug purposes
+		};
+		std::optional<NextStep> GetNextStep(float step);
+		void ResetStepIterator();
+
+		std::optional<MillingCommand> GetNextCommand();
+		void ResetCommandIterator();
 	private:
+		std::vector<MillingCommand> m_path;
+		int m_cmdIt = 0;
+		int m_stepIt = 0;
+		gmod::vector3<float> m_stepPos;
+
 		void ParseN(MillingCommand& cmd, std::istringstream& line, int& lineNumber);
 		void ParseG(MillingCommand& cmd, std::istringstream& line, int& lineNumber);
 	};

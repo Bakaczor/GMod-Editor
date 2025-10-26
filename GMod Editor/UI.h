@@ -120,12 +120,12 @@ namespace app {
 		void RenderIO_CAM();
 
 		std::string OpenFileDialog_CAD();
-		void LoadJSONFile(const std::string& path);
+		void LoadJSONFile(const std::string& m_path);
 		std::string SaveFileDialog_CAD();
-		void SaveScene(const std::string& path);
+		void SaveScene(const std::string& m_path);
 
 		std::string OpenFileDialog_CAM();
-		void LoadPathFile(const std::string& path);
+		void LoadPathFile(const std::string& m_path);
 
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();

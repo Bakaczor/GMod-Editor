@@ -280,7 +280,7 @@ void Cutter::RenderProperties() {
 	ImGui::Spacing();
 
     auto checkChange = [this](float& oldValue, float& currentValue)-> void {
-        if (std::abs(oldValue - currentValue) > std::numeric_limits<float>::epsilon()) {
+        if (std::abs(oldValue - currentValue) > 10 * std::numeric_limits<float>::epsilon()) {
             propertiesChanged = true;
         }
     };

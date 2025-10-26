@@ -20,7 +20,7 @@ const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
 
-UI::UI() : m_surfaceBuilder(sceneObjects) {}
+UI::UI() : m_surfaceBuilder(sceneObjects), m_pathAnimator(PathAnimator(milling)) {}
 
 void UI::Render(bool firstPass, Camera& camera) {
 	if (showCAD) {
@@ -885,10 +885,10 @@ std::string UI::OpenFileDialog_CAM() {
 	return file ? file : "";
 }
 
-void UI::LoadJSONFile(const std::string& path) {
-	std::ifstream file(path);
+void UI::LoadJSONFile(const std::string& m_path) {
+	std::ifstream file(m_path);
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file for reading: " + path);
+		throw std::runtime_error("Failed to open file for reading: " + m_path);
 	}
 	try {
 		std::string content{ std::istreambuf_iterator<char>{file}, {} };
@@ -901,10 +901,10 @@ void UI::LoadJSONFile(const std::string& path) {
 	}
 }
 
-void UI::LoadPathFile(const std::string& path) {
-	std::ifstream file(path);
+void UI::LoadPathFile(const std::string& m_path) {
+	std::ifstream file(m_path);
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file for reading: " + path);
+		throw std::runtime_error("Failed to open file for reading: " + m_path);
 	}
 	try {
 		m_pathParser.Clear();
@@ -928,10 +928,10 @@ std::string UI::SaveFileDialog_CAD() {
 	return file ? file : "";
 }
 
-void UI::SaveScene(const std::string& path) {
-	std::ofstream file(path);
+void UI::SaveScene(const std::string& m_path) {
+	std::ofstream file(m_path);
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file for writing: " + path);
+		throw std::runtime_error("Failed to open file for writing: " + m_path);
 	}
 	try {
 		boost::json::value jsonDoc = m_serializationManager.SerializeScene(sceneObjects);

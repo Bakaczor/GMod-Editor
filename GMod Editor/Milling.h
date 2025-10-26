@@ -21,6 +21,7 @@ namespace app {
 		float baseThickness = 1.5f;
 		float margin = 0.5f;
 
+		void Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos);
 		void ResetScene();
 	private:
 
