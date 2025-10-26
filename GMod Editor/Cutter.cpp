@@ -262,6 +262,12 @@ gmod::vector3<float> Cutter::GetPosition() const {
 void Cutter::SetCutterDiameter(int diameter) {
 	m_millingPartDiameter = static_cast<float>(diameter);
 	propertiesChanged = true;
+    if (m_cutterType == CutterType::Spherical) {
+        m_millingPartHeight = m_millingPartDiameter;
+    }
+    if (m_millingPartDiameter > m_totalCutterLength) {
+        m_totalCutterLength = m_millingPartDiameter;
+    }
 }
 
 void Cutter::SetCutterType(CutterType type) {
@@ -294,6 +300,7 @@ void Cutter::RenderProperties() {
     if (oldType != m_selectedCutterType) {
         propertiesChanged = true;
     }
+
 	ImGui::Spacing();
 
 	float inputWidth = 100.f;
@@ -305,6 +312,9 @@ void Cutter::RenderProperties() {
     oldValue = m_millingPartDiameter;
 	ImGui::InputFloat("##diameter", &m_millingPartDiameter, 0.01f, 1.f);
     checkChange(oldValue, m_millingPartDiameter);
+    if (m_millingPartDiameter > m_totalCutterLength) {
+        m_totalCutterLength = m_millingPartDiameter;
+    }
 	ImGui::NextColumn();
 
 	if (m_cutterType == CutterType::Cylindrical) {

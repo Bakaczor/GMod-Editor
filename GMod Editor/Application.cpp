@@ -474,6 +474,22 @@ void Application::Render() {
 			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->milling.cutter.color.data()));
 			m_UI->milling.cutter.RenderMesh(m_device.deviceContext(), m_shaders);
 		}
+		auto& animator = m_UI->animator;
+		// complete animation button
+		if (m_UI->completeAnimation) {
+			m_UI->completeAnimation = false;
+			animator.CompleteAnimation(m_device);
+		}
+		// make animation step
+		if (animator.isRunning) {
+			animator.MakeStep(m_device);
+		}
+		// display path
+		if (animator.displayPath && animator.canRender) {
+			m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(animator.modelMatrix()));
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(animator.pathColor.data()));
+			animator.RenderMesh(m_device.deviceContext(), m_shaders);
+		}
 	}
 }
 

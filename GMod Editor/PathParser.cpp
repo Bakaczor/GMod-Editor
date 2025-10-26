@@ -126,6 +126,7 @@ void PathParser::Parse(std::ifstream& file) {
             cmd.distance = length;
         }
 
+        cmd.coordinates = gmod::vector3<float>(cmd.coordinates.x(), cmd.coordinates.z(), -cmd.coordinates.y());
         m_path.push_back(cmd);
     }
 
@@ -149,7 +150,9 @@ void PathParser::ResetCommandIterator() {
 }
 
 std::optional<PathParser::NextStep> PathParser::GetNextStep(float step) {
-    if (m_stepIt++ == 0) {
+    if (m_stepIt == 0) {
+        m_stepIt++;
+        if (m_path.empty()) { return std::nullopt; }
         auto& first = m_path.front();
         m_stepPos = first.coordinates;
         return NextStep{ { first.coordinates }, { first.commandNumber } };
@@ -157,25 +160,46 @@ std::optional<PathParser::NextStep> PathParser::GetNextStep(float step) {
     if (m_stepIt >= m_path.size()) {
         return std::nullopt;
     }
-    // TODO
-    // calculate next set of coordinates and move step and pos accordingly
+    constexpr float fzero = 1000.f * std::numeric_limits<float>::epsilon();
     float length = (m_path[m_stepIt].coordinates - m_stepPos).length();
-
-    const int accuracy = 100;
-    if (std::abs(length - step) < 100 * std::numeric_limits<float>::epsilon()) {
+    if (std::abs(length - step) < fzero) {
         auto& currCmd = m_path[m_stepIt];
         m_stepIt++;
         m_stepPos = currCmd.coordinates;
         return NextStep{ { currCmd.coordinates }, { currCmd.commandNumber } };
     }
-    if (length < step) {
+    if (step < length) {
         auto& currCmd = m_path[m_stepIt];
-        gmod::vector3<float> vec = (currCmd.coordinates - m_stepPos).normalized() * step;
-        auto newCoord = currCmd.coordinates + vec;
+        gmod::vector3<float> moveVec = (currCmd.coordinates - m_stepPos).normalized() * step;
+        auto newCoord = m_stepPos + moveVec;
         m_stepPos = newCoord;
-        return NextStep{ {newCoord}, {currCmd.commandNumber} };
+        return NextStep{ { newCoord }, { currCmd.commandNumber } };
     } else {
-        // TODO
+        std::vector<gmod::vector3<float>> newCoords;
+        std::vector<int> commandNumbs;
+        while (step > fzero && m_stepIt < m_path.size()) {
+            auto& currCmd = m_path[m_stepIt];
+            gmod::vector3<float> vec = (currCmd.coordinates - m_stepPos);
+            float currLen = vec.length();
+
+            if (currLen <= step) {
+                newCoords.push_back(currCmd.coordinates);
+                commandNumbs.push_back(currCmd.commandNumber);
+                m_stepIt++;
+                m_stepPos = currCmd.coordinates;
+                step -= currLen;
+            } else {
+                gmod::vector3<float> moveVec = vec.normalized() * step;
+                auto newCoord = m_stepPos + moveVec;
+                m_stepPos = newCoord;
+
+                newCoords.push_back(newCoord);
+                commandNumbs.push_back(currCmd.commandNumber);
+                m_stepPos = newCoord;
+                step = 0;
+            }
+        }
+        return NextStep{ newCoords, commandNumbs };
     }
 }
 

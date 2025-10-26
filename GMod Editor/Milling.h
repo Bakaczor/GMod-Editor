@@ -2,6 +2,8 @@
 #include "../gmod/vector3.h"
 #include "CutterType.h"
 #include <array>
+#include <optional>
+#include <string>
 #include "Cutter.h"
 
 namespace app {
@@ -21,7 +23,7 @@ namespace app {
 		float baseThickness = 1.5f;
 		float margin = 0.5f;
 
-		void Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos);
+		std::optional<std::string> Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos);
 		void ResetScene();
 	private:
 

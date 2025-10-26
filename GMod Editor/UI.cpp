@@ -20,7 +20,7 @@ const std::vector<const char*> UI::m_objectTypeNames = { "Cube", "Torus", "Point
 const std::vector<UI::ObjectGroupType> UI::m_objectGroupTypes = { ObjectGroupType::Polyline, ObjectGroupType::Spline, ObjectGroupType::BSpline, ObjectGroupType::CISpline };
 const std::vector<const char*> UI::m_objectGroupTypeNames = { "Polyline", "Spline", "BSpline", "CISpline" };
 
-UI::UI() : m_surfaceBuilder(sceneObjects), m_pathAnimator(PathAnimator(milling)) {}
+UI::UI() : m_surfaceBuilder(sceneObjects), animator(PathAnimator(parser, milling)) {}
 
 void UI::Render(bool firstPass, Camera& camera) {
 	if (showCAD) {
@@ -136,37 +136,38 @@ void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
 	ImGui::SetColumnWidth(0, 150.f);
 
 	ImGui::Text("Status:"); ImGui::NextColumn();
-	ImGui::TextColored(m_pathAnimator.isRunning ?
+	ImGui::TextColored(animator.isRunning ?
 		ImVec4(0.0f, 1.0f, 0.0f, 1.0f) :
 		ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
-		m_pathAnimator.isRunning ? "RUNNING" : "STOPPED"); ImGui::NextColumn();
+		animator.isRunning ? "RUNNING" : "STOPPED"); ImGui::NextColumn();
 
 	ImGui::Text("Step size [mm]:"); ImGui::NextColumn();
 	ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputFloat("##simulationspeed", &m_pathAnimator.stepSize, 1.f, 10.f, "%.1f"); ImGui::NextColumn();
+	ImGui::InputFloat("##simulationspeed", &animator.stepSize, 1.f, 10.f, "%.1f"); ImGui::NextColumn();
 
 	ImGui::Columns(1);
-	ImGui::Checkbox("Display path", &m_pathAnimator.displayPath);
+	ImGui::Checkbox("Display path", &animator.displayPath);
 	ImGui::Text("Path color:");
-	ImGui::ColorEdit3("##path_color", m_pathAnimator.pathColor.data());
+	ImGui::ColorEdit3("##path_color", animator.pathColor.data());
 	ImGui::Spacing();
 
 	ImGui::BeginGroup();
 	float buttonWidth = ImGui::GetContentRegionAvail().x / 2.f - 5.f;
 	if (ImGui::Button("Start", ImVec2(buttonWidth, 0))) {
-		m_pathAnimator.StartAnimation();
+		animator.StartAnimation();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Stop", ImVec2(buttonWidth, 0))) {
-		m_pathAnimator.StopAnimation();
+		animator.StopAnimation();
 	}
 
 	if (ImGui::Button("Restart", ImVec2(buttonWidth, 0))) {
-		m_pathAnimator.RestartAnimation();
+		animator.ClearMesh();
+		animator.RestartAnimation();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Complete", ImVec2(buttonWidth, 0))) {
-		m_pathAnimator.CompleteAnimation();
+		completeAnimation = true;
 	}
 	ImGui::EndGroup();
 
@@ -839,23 +840,27 @@ void UI::RenderIO_CAM() {
 	if (ImGui::Button("Load Path", ImVec2(150.f, 0.f))) {
 		std::string file = OpenFileDialog_CAM();
 
-		std::string filename = file.substr(file.find_last_of("/\\") + 1);
-		size_t dotPos = filename.find_last_of('.');
-		std::string extension = filename.substr(dotPos + 1);
-
-		if (extension[0] == 'k') {
-			milling.cutter.SetCutterType(CutterType::Spherical);
-		} else {
-			milling.cutter.SetCutterType(CutterType::Cylindrical);
-		}
-		milling.cutter.SetCutterDiameter(std::stoi(extension.substr(1)));
-
 		if (!file.empty()) {
+			std::string filename = file.substr(file.find_last_of("/\\") + 1);
+			size_t dotPos = filename.find_last_of('.');
+			std::string extension = filename.substr(dotPos + 1);
+
+			if (extension[0] == 'k') {
+				milling.cutter.SetCutterType(CutterType::Spherical);
+			} else {
+				milling.cutter.SetCutterType(CutterType::Cylindrical);
+			}
+			milling.cutter.SetCutterDiameter(std::stoi(extension.substr(1)));
+
 			LoadPathFile(file);
 		}
 	}
 	ImGui::SameLine();
-	ImGui::TextColored(ImVec4(1.f, 1.f, 1.f, 1.f), "Length: %.1f [cm]", m_pathParser.pathLength);
+	ImGui::TextColored(ImVec4(1.f, 1.f, 1.f, 1.f), "Length: %.1f [cm]", parser.pathLength);
+	if (animator.errorDetected) {
+		ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), animator.errorMsg.c_str());
+	}
 	ImGui::End();
 }
 
@@ -907,8 +912,8 @@ void UI::LoadPathFile(const std::string& m_path) {
 		throw std::runtime_error("Failed to open file for reading: " + m_path);
 	}
 	try {
-		m_pathParser.Clear();
-		m_pathParser.Parse(file);
+		parser.Clear();
+		parser.Parse(file);
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Parsing error: " + std::string(e.what()));
 	} catch (...) {

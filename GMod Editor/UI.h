@@ -82,6 +82,9 @@ namespace app {
 		} display;
 
 		Milling milling;
+		PathParser parser;
+		PathAnimator animator;
+		bool completeAnimation = false;
 
 		UI();
 		void Render(bool firstPass, Camera& camera);
@@ -92,9 +95,6 @@ namespace app {
 		int m_selectedObjGrpType = 0;
 		const static std::vector<ObjectGroupType> m_objectGroupTypes;
 		const static std::vector<const char*> m_objectGroupTypeNames;
-
-		PathAnimator m_pathAnimator;
-		PathParser m_pathParser;
 
 		SurfaceBuilder m_surfaceBuilder;
 		bool m_showSurfaceBuilder = false;

@@ -41,9 +41,9 @@ namespace app {
 		const static std::vector<const char*> m_cutterTypeNames;
 
 		// all in millimetres
-		float m_millingPartDiameter = 0.0f;
-		float m_millingPartHeight = 0.0f;
-		float m_totalCutterLength = 0.0f;
+		float m_millingPartDiameter = 1.f;
+		float m_millingPartHeight = 1.f;
+		float m_totalCutterLength = 10.f;
 
 		CutterType m_cutterType = CutterType::Spherical;
 		float m_maxHorizontalDeviationAngle = 0.0f; // degrees
