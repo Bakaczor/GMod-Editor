@@ -76,57 +76,32 @@ void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
 	ImGui::SeparatorText("Milling settings");
 	ImGui::Spacing();
 
-	ImGui::Text("Size [cm]:");
-	ImGui::InputFloat3("##size", milling.size.data());
+	auto checkChange = [this](std::array<float, 3>& oldValue, std::array<float, 3>& currentValue)-> void {
+		for (int i = 0; i < 3; i++) {
+			if (std::abs(oldValue[i] - currentValue[i]) > 100 * std::numeric_limits<float>::epsilon()) {
+				milling.sceneChanged = true;
+				oldValue = currentValue;
+				break;
+			}
+		}
+	};
+	std::array<float, 3> size(milling.size);
+	std::array<float, 3> centre(milling.centre);
+
+	ImGui::Text("Size [mm]:");
+	ImGui::InputFloat3("##size", size.data());
 
 	ImGui::Text("Scene centre:");
-	ImGui::InputFloat3("##scene_centre", milling.centre.data());
+	ImGui::InputFloat3("##scene_centre", centre.data());
+
+	checkChange(milling.size, size);
+	checkChange(milling.centre, centre);
 
 	ImGui::Spacing();
 	milling.cutter.RenderCutterOrientation();
 	ImGui::Spacing();
 
-	ImGui::Columns(2, "milling_settings", false);
-	ImGui::SetColumnWidth(0, 150.f);
-
-	ImGui::Text("Base thickness [cm]:"); ImGui::NextColumn();
-	ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputFloat("##base_thickness", &milling.baseThickness, 0.01f, 1.f); ImGui::NextColumn();
-
-	ImGui::Text("Margin [cm]:"); ImGui::NextColumn();
-	ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputFloat("##margin", &milling.margin, 0.01f, 1.f); ImGui::NextColumn();
-
-	ImGui::Text("Base mesh size:"); ImGui::NextColumn();
-	int bms = milling.baseMeshSize;
-	ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputInt("##bms", &bms, 1, 10); ImGui::NextColumn();
-	if (bms > 0) {
-		milling.baseMeshSize = bms;
-	}
-	ImGui::Columns(1);
-
-	ImGui::Text("Resolution:");
-	ImGui::Text("X:"); ImGui::SameLine();
-	int resX = milling.resolutionX;
-	ImGui::SetNextItemWidth(90.f);
-	ImGui::InputInt("##resolution_X", &resX, 1, 10);
-	if (resX > 0) {
-		milling.resolutionX = resX;
-	}
-	ImGui::SameLine();
-	ImGui::Text("Y:"); ImGui::SameLine();
-	int resY = milling.resolutionY;
-	ImGui::SetNextItemWidth(90.f);
-	ImGui::InputInt("##resolution_Y", &resY, 1, 10);
-	if (resY > 0) {
-		milling.resolutionY = resY;
-	}
-
-	ImGui::Spacing();
-	if (ImGui::Button("Reset scene", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
-		milling.ResetScene();
-	}
+	milling.RenderProperties();
 
 	ImGui::Spacing();
 	ImGui::SeparatorText("Animation");

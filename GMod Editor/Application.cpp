@@ -300,6 +300,21 @@ void Application::Update() {
 	if (m_UI->stereoscopicChanged) {
 		m_UI->stereoscopicChanged = false;
 	}
+
+	if (!m_UI->showCAD) {
+		auto& milling = m_UI->milling;
+		if (milling.resetHeightMap) {
+			milling.ResetHeightMap(m_device);
+			// bind textures
+			// m_UI->milling.heightMapTexSRV
+		}
+		if (milling.updateHeightMap) {
+			milling.UpdateHeightMap(m_device);
+		}
+		if (milling.sceneChanged) {
+			milling.UpdateMesh(m_device);
+		}
+	}
 }
 
 float Application::aspect() const {
@@ -466,14 +481,20 @@ void Application::Render() {
 	}
 
 	if (!m_UI->showCAD) {
-		if (m_UI->milling.cutter.propertiesChanged) {
-			m_UI->milling.cutter.UpdateMesh(m_device);
+		auto& milling = m_UI->milling;
+		if (milling.cutter.propertiesChanged) {
+			milling.cutter.UpdateMesh(m_device);
 		}
-		if (m_UI->milling.cutter.showCutter) {
-			m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(m_UI->milling.cutter.modelMatrix()));
-			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(m_UI->milling.cutter.color.data()));
-			m_UI->milling.cutter.RenderMesh(m_device.deviceContext(), m_shaders);
+		if (milling.cutter.showCutter) {
+			m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(milling.cutter.modelMatrix()));
+			m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(milling.cutter.color.data()));
+			milling.cutter.RenderMesh(m_device.deviceContext(), m_shaders);
 		}
+
+		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(milling.modelMatrix()));
+		m_device.UpdateBuffer(m_constBuffColor, DirectX::XMFLOAT4(milling.color.data()));
+		milling.RenderMesh(m_device.deviceContext(), m_shaders);
+
 		auto& animator = m_UI->animator;
 		// complete animation button
 		if (m_UI->completeAnimation) {

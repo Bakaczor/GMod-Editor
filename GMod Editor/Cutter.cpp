@@ -12,6 +12,7 @@ Cutter::Cutter() {
 }
 
 void Cutter::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
+    // later change to phong shaders
 	map.at(ShaderType::Regular).Set(context);
 	m_mesh.Render(context);
 }
@@ -286,7 +287,7 @@ void Cutter::RenderProperties() {
 	ImGui::Spacing();
 
     auto checkChange = [this](float& oldValue, float& currentValue)-> void {
-        if (std::abs(oldValue - currentValue) > 10 * std::numeric_limits<float>::epsilon()) {
+        if (std::abs(oldValue - currentValue) > 100 * std::numeric_limits<float>::epsilon()) {
             propertiesChanged = true;
         }
     };

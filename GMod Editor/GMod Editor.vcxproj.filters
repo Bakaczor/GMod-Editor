@@ -192,9 +192,6 @@
     <ClInclude Include="Debug.h">
       <Filter>Pliki nagłówkowe\app</Filter>
     </ClInclude>
-    <ClInclude Include="DirLight.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
     <ClInclude Include="Display.h">
       <Filter>Pliki nagłówkowe\d3dx</Filter>
     </ClInclude>

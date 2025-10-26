@@ -197,7 +197,6 @@
     <ClInclude Include="Cutter.h" />
     <ClInclude Include="CutterType.h" />
     <ClInclude Include="Debug.h" />
-    <ClInclude Include="DirLight.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="Divisable.h" />
     <ClInclude Include="Edge.h" />

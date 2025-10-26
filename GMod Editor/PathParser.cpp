@@ -113,6 +113,8 @@ void PathParser::Parse(std::ifstream& file) {
             cmd.coordinates.z() = prevZ;
         }
 
+        cmd.coordinates = gmod::vector3<float>(cmd.coordinates.y(), cmd.coordinates.z(), cmd.coordinates.x());
+
         if (isFirst) {
             if (!hasX || !hasY || !hasZ) {
                 throw std::runtime_error("Line " + std::to_string(lineNumber) + " : first move command must include all coordinates");
@@ -125,8 +127,6 @@ void PathParser::Parse(std::ifstream& file) {
             pathLength += length;
             cmd.distance = length;
         }
-
-        cmd.coordinates = gmod::vector3<float>(cmd.coordinates.x(), cmd.coordinates.z(), -cmd.coordinates.y());
         m_path.push_back(cmd);
     }
 
