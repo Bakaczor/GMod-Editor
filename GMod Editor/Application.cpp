@@ -216,6 +216,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_sampState = m_device.CreateSamplerState(SamplerDescription());
 	auto s_ptr = m_sampState.get();
+	m_device.deviceContext()->GSSetSamplers(0, 1, &s_ptr);
 	m_device.deviceContext()->PSSetSamplers(0, 1, &s_ptr);
 
 	BindTrimTextures();
@@ -367,8 +368,10 @@ void Application::Update() {
 		if (milling.resetHeightMap) {
 			milling.ResetHeightMap(m_device);
 			// bind textures
-			// m_UI->milling.heightMapTexSRV
+			ID3D11ShaderResourceView* gsr[] = { milling.heightMapTexSRV.get() };
+			m_device.deviceContext()->GSSetShaderResources(0, 1, gsr);
 		}
+			
 		if (milling.updateHeightMap) {
 			milling.UpdateHeightMap(m_device);
 		}
