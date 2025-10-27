@@ -340,18 +340,16 @@ void Application::Update() {
 		DirectX::XMFLOAT4X4 viewMtxInv = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix_inv());
 		m_device.UpdateBuffer(m_constBuffViewInv, viewMtxInv);
 		DirLight dirLight {
-			DirectX::XMFLOAT3(m_UI->display.direction.data()),
-			DirectX::XMFLOAT3(m_UI->display.color.data()),
-			DirectX::XMFLOAT3(m_UI->display.weights.data()),
-			{ 0, 0, 0 }
+			DirectX::XMFLOAT4(m_UI->display.direction.data()),
+			DirectX::XMFLOAT4(m_UI->display.color.data()),
+			DirectX::XMFLOAT4(m_UI->display.weights.data())
 		};
 		m_device.UpdateBuffer(m_constBuffDirLight, dirLight);
 		Material material {
-			DirectX::XMFLOAT3(m_UI->display.ambient.data()),
-			DirectX::XMFLOAT3(m_UI->display.diffuse.data()),
-			DirectX::XMFLOAT3(m_UI->display.specular.data()),
-			m_UI->display.shininess,
-			{ 0, 0 }
+			DirectX::XMFLOAT4(m_UI->display.ambient.data()),
+			DirectX::XMFLOAT4(m_UI->display.diffuse.data()),
+			DirectX::XMFLOAT4(m_UI->display.specular.data()),
+			m_UI->display.shininess
 		};
 		m_device.UpdateBuffer(m_constBuffMaterial, material);
 

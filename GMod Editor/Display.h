@@ -5,17 +5,16 @@
 
 namespace app {
 	struct DirLight {
-		DirectX::XMFLOAT3 direction;
-		DirectX::XMFLOAT3 color;
-		DirectX::XMFLOAT3 weights;
-		float padding[3];
+		DirectX::XMFLOAT4 direction;
+		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4 weights;
 	};
 
 	struct Material {
-		DirectX::XMFLOAT3 ambient;
-		DirectX::XMFLOAT3 diffuse;
-		DirectX::XMFLOAT3 specular;
+		DirectX::XMFLOAT4 ambient;
+		DirectX::XMFLOAT4 diffuse;
+		DirectX::XMFLOAT4 specular;
 		float shininess;
-		float padding[2];
+		float padding[3];
 	};
 }

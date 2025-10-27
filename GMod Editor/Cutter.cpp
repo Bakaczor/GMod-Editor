@@ -31,8 +31,8 @@ void Cutter::UpdateMesh(const Device& device) {
 }
 
 void Cutter::GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs) {
-    verts.reserve(2 * m_parts + 1 + (m_parts - 1) * m_parts + 1); // cylinder + half-sphere
-    idxs.reserve(3 * ((2 + 1) * m_parts + 2 * (m_parts - 2) + m_parts)); // cylinder + half-sphere
+    verts.reserve(2 * m_parts + 1 + (m_parts - 2) * m_parts + 1); // cylinder + half-sphere
+    idxs.reserve(3 * ((2 + 1) * m_parts + 2 * (m_parts - 2) * m_parts + m_parts)); // cylinder + half-sphere
 
     const double horizontalStep = 2 * DirectX::XM_PI / m_parts;
     const double verticalStep = DirectX::XM_PIDIV2 / (m_parts - 1);
@@ -79,7 +79,8 @@ void Cutter::GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHO
 
     // indices for sides and cap
     for (int i = 1; i <= m_parts; ++i) {
-        int next_i = (i + 1) % m_parts;
+        int next_i = (i + 1) % (m_parts + 1);
+        if (next_i == 0) { next_i++; }
 
         // first triangle
         idxs.push_back(static_cast<USHORT>(i));
@@ -273,7 +274,7 @@ void Cutter::SetCutterDiameter(int diameter) {
         m_millingPartHeight = m_millingPartDiameter;
     }
     if (m_millingPartDiameter > m_totalCutterLength) {
-        m_totalCutterLength = m_millingPartDiameter;
+        m_totalCutterLength = 2 * m_millingPartDiameter;
     }
 }
 

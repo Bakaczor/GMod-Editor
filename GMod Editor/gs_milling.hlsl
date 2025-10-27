@@ -44,16 +44,16 @@ struct GSInput
     float3 normal : NORMAL;
 };
 
-const float halfSizeX = size.x / 2;
-const float halfSizeY = size.y / 2;
-    
-const float leftX = centre.y - halfSizeY; // 1
-const float rightX = centre.y + halfSizeY; // 3
-const float topZ = centre.x - halfSizeX; // 2
-const float bottomZ = centre.x + halfSizeX; // 4
-
-int isMillingEdge(float3 v1, float3 v2)
+uint isMillingEdge(float3 v1, float3 v2)
 {
+    const float halfSizeX = size.x / 2;
+    const float halfSizeY = size.y / 2;
+    
+    const float leftX = centre.y - halfSizeY; // 1
+    const float rightX = centre.y + halfSizeY; // 3
+    const float topZ = centre.x - halfSizeX; // 2
+    const float bottomZ = centre.x + halfSizeX; // 4
+    
     if (abs(v1.x - v2.x) < 1e-6f)
     {
         if (abs(v1.x - leftX) < 1e-6f)
@@ -86,21 +86,21 @@ int isMillingEdge(float3 v1, float3 v2)
 [maxvertexcount(15)]
 void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
 {
-    PSInput o;
     const float3 camPos = mul(viewMatrixInv, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
     
     const float stepX = size.x / resolutions.z;
     const float stepY = size.y / resolutions.z;
     
+    PSInput o;
     float2 uvs[3];
     
-    int i;
+    uint i;
     for (i = 0; i < 3; i++) {
         float2 uv;
         uv.x = (input[i].position.z + size.x / 2 - centre.x) / stepX;
         uv.y = (input[i].position.x + size.y / 2 - centre.y) / stepY;
         
-        float3 tex = heightMap.SampleLevel(samp, uv, 0);
+        float3 tex = heightMap.SampleLevel(samp, uv, 0).rgb;
         float maxH = tex.g * 255 + tex.b * 255 / 100.0f;
         input[i].position.y = tex.r * maxH + centre.z;
         uvs[i] = uv;
@@ -108,8 +108,8 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
     
     for (i = 0; i < 3; i++)
     {
-        int next_i = (i + 1) % 3;
-        int edge = isMillingEdge(input[i].position, input[next_i].position);
+        uint next_i = (i + 1) % 3;
+        uint edge = isMillingEdge(input[i].position, input[next_i].position);
         if (edge == 0)
         {
             continue;
@@ -178,7 +178,7 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         uv2 = uv0;
         uv3 = uv1;
         
-        int j;
+        uint j;
         GSInput tri1[3] =
         {
             { v0, n0 },

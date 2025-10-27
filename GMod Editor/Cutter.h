@@ -33,7 +33,7 @@ namespace app {
 		gmod::matrix4<float> modelMatrix();
 	private:
 		Mesh m_mesh;
-		const int m_parts = 32;
+		const int m_parts = 20;
 		gmod::Transform<float> m_transform;
 
 		int m_selectedCutterType = 0;
