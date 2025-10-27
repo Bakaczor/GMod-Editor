@@ -48,5 +48,7 @@ namespace app {
 		Mesh m_planeMesh;
 		std::vector<std::vector<float>> m_heightMap;
 		mini::dx_ptr<ID3D11Texture2D> m_heighMapTex;
+
+		DirectX::XMFLOAT3 CalculateNormal(unsigned int x, unsigned int y, unsigned int size, float stepX, float stepY, const std::vector<Vertex_PoNo>& verts);
 	};
 }

@@ -26,4 +26,10 @@ namespace app {
 		DirectX::XMFLOAT2 uv;
 		static const D3D11_INPUT_ELEMENT_DESC layout[2];
 	};
+
+	struct Vertex_PoNo {
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+		static const D3D11_INPUT_ELEMENT_DESC layout[2];
+	};
 }

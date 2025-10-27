@@ -34,6 +34,12 @@ namespace app {
 		uint32_t trimmingMode;  // 4 bytes
 		float padding;			// 4 bytes
 	};
+	struct MillingInfo {
+		DirectX::XMFLOAT3 size;		  // 12 bytes
+		DirectX::XMFLOAT3 centre;	  // 12 bytes
+		DirectX::XMUINT3 resolutions; // 12 bytes
+		float padding[3];			  // 12 bytes
+	};
 
 	class UI;
 
@@ -121,10 +127,14 @@ namespace app {
 
 		mini::dx_ptr<ID3D11Buffer> m_constBuffModel;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffView;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffViewInv;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffProj;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffColor;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffTessConst;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffTrimInfo;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffDirLight;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffMaterial;
+		mini::dx_ptr<ID3D11Buffer> m_constBuffMillInfo;
 
 		void BindTrimTextures();
 #pragma endregion

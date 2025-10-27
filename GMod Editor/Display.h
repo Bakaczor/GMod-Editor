@@ -8,6 +8,7 @@ namespace app {
 		DirectX::XMFLOAT3 direction;
 		DirectX::XMFLOAT3 color;
 		DirectX::XMFLOAT3 weights;
+		float padding[3];
 	};
 
 	struct Material {
@@ -15,6 +16,6 @@ namespace app {
 		DirectX::XMFLOAT3 diffuse;
 		DirectX::XMFLOAT3 specular;
 		float shininess;
-		float padding[3];
+		float padding[2];
 	};
 }

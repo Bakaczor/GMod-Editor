@@ -79,7 +79,7 @@ BufferDescription BufferDescription::ConstantBufferDescription(size_t byteWidth)
 RasterizerDescription::RasterizerDescription() {
 	FillMode = D3D11_FILL_SOLID;
 	//FillMode = D3D11_FILL_WIREFRAME;
-	CullMode = D3D11_CULL_NONE;
+	CullMode = D3D11_CULL_BACK;
 	//FrontCounterClockwise = false;
 	DepthBias = 0;
 	DepthBiasClamp = 0.0f;

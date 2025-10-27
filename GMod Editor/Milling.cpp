@@ -56,7 +56,6 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 }
 
 void Milling::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
-	// later change to phong shaders
 	map.at(ShaderType::Regular).Set(context);
 	m_planeMesh.Render(context);
 }
@@ -65,7 +64,7 @@ void Milling::UpdateMesh(const Device& device) {
 	sceneChanged = false;
 	const unsigned int size = baseMeshSize + 1;
 
-	std::vector<Vertex_Po> verts(size * size);
+	std::vector<Vertex_PoNo> verts(size * size);
 	std::vector<USHORT> idxs(4 * baseMeshSize * baseMeshSize);
 
 	float stepX = SizeX() / baseMeshSize;
@@ -77,7 +76,14 @@ void Milling::UpdateMesh(const Device& device) {
 			float posX = -SizeX() / 2 + x * stepX + centre[0];
 			float posY = -SizeY() / 2 + y * stepY + centre[1];
 			float posZ = SizeZ() + centre[2];
-			verts[index] = Vertex_Po{ { posY, posZ, posX } };
+			verts[index] = Vertex_PoNo{ DirectX::XMFLOAT3(posY, posZ, posX), DirectX::XMFLOAT3(0, 0, 0) };
+		}
+	}
+
+	for (unsigned int x = 0; x < size; ++x) {
+		for (unsigned int y = 0; y < size; ++y) {
+			unsigned int index = x * size + y;
+			verts[index].normal = CalculateNormal(x, y, size, stepX, stepY, verts);
 		}
 	}
 
@@ -97,8 +103,53 @@ void Milling::UpdateMesh(const Device& device) {
 		}
 	}
 
-	// D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST
-	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+}
+
+DirectX::XMFLOAT3 Milling::CalculateNormal(unsigned int x, unsigned int y, unsigned int size, float stepX, float stepY, const std::vector<Vertex_PoNo>& verts) {
+	float z_center = verts[x * size + y].position.y;
+	float dz_dx, dz_dy;
+
+	if (x == 0) {
+		// top edge
+		float z_below = verts[(x + 1) * size + y].position.y;
+		dz_dx = (z_below - z_center) / stepX;
+	} else if (x == size - 1) {
+		// bottom edge
+		float z_above = verts[(x - 1) * size + y].position.y;
+		dz_dx = (z_center - z_above) / stepX;
+	} else {
+		// interior
+		float z_above = verts[(x - 1) * size + y].position.y;
+		float z_below = verts[(x + 1) * size + y].position.y;
+		dz_dx = (z_below - z_above) / (2 * stepX);
+	}
+
+	if (y == 0) {
+		// left edge
+		float z_toRight = verts[x * size + (y + 1)].position.y;
+		dz_dy = (z_toRight - z_center) / stepY;
+	} else if (y == size - 1) {
+		// right edge  
+		float z_toLeft = verts[x * size + (y - 1)].position.y;
+		dz_dy = (z_center - z_toLeft) / stepY;
+	} else {
+		// interior
+		float z_toLeft = verts[x * size + (y - 1)].position.y;
+		float z_toRight = verts[x * size + (y + 1)].position.y;
+		dz_dy = (z_toRight - z_toLeft) / (2 * stepY);
+	}
+
+	DirectX::XMFLOAT3 normal(-dz_dy, 1.0f, -dz_dx);
+
+	float length = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+	if (length > 0.0001f) {
+		normal.x /= length;
+		normal.y /= length;
+		normal.z /= length;
+	}
+
+	return normal;
 }
 
 void Milling::RenderProperties() {

@@ -50,7 +50,7 @@ namespace app {
 
 		bool m_useCutterBase = true;
 
-		void GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT>& idxs);
-		void GenerateCylindrical(std::vector<Vertex_Po>& verts, std::vector<USHORT>& idxs) const;
+		void GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs);
+		void GenerateCylindrical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs) const;
 	};
 }

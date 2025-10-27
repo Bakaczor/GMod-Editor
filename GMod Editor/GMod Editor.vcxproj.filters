@@ -55,9 +55,6 @@
     <Filter Include="Pliki zasobów\RegularWithTesselation">
       <UniqueIdentifier>{132632fc-3270-4a10-9775-6788ce75d354}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Pliki zasobów\RegulatWithTesselationCISpline">
-      <UniqueIdentifier>{7b404e89-2b04-4f5c-8a00-675d61d3c7c5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Pliki zasobów\RegularWithTesselationSurface">
       <UniqueIdentifier>{efadf93e-3566-45f6-8109-1f8ffb070f46}</UniqueIdentifier>
     </Filter>
@@ -75,6 +72,15 @@
     </Filter>
     <Filter Include="Pliki źródłowe\CAM">
       <UniqueIdentifier>{70a0aa8d-e9bd-4b1b-8803-ba325c481674}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\RegularWithTesselationCISpline">
+      <UniqueIdentifier>{7b404e89-2b04-4f5c-8a00-675d61d3c7c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\Cutter">
+      <UniqueIdentifier>{9691ef93-4c0f-44a2-90c5-adbec43fee76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki zasobów\Milling">
+      <UniqueIdentifier>{93b0627f-1284-4e9e-9ba8-63e7d5063e76}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -353,13 +359,13 @@
       <Filter>Pliki zasobów\RegularWithTesselationBSpline</Filter>
     </FxCompile>
     <FxCompile Include="ds_rwtcis.hlsl">
-      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+      <Filter>Pliki zasobów\RegularWithTesselationCISpline</Filter>
     </FxCompile>
     <FxCompile Include="hs_rwtcis.hlsl">
-      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+      <Filter>Pliki zasobów\RegularWithTesselationCISpline</Filter>
     </FxCompile>
     <FxCompile Include="vs_rwtcis.hlsl">
-      <Filter>Pliki zasobów\RegulatWithTesselationCISpline</Filter>
+      <Filter>Pliki zasobów\RegularWithTesselationCISpline</Filter>
     </FxCompile>
     <FxCompile Include="ds_rwtsr.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationSurface</Filter>
@@ -387,6 +393,27 @@
     </FxCompile>
     <FxCompile Include="gs_rwtg.hlsl">
       <Filter>Pliki zasobów\RegularWithTesselationGregory</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_cutter.hlsl">
+      <Filter>Pliki zasobów\Cutter</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_cutter.hlsl">
+      <Filter>Pliki zasobów\Cutter</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_milling.hlsl">
+      <Filter>Pliki zasobów\Milling</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_milling.hlsl">
+      <Filter>Pliki zasobów\Milling</Filter>
+    </FxCompile>
+    <FxCompile Include="gs_milling.hlsl">
+      <Filter>Pliki zasobów\Milling</Filter>
+    </FxCompile>
+    <FxCompile Include="ds_milling.hlsl">
+      <Filter>Pliki zasobów\Milling</Filter>
+    </FxCompile>
+    <FxCompile Include="hs_milling.hlsl">
+      <Filter>Pliki zasobów\Milling</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

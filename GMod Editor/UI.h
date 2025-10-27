@@ -73,12 +73,12 @@ namespace app {
 		// CAM
 		struct Display {
 			std::array<float, 3> color = { 1.f, 1.f, 1.f };
-			std::array<float, 3> direction = { 0.f, -1.f, 0.f };
+			std::array<float, 3> direction = { 1.f, -1.f, 1.f };
 			std::array<float, 3> weights = { 1.f, 1.f, 1.f };
-			std::array<float, 3> ambient = { 1.f, 1.f, 1.f };
-			std::array<float, 3> diffuse = { 1.f, 1.f, 1.f };
-			std::array<float, 3> specular = { 1.f, 1.f, 1.f };
-			float shininess = 1.f;
+			std::array<float, 3> ambient = { 0.25f, 0.25f, 0.25f };
+			std::array<float, 3> diffuse = { 0.4f, 0.4f, 0.4f };
+			std::array<float, 3> specular = { 0.774597f, 0.774597f, 0.774597f };
+			float shininess = 0.6f;
 		} display;
 
 		Milling milling;

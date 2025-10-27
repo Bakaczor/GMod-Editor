@@ -12,13 +12,12 @@ Cutter::Cutter() {
 }
 
 void Cutter::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
-    // later change to phong shaders
-	map.at(ShaderType::Regular).Set(context);
+	map.at(ShaderType::Cutter).Set(context);
 	m_mesh.Render(context);
 }
 
 void Cutter::UpdateMesh(const Device& device) {
-    std::vector<Vertex_Po> verts;
+    std::vector<Vertex_PoNo> verts;
     std::vector<USHORT> idxs;
 
     if (m_cutterType == CutterType::Spherical) {
@@ -31,7 +30,7 @@ void Cutter::UpdateMesh(const Device& device) {
     propertiesChanged = false;
 }
 
-void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT>& idxs) {
+void Cutter::GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs) {
     verts.reserve(2 * m_parts + 1 + (m_parts - 1) * m_parts + 1); // cylinder + half-sphere
     idxs.reserve(3 * ((2 + 1) * m_parts + 2 * (m_parts - 2) + m_parts)); // cylinder + half-sphere
 
@@ -39,7 +38,7 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
     const double verticalStep = DirectX::XM_PIDIV2 / (m_parts - 1);
     const float radius = m_millingPartDiameter / 2.0f;
 
-    verts.push_back(Vertex_Po{ DirectX::XMFLOAT3(0, m_totalCutterLength, 0) }); // top
+    verts.push_back(Vertex_PoNo{ DirectX::XMFLOAT3(0, m_totalCutterLength, 0), DirectX::XMFLOAT3(0, 1, 0) }); // top
 
     std::vector<std::pair<float, float>> cossin(m_parts);
     for (int i = 0; i < m_parts; ++i) {
@@ -48,13 +47,15 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
         const float sinA = static_cast<float>(std::sin(angle));
         cossin[i] = std::make_pair(cosA, sinA);
 
+        DirectX::XMFLOAT3 normal(cosA, 0, sinA);
+
         // top vertex
-        Vertex_Po topVertex{
+        Vertex_PoNo topVertex{
             DirectX::XMFLOAT3(
                 radius * cosA,
                 m_totalCutterLength,
                 radius * sinA
-            )
+            ), normal
         };
         verts.push_back(topVertex);
     }
@@ -63,19 +64,20 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
         const float& cosA = cossin[i].first;
         const float& sinA = cossin[i].second;
 
+        DirectX::XMFLOAT3 normal(cosA, 0, sinA);
+
         // bottom vertex
-        Vertex_Po bottomVertex{
+        Vertex_PoNo bottomVertex{
             DirectX::XMFLOAT3(
                 radius * cosA,
                 m_totalCutterLength - radius,
                 radius * sinA
-            )
+            ), normal
         };
         verts.push_back(bottomVertex);
     }
 
     // indices for sides and cap
-    const int parts2 = 2 * m_parts;
     for (int i = 1; i <= m_parts; ++i) {
         int next_i = (i + 1) % m_parts;
 
@@ -91,8 +93,8 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
 
         // cap
         idxs.push_back(static_cast<USHORT>(0));
-        idxs.push_back(static_cast<USHORT>(i));
         idxs.push_back(static_cast<USHORT>(next_i));
+        idxs.push_back(static_cast<USHORT>(i));
     }
 
     // half-sphere at the end
@@ -106,18 +108,20 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
             const float cosU = static_cast<float>(std::cos(u));
             const float sinU = static_cast<float>(std::sin(u));
 
-            Vertex_Po vertex{
+            DirectX::XMFLOAT3 normal(cosU * sinV, cosV, sinU * sinV);
+
+            Vertex_PoNo vertex{
                 DirectX::XMFLOAT3(
                     radius * cosU * sinV,
                     radius + radius * cosV,
                     radius * sinU * sinV
-                )
+                ), normal
             };
             verts.push_back(vertex);
         }
     }
 
-    verts.push_back(Vertex_Po{ DirectX::XMFLOAT3(0, 0, 0) }); // bottom
+    verts.push_back(Vertex_PoNo{ DirectX::XMFLOAT3(0, 0, 0), DirectX::XMFLOAT3(0, -1, 0) }); // bottom
 
     int startIdx = 1 + m_parts;
     for (int j = 0; j < m_parts - 2; ++j) {
@@ -149,7 +153,7 @@ void Cutter::GenerateSpherical(std::vector<Vertex_Po>& verts, std::vector<USHORT
     }
 }
 
-void Cutter::GenerateCylindrical(std::vector<Vertex_Po>& verts, std::vector<USHORT>& idxs) const {
+void Cutter::GenerateCylindrical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs) const {
     verts.reserve(2 * m_parts + 2); // there are 2 caps + 2 center points 
     idxs.reserve(3 * (2 * m_parts + 2 * m_parts)); // there are 2 caps + 2 triangles for each side
 
@@ -161,23 +165,25 @@ void Cutter::GenerateCylindrical(std::vector<Vertex_Po>& verts, std::vector<USHO
         const float cosA = static_cast<float>(std::cos(angle));
         const float sinA = static_cast<float>(std::sin(angle));
 
+        DirectX::XMFLOAT3 normal(cosA, 0, sinA);
+
         // bottom vertex
-        Vertex_Po bottomVertex{
+        Vertex_PoNo bottomVertex{
             DirectX::XMFLOAT3(
                 radius * cosA,
                 0, // base level
                 radius * sinA 
-            )
+            ), normal
         };
         verts.push_back(bottomVertex);
 
         // top vertex
-        Vertex_Po topVertex{
+        Vertex_PoNo topVertex{
             DirectX::XMFLOAT3(
                 radius * cosA,
                 m_totalCutterLength,
                 radius * sinA
-            )
+            ), normal
         };
         verts.push_back(topVertex);
     }
@@ -202,8 +208,8 @@ void Cutter::GenerateCylindrical(std::vector<Vertex_Po>& verts, std::vector<USHO
     }
 
     // center points
-    verts.push_back(Vertex_Po{ DirectX::XMFLOAT3(0, 0, 0) }); // bottom
-    verts.push_back(Vertex_Po{ DirectX::XMFLOAT3(0, m_totalCutterLength, 0) }); // top
+    verts.push_back(Vertex_PoNo{ DirectX::XMFLOAT3(0, 0, 0), DirectX::XMFLOAT3(0, -1, 0) }); // bottom
+    verts.push_back(Vertex_PoNo{ DirectX::XMFLOAT3(0, m_totalCutterLength, 0), DirectX::XMFLOAT3(0, 1, 0) }); // top
 
     int bottomCenterIndex = static_cast<int>(verts.size()) - 2;
     int topCenterIndex = static_cast<int>(verts.size()) - 1;
