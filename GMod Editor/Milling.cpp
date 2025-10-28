@@ -54,7 +54,15 @@ void Milling::UpdateHeightMap(const Device& device) {
 
 std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos) {
 	// TODO
-	//updateHeightMap = true;
+	// use bresenham to get list of pixels to check, max height, isMilling
+	// check margins
+	// check base
+	// if milling
+	// millingHeight >= maxHeight
+	// check angle
+	// for spherical, distance from tip to elements should >= 0 (consider vector as y = mx + b and calculate distances)
+	// if everything is okay, mill
+	updateHeightMap = true;
 	return std::nullopt;
 }
 
