@@ -2,10 +2,9 @@
 
 cbuffer cbMillInfo : register(b3)
 {
-    float3 size;
-    float3 centre;
-    uint3 resolutions; 
-    float3 padding; 
+    float4 size;
+    float4 centre;
+    uint4 resolutions; 
 };
 
 struct HSInput
@@ -41,7 +40,7 @@ HSPatchOutput HSPatch(InputPatch<HSInput, PATCH_SIZE> patch, uint patchID : SV_P
 
 [domain("quad")]
 [partitioning("integer")]
-[outputtopology("triangle_cw")]
+[outputtopology("triangle_ccw")]
 [outputcontrolpoints(PATCH_SIZE)]
 [patchconstantfunc("HSPatch")]
 [maxtessfactor(64.0f)]

@@ -80,6 +80,9 @@ namespace app {
 			std::array<float, 3> specular = { 0.774597f, 0.774597f, 0.774597f };
 			float shininess = 0.6f;
 		} display;
+		
+		std::wstring millTexPath = L"";
+		bool updateMillTex = false;
 
 		Milling milling;
 		PathParser parser;
@@ -126,6 +129,8 @@ namespace app {
 
 		std::string OpenFileDialog_CAM();
 		void LoadPathFile(const std::string& m_path);
+
+		std::string OpenFileDialogTex();
 
 		inline int tableHeight(int rows) const {
 			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();

@@ -29,6 +29,8 @@ namespace app {
 		mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(const mini::dx_ptr<ID3D11Texture2D>& texture) const;
 
 		mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(SIZE size) const;
+
+		mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(const std::wstring& texPath) const;
 #pragma endregion
 
 #pragma region BUFFERS

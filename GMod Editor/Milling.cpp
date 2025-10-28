@@ -13,18 +13,19 @@ void Milling::ResetHeightMap(const Device& device) {
 	m_heightMap = std::vector<std::vector<float>>(TextureSizeX(), std::vector<float>(TextureSizeY(), SizeZ()));
 
 	auto texDesc = Texture2DDescription::DynamicTextureDescription(TextureSizeY(), TextureSizeX());
-	m_heighMapTex = device.CreateTexture(texDesc);
+	m_heightMapTex = device.CreateTexture(texDesc);
 
 	UpdateHeightMap(device);
 
-	heightMapTexSRV = device.CreateShaderResourceView(m_heighMapTex);
+	m_heightMapTexSRV = device.CreateShaderResourceView(m_heightMapTex);
+
+	ID3D11ShaderResourceView* gsr[] = { m_heightMapTexSRV.get() };
+	device.deviceContext()->GSSetShaderResources(0, 1, gsr);
 
 	if (baseMeshSizeChanged) {
 		UpdateMesh(device);
 		baseMeshSizeChanged = false;
 	}
-
-	// bind in Application, with other textures, if any
 }
 
 void Milling::UpdateHeightMap(const Device& device) {
@@ -32,21 +33,23 @@ void Milling::UpdateHeightMap(const Device& device) {
 	const unsigned int sizeX = TextureSizeX();
 	const unsigned int sizeY = TextureSizeY();
 
-	std::vector<uint8_t> image(sizeX * sizeY * 4, 0);
+	uint8_t whole = static_cast<uint8_t>(SizeZ()); // assume max height is 255
+	uint8_t frac = static_cast<uint8_t>((SizeZ() - whole) * 100); // up to 2 decimals
+
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	device.deviceContext()->Map(m_heightMapTex.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	auto* data = static_cast<uint8_t*>(mapped.pData);
 	for (unsigned int x = 0; x < sizeX; ++x) {
 		for (unsigned int y = 0; y < sizeY; ++y) {
 			float& height = m_heightMap[x][y];
-			size_t idx = 4 * (x * sizeY + y);
-
-			uint8_t whole = static_cast<uint8_t>(SizeZ()); // assume max height is 255
-			uint8_t frac = static_cast<uint8_t>((SizeZ() - whole) * 100); // up to 2 decimals
-			image[idx + 0] = static_cast<uint8_t>(height / SizeZ()) * 255; // relative height
-			image[idx + 1] = whole; // whole part of max height
-			image[idx + 2] = frac; // 2 decimals of max height
-			image[idx + 3] = 255; // unused
+			size_t idx = (x * sizeY + y) * 4;
+			data[idx + 0] = static_cast<uint8_t>(std::clamp(height / SizeZ(), 0.f, 1.f) * 255); // relative height
+			data[idx + 1] = whole; // whole part of max height
+			data[idx + 2] = frac; // 2 decimals of max height
+			data[idx + 3] = 255; // unused
 		}
 	}
-	device.deviceContext()->UpdateSubresource(m_heighMapTex.get(), 0, nullptr, image.data(), sizeY * 4, 0);
+	device.deviceContext()->Unmap(m_heightMapTex.get(), 0);
 }
 
 std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos) {
@@ -56,7 +59,7 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 }
 
 void Milling::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
-	map.at(ShaderType::Regular).Set(context);
+	map.at(ShaderType::Milling).Set(context);
 	m_planeMesh.Render(context);
 }
 
@@ -102,7 +105,6 @@ void Milling::UpdateMesh(const Device& device) {
 			idxs[idx++] = br;
 		}
 	}
-
 	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 }
 

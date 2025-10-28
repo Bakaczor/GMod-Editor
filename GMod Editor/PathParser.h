@@ -40,6 +40,8 @@ namespace app {
 		void Parse(std::ifstream& file);
 		void Clear();
 
+		inline bool Empty() { return m_path.empty(); }
+
 		struct NextStep {
 			std::vector<gmod::vector3<float>> destinations;
 			std::vector<int> associatedCommandNumbers; // for g-code debug purposes

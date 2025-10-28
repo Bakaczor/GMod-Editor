@@ -25,7 +25,7 @@ std::unique_ptr<CubeModel> Application::m_cubeModel = std::make_unique<CubeModel
 std::unique_ptr<PointModel> Application::m_pointModel = std::make_unique<PointModel>();
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_camera(-10.0f), 
+	m_device(m_window), m_camera(-150.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffViewInv(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
@@ -35,7 +35,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_constBuffTrimInfo(m_device.CreateConstantBuffer<TrimmingInfo>()),
 	m_constBuffDirLight(m_device.CreateConstantBuffer<DirLight>()),
 	m_constBuffMaterial(m_device.CreateConstantBuffer<Material>()),
-	m_constBuffMillInfo(m_device.CreateConstantBuffer<MillingInfo>())
+	m_constBuffMillInfo(m_device.CreateConstantBuffer<MillingInfo>()),
+	m_millTexSRV(m_device.CreateShaderResourceView(L"./textures/chrome.jpeg"))
 {
 	m_UI = std::make_unique<UI>();
 	m_mouse.prevCursorPos = {
@@ -219,7 +220,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_device.deviceContext()->GSSetSamplers(0, 1, &s_ptr);
 	m_device.deviceContext()->PSSetSamplers(0, 1, &s_ptr);
 
-	BindTrimTextures();
+	BindPSTextures();
 
 	// GLOBAL
 	m_axesModel->Initialize(m_device);
@@ -234,9 +235,9 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_UI->selection.SetModel(m_pointModel.get());
 }
 
-void Application::BindTrimTextures() {
-	ID3D11ShaderResourceView* psr[] = { m_UI->intersection.uv1TrimTexSRV.get(), m_UI->intersection.uv2TrimTexSRV.get() };
-	m_device.deviceContext()->PSSetShaderResources(0, 2, psr);
+void Application::BindPSTextures() {
+	ID3D11ShaderResourceView* psr[] = { m_UI->intersection.uv1TrimTexSRV.get(), m_UI->intersection.uv2TrimTexSRV.get(), m_millTexSRV.get() };
+	m_device.deviceContext()->PSSetShaderResources(0, 3, psr);
 }
 
 void Application::Initialize() {
@@ -337,6 +338,12 @@ void Application::Update() {
 	}
 
 	if (!m_UI->showCAD) {
+		if (m_UI->updateMillTex) {
+			m_UI->updateMillTex = false;
+			m_millTexSRV.release();
+			m_millTexSRV = m_device.CreateShaderResourceView(m_UI->millTexPath);
+			BindPSTextures();
+		}
 		DirectX::XMFLOAT4X4 viewMtxInv = matrix4_to_XMFLOAT4X4(m_camera.viewMatrix_inv());
 		m_device.UpdateBuffer(m_constBuffViewInv, viewMtxInv);
 		DirLight dirLight {
@@ -356,20 +363,15 @@ void Application::Update() {
 		auto& milling = m_UI->milling;
 		if (milling.resetHeightMap || milling.sceneChanged) {
 			MillingInfo millInfo {
-				DirectX::XMFLOAT3(milling.size.data()),
-				DirectX::XMFLOAT3(milling.centre.data()),
-				DirectX::XMUINT3(milling.resolutionX, milling.resolutionY, milling.baseMeshSize),
-				{ 0, 0, 0 }
+				DirectX::XMFLOAT4(milling.size.data()),
+				DirectX::XMFLOAT4(milling.centre.data()),
+				DirectX::XMUINT4(milling.resolutionX, milling.resolutionY, milling.baseMeshSize, 0)
 			};
 			m_device.UpdateBuffer(m_constBuffMillInfo, millInfo);
 		}
 		if (milling.resetHeightMap) {
 			milling.ResetHeightMap(m_device);
-			// bind textures
-			ID3D11ShaderResourceView* gsr[] = { milling.heightMapTexSRV.get() };
-			m_device.deviceContext()->GSSetShaderResources(0, 1, gsr);
 		}
-			
 		if (milling.updateHeightMap) {
 			milling.UpdateHeightMap(m_device);
 		}
@@ -530,11 +532,11 @@ void Application::Render() {
 			m_UI->updatePreview = false;
 			m_UI->intersection.UpdateMesh(m_device);
 			m_UI->intersection.UpdateUVPlanes(m_device);
-			BindTrimTextures();
+			BindPSTextures();
 		}
 		if (m_UI->intersection.reupload) {
 			m_UI->intersection.ReUploadUVPlanes(m_device);
-			BindTrimTextures();
+			BindPSTextures();
 		}
 
 		m_device.UpdateBuffer(m_constBuffModel, matrix4_to_XMFLOAT4X4(gmod::matrix4<float>::identity()));

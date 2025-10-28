@@ -33,6 +33,7 @@ void PathAnimator::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, 
 }
 
 void PathAnimator::CompleteAnimation(const Device& device) {
+	if (m_path.Empty()) { return; }
 	std::optional<PathParser::MillingCommand> cmd;
 	while ((cmd = m_path.GetNextCommand()).has_value()) {
 		auto& coords = cmd.value().coordinates;

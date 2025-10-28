@@ -32,7 +32,7 @@ float4 main(PSInput input) : SV_TARGET
     float3 final = weights.x * color.rgb * ambient.rgb * surfaceColor.rgb;
     float3 N = normalize(input.normal);
     float3 V = normalize(input.view);
-    float3 L = -normalize(direction);
+    float3 L = -normalize(direction.xyz);
     float3 R = 2 * dot(N, L) * N - L;
     final += weights.y * color.rgb * diffuse.rgb * saturate(dot(N, L)) * surfaceColor.rgb;
     final += weights.z * color.rgb * specular.rgb * pow(saturate(dot(V, R)), shininess) * surfaceColor.rgb;

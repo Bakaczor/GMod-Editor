@@ -82,6 +82,12 @@
     <Filter Include="Pliki zasobów\Milling">
       <UniqueIdentifier>{93b0627f-1284-4e9e-9ba8-63e7d5063e76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki źródłowe\d3dx\DirectX">
+      <UniqueIdentifier>{7f1db83d-b620-45ab-a5f6-0549fa4a5004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe\d3dx\DirectX">
+      <UniqueIdentifier>{5a40f91a-55bb-4a6c-976a-0b4f237e7109}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -216,6 +222,12 @@
     <ClInclude Include="CutterType.h">
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>Pliki nagłówkowe\d3dx\DirectX</Filter>
+    </ClInclude>
+    <ClInclude Include="WICTextureLoader.h">
+      <Filter>Pliki nagłówkowe\d3dx\DirectX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -331,6 +343,12 @@
     </ClCompile>
     <ClCompile Include="Cutter.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="WICTextureLoader.cpp">
+      <Filter>Pliki źródłowe\d3dx\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>Pliki źródłowe\d3dx\DirectX</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

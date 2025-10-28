@@ -15,11 +15,11 @@ namespace app {
 		Cutter cutter;
 
 		bool baseMeshSizeChanged = true;
-		unsigned int baseMeshSize = 5;
-		unsigned int resolutionX = 30;
-		inline unsigned int TextureSizeX() const { return baseMeshSize * (resolutionX + 1); }
-		unsigned int resolutionY = 30;
-		inline unsigned int TextureSizeY() const { return baseMeshSize * (resolutionY + 1); }
+		unsigned int baseMeshSize = 8;
+		unsigned int resolutionX = 24;
+		inline unsigned int TextureSizeX() const { return baseMeshSize * resolutionX + 1; }
+		unsigned int resolutionY = 24;
+		inline unsigned int TextureSizeY() const { return baseMeshSize * resolutionY + 1; }
 
 		// all in millimetres
 		std::array<float, 3> centre = { 0.f, 0.f, 0.f };
@@ -31,7 +31,7 @@ namespace app {
 		float margin = 0.5f;
 		bool sceneChanged = false;
 
-		mini::dx_ptr<ID3D11ShaderResourceView> heightMapTexSRV;
+
 
 		Milling();
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;
@@ -47,7 +47,8 @@ namespace app {
 	private:
 		Mesh m_planeMesh;
 		std::vector<std::vector<float>> m_heightMap;
-		mini::dx_ptr<ID3D11Texture2D> m_heighMapTex;
+		mini::dx_ptr<ID3D11Texture2D> m_heightMapTex;		
+		mini::dx_ptr<ID3D11ShaderResourceView> m_heightMapTexSRV;
 
 		DirectX::XMFLOAT3 CalculateNormal(unsigned int x, unsigned int y, unsigned int size, float stepX, float stepY, const std::vector<Vertex_PoNo>& verts);
 	};

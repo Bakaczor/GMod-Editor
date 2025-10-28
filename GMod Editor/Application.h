@@ -35,10 +35,9 @@ namespace app {
 		float padding;			// 4 bytes
 	};
 	struct MillingInfo {
-		DirectX::XMFLOAT3 size;		  // 12 bytes
-		DirectX::XMFLOAT3 centre;	  // 12 bytes
-		DirectX::XMUINT3 resolutions; // 12 bytes
-		float padding[3];			  // 12 bytes
+		DirectX::XMFLOAT4 size;		  // 16 bytes
+		DirectX::XMFLOAT4 centre;	  // 16 bytes
+		DirectX::XMUINT4 resolutions; // 16 bytes
 	};
 
 	class UI;
@@ -136,7 +135,9 @@ namespace app {
 		mini::dx_ptr<ID3D11Buffer> m_constBuffMaterial;
 		mini::dx_ptr<ID3D11Buffer> m_constBuffMillInfo;
 
-		void BindTrimTextures();
+		mini::dx_ptr<ID3D11ShaderResourceView> m_millTexSRV;
+
+		void BindPSTextures();
 #pragma endregion
 	};
 }

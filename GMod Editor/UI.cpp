@@ -150,6 +150,12 @@ void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
 	ImGui::SeparatorText("Display settings");
 	ImGui::Spacing();
 
+	if (ImGui::Button("Load texture", ImVec2(ImGui::GetContentRegionAvail().x, 0.f))) {
+		auto path = OpenFileDialogTex();
+		millTexPath = std::wstring(path.begin(), path.end());
+		updateMillTex = true;
+	}
+
 	ImGui::Text("Light color:");
 	ImGui::ColorEdit3("##light_color", display.color.data());
 	ImGui::Text("Light direction:");
@@ -858,6 +864,19 @@ std::string UI::OpenFileDialog_CAM() {
 		"Open path file",   // Title
 		"",                 // Default dir
 		2,                  // Filter count
+		filters,            // File extensions
+		nullptr,            // Filter description
+		0                   // Single select
+	);
+	return file ? file : "";
+}
+
+std::string UI::OpenFileDialogTex() {
+	char const* filters[4] = { "*.jpg*", "*.jpeg*", "*.png", "*.dds" };
+	char const* file = tinyfd_openFileDialog(
+		"Open texture file",   // Title
+		"",                 // Default dir
+		4,                  // Filter count
 		filters,            // File extensions
 		nullptr,            // Filter description
 		0                   // Single select

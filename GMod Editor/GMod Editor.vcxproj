@@ -148,7 +148,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)*.cso" "$(ProjectDir)"</Command>
@@ -174,7 +174,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(OutDir)*.cso" "$(ProjectDir)"</Command>
@@ -196,6 +196,7 @@
     <ClInclude Include="Cursor.h" />
     <ClInclude Include="Cutter.h" />
     <ClInclude Include="CutterType.h" />
+    <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="Divisable.h" />
@@ -228,6 +229,7 @@
     <ClInclude Include="Torus.h" />
     <ClInclude Include="Transformable.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="WICTextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -241,6 +243,7 @@
     <ClCompile Include="CubeModel.cpp" />
     <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Cutter.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Gregory.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Milling.cpp" />
@@ -268,6 +271,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Transformable.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="WICTextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ds_milling.hlsl">

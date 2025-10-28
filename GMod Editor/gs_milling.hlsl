@@ -23,10 +23,9 @@ cbuffer cbViewInv : register(b3)
 
 cbuffer cbMillInfo : register(b4)
 {
-    float3 size;
-    float3 centre;
-    uint3 resolutions;
-    float3 padding;
+    float4 size;
+    float4 centre;
+    uint4 resolutions;
 };
 
 struct PSInput
@@ -88,28 +87,28 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
 {
     const float3 camPos = mul(viewMatrixInv, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
     
-    const float stepX = size.x / resolutions.z;
-    const float stepY = size.y / resolutions.z;
-    
     PSInput o;
     float2 uvs[3];
+    float3 positions[3] = { input[0].position, input[1].position, input[2].position };
     
     uint i;
     for (i = 0; i < 3; i++) {
         float2 uv;
-        uv.x = (input[i].position.z + size.x / 2 - centre.x) / stepX;
-        uv.y = (input[i].position.x + size.y / 2 - centre.y) / stepY;
+        // uv names are flipped
+        uv.x = (positions[i].z + size.x / 2 - centre.x) / size.x;
+        uv.y = (positions[i].x + size.y / 2 - centre.y) / size.y;
         
-        float3 tex = heightMap.SampleLevel(samp, uv, 0).rgb;
-        float maxH = tex.g * 255 + tex.b * 255 / 100.0f;
-        input[i].position.y = tex.r * maxH + centre.z;
-        uvs[i] = uv;
+        // there is something wrong here, but I don't know what
+        float3 tex = heightMap.SampleLevel(samp, uv.yx, 0).rgb;
+        float maxH = (tex.g + tex.b / 100.0f) * 255.f;
+        positions[i].y = tex.r * maxH + centre.z;
+        uvs[i] = uv.yx;
     }
     
     for (i = 0; i < 3; i++)
     {
         uint next_i = (i + 1) % 3;
-        uint edge = isMillingEdge(input[i].position, input[next_i].position);
+        uint edge = isMillingEdge(positions[i], positions[next_i]);
         if (edge == 0)
         {
             continue;
@@ -117,12 +116,12 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         
         float3 v0, v1, v2, v3, n0, n1, n2, n3;
         float2 uv0, uv1, uv2, uv3;
-        bool condX = input[i].position.x > input[next_i].position.x;
-        bool condZ = input[i].position.z < input[next_i].position.z;
+        bool condX = positions[i].x > positions[next_i].x;
+        bool condZ = positions[i].z < positions[next_i].z;
         if (edge == 1) // left
         {
-            v0 = condZ ? input[i].position : input[next_i].position;
-            v1 = condZ ? input[next_i].position : input[i].position;
+            v0 = condZ ? positions[i] : positions[next_i];
+            v1 = condZ ? positions[next_i] : positions[i];
             v2 = float3(v0.x, centre.z, v0.z);
             v3 = float3(v1.x, centre.z, v1.z);
             
@@ -135,8 +134,8 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         }
         else if (edge == 2) // top
         {
-            v0 = condX ? input[i].position : input[next_i].position;
-            v1 = condX ? input[next_i].position : input[i].position;
+            v0 = condX ? positions[i] : positions[next_i];
+            v1 = condX ? positions[next_i] : positions[i];
             v2 = float3(v0.x, centre.z, v0.z);
             v3 = float3(v1.x, centre.z, v1.z);
             
@@ -149,8 +148,8 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         }
         else if (edge == 3) // right
         {
-            v0 = !condZ ? input[i].position : input[next_i].position;
-            v1 = !condZ ? input[next_i].position : input[i].position;
+            v0 = !condZ ? positions[i] : positions[next_i];
+            v1 = !condZ ? positions[next_i] : positions[i];
             v2 = float3(v0.x, centre.z, v0.z);
             v3 = float3(v1.x, centre.z, v1.z);
             
@@ -163,8 +162,8 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         }
         else // bottom
         {
-            v0 = !condX ? input[i].position : input[next_i].position;
-            v1 = !condX ? input[next_i].position : input[i].position;
+            v0 = !condX ? positions[i] : positions[next_i];
+            v1 = !condX ? positions[next_i] : positions[i];
             v2 = float3(v0.x, centre.z, v0.z);
             v3 = float3(v1.x, centre.z, v1.z);
             
@@ -182,10 +181,10 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         GSInput tri1[3] =
         {
             { v0, n0 },
-            { v3, n3 },
-            { v2, n2 }
+            { v2, n2 },
+            { v3, n3 }
         };
-        float2 tri1uvs[3] = { uv0, uv3, uv2 };
+        float2 tri1uvs[3] = { uv0, uv2, uv3 };
         for (j = 0; j < 3; j++)
         {
             float4 worldPos = mul(modelMatrix, float4(tri1[j].position, 1.0f));
@@ -201,10 +200,10 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         GSInput tri2[3] =
         {
             { v0, n0 },
-            { v1, n1 },
-            { v3, n3 }
+            { v3, n3 },
+            { v1, n1 }
         };
-        float2 tri2uvs[3] = { uv0, uv1, uv3 };
+        float2 tri2uvs[3] = { uv0, uv3, uv1 };
         for (j = 0; j < 3; j++)
         {
             float4 worldPos = mul(modelMatrix, float4(tri2[j].position, 1.0f));
@@ -219,7 +218,7 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
     }
     
     for (i = 0; i < 3; i++) {
-        float4 worldPos = mul(modelMatrix, float4(input[i].position, 1.0f));
+        float4 worldPos = mul(modelMatrix, float4(positions[i], 1.0f));
         o.view = normalize(camPos - worldPos.xyz);
         o.worldPos = worldPos.xyz;
         o.normal = input[i].normal;

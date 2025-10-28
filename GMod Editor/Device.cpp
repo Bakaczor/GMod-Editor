@@ -1,6 +1,8 @@
-#include "Device.h"
 #include "../mini/exceptions.h"
 #include <fstream>
+#include "WICTextureLoader.h"
+#include "DDSTextureLoader.h"
+#include "Device.h"
 
 using namespace app;
 
@@ -113,6 +115,25 @@ mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(SIZE siz
 	auto desc = Texture2DDescription::DynamicTextureDescription(size.cx, size.cy);
 	mini::dx_ptr<ID3D11Texture2D> texture = CreateTexture(desc);
 	return CreateShaderResourceView(texture);
+}
+
+mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(const std::wstring& texPath) const {
+	ID3D11ShaderResourceView* rv = nullptr;;
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+	const std::wstring ext{ L".dds" };
+	if (texPath.size() > ext.size() && texPath.compare(texPath.size() - ext.size(), ext.size(), ext) == 0) {
+		hr = DirectX::CreateDDSTextureFromFile(m_device.get(), m_deviceContext.get(), texPath.c_str(), nullptr, &rv);
+	} else {
+		hr = DirectX::CreateWICTextureFromFile(m_device.get(), m_deviceContext.get(), texPath.c_str(), nullptr, &rv);
+	}
+
+	mini::dx_ptr<ID3D11ShaderResourceView> resourceView(rv);
+	if (FAILED(hr)) {
+		// Make sure CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED); is called before first use of this function!
+		THROW_DX(hr);
+	}
+	return resourceView;
 }
 #pragma endregion
 
