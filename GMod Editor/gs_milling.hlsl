@@ -98,7 +98,6 @@ void main(triangle GSInput input[3], inout TriangleStream<PSInput> outputStream)
         uv.x = (positions[i].z + size.x / 2 - centre.x) / size.x;
         uv.y = (positions[i].x + size.y / 2 - centre.y) / size.y;
         
-        // there is something wrong here, but I don't know what
         float3 tex = heightMap.SampleLevel(samp, uv.yx, 0).rgb;
         float maxH = (tex.g + tex.b / 100.0f) * 255.f;
         positions[i].y = tex.r * maxH + centre.z;

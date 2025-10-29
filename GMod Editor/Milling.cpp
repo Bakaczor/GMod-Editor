@@ -42,7 +42,7 @@ void Milling::UpdateHeightMap(const Device& device) {
 	for (unsigned int x = 0; x < sizeX; ++x) {
 		for (unsigned int y = 0; y < sizeY; ++y) {
 			float& height = m_heightMap[x][y];
-			size_t idx = (x * sizeY + y) * 4;
+			size_t idx = x * mapped.RowPitch + y * 4;
 			data[idx + 0] = static_cast<uint8_t>(std::clamp(height / SizeZ(), 0.f, 1.f) * 255); // relative height
 			data[idx + 1] = whole; // whole part of max height
 			data[idx + 2] = frac; // 2 decimals of max height

@@ -80,7 +80,7 @@ void Cutter::GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHO
     // indices for sides and cap
     for (int i = 1; i <= m_parts; ++i) {
         int next_i = (i + 1) % (m_parts + 1);
-        if (next_i == 0) { next_i++; }
+        if (next_i == 0) { next_i = 1; }
 
         // first triangle
         idxs.push_back(static_cast<USHORT>(i));

@@ -25,7 +25,7 @@ std::unique_ptr<CubeModel> Application::m_cubeModel = std::make_unique<CubeModel
 std::unique_ptr<PointModel> Application::m_pointModel = std::make_unique<PointModel>();
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_camera(-150.0f), 
+	m_device(m_window), m_camera(-2.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffViewInv(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
@@ -205,15 +205,11 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 	m_rastState = m_device.CreateRasterizerState(rsdesc);
 	m_device.deviceContext()->RSSetState(m_rastState.get());
 
-	m_blendState = m_device.CreateBlendState(BlendDescription::AdditiveBlendDescription());
-
-	DepthStencilDescription dsdesc;
-	m_dssWrite = m_device.CreateDepthStencilState(dsdesc);
-	dsdesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	m_dssNoWrite = m_device.CreateDepthStencilState(dsdesc);
-
 	rsdesc.FillMode = D3D11_FILL_WIREFRAME;
 	m_rastStateWireframe = m_device.CreateRasterizerState(rsdesc);
+	//m_device.deviceContext()->RSSetState(m_rastStateWireframe.get());
+
+	m_blendState = m_device.CreateBlendState(BlendDescription::AdditiveBlendDescription());
 
 	m_sampState = m_device.CreateSamplerState(SamplerDescription());
 	auto s_ptr = m_sampState.get();
@@ -229,7 +225,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_axes.SetModel(m_axesModel.get());
 	m_UI->cursor.SetModel(m_axesModel.get());
-	m_UI->cursor.transform.SetScaling(0.5, 0.5, 0.5);
+	m_UI->cursor.transform.SetScaling(1, 1, 1);
 
 	m_UI->selection.color = { 0.0f, 0.0f, 1.0f, 1.0f };
 	m_UI->selection.SetModel(m_pointModel.get());
@@ -250,13 +246,21 @@ void Application::Initialize() {
 	const mini::dx_ptr<ID3D11Texture2D> backTexture(temp);
 	m_backBuffer = m_device.CreateRenderTargetView(backTexture);
 
-	// DEPTH STENCIL
+	// DEPTH STENCIL VIEW
 	SIZE size = m_window.getClientSize();
 	m_depthBuffer = m_device.CreateDepthStencilView(size);
 
 	// OUTPUT MERGER
 	auto backBuffer = m_backBuffer.get();
 	m_device.deviceContext()->OMSetRenderTargets(1, &backBuffer, m_depthBuffer.get());
+
+	// DEPTH STENCIL DESCRIPTION
+	DepthStencilDescription dsdesc;
+	m_dssWrite = m_device.CreateDepthStencilState(dsdesc);
+	m_device.deviceContext()->OMSetDepthStencilState(m_dssWrite.get(), 1);
+
+	dsdesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	m_dssNoWrite = m_device.CreateDepthStencilState(dsdesc); // used in stereoscopy
 
 	// VIEWPORT
 	Viewport viewport{ size };
@@ -481,7 +485,7 @@ void Application::Render() {
 		m_device.deviceContext()->OMSetDepthStencilState(m_dssNoWrite.get(), 0);
 		RenderStereoscopic(-1, m_UI->stereoRed);
 		RenderStereoscopic(+1, m_UI->stereoCyan);
-		m_device.deviceContext()->OMSetDepthStencilState(nullptr, 0);
+		m_device.deviceContext()->OMSetDepthStencilState(m_dssWrite.get(), 0);
 		m_device.deviceContext()->OMSetBlendState(nullptr, nullptr, UINT_MAX);
 		return;
 	}
