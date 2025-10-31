@@ -97,13 +97,16 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 	auto [nextX2, nextY2] = Scene2Canvas(nextPos2);
 
 	// mill
+	const float xScaling = ((TextureSizeX() - 1) / size[0]);
+	const float yScaling = ((TextureSizeY() - 1) / size[1]);
+	const float canvasR = R * std::sqrt((xScaling * xScaling + yScaling * yScaling) / 2);
+
 	float maxHeight = 0.f;
-	float canvasR = R * ((TextureSizeX() - 1) / size[0]);
 	float mH;
 
 	// circle at the start
 	if (AreWithinCanvas(currX, currY)) {
-		mH = DrawCircle(canvas, currX, currY, R);
+		mH = DrawCircle(canvas, currX, currY, canvasR);
 		maxHeight = mH > maxHeight ? mH : maxHeight;
 
 		mH = FloodFill(canvas, currX, currY);
@@ -111,7 +114,7 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 	}
 	// circle at the end
 	if (AreWithinCanvas(nextX, nextY)) {
-		mH = DrawCircle(canvas, nextX, nextY, R);
+		mH = DrawCircle(canvas, nextX, nextY, canvasR);
 		maxHeight = mH > maxHeight ? mH : maxHeight;
 
 		mH = FloodFill(canvas, nextX, nextY);

@@ -15,15 +15,15 @@ namespace app {
 		Cutter cutter;
 
 		bool baseMeshSizeChanged = true;
-		unsigned int baseMeshSize = 7;
-		unsigned int resolutionX = 10;
+		unsigned int baseMeshSize = 8;
+		unsigned int resolutionX = 8;
 		inline unsigned int TextureSizeX() const { return baseMeshSize * resolutionX + 1; }
-		unsigned int resolutionY = 10;
+		unsigned int resolutionY = 8;
 		inline unsigned int TextureSizeY() const { return baseMeshSize * resolutionY + 1; }
 
 		// all in millimetres, milling space
 		std::array<float, 3> centre = { 0.f, 0.f, 0.f };
-		std::array<float, 3> size = { 200.f, 200.f, 50.f };
+		std::array<float, 3> size = { 250.f, 250.f, 50.f };
 		inline float SizeX() const { return size[0]; }
 		inline float SizeY() const { return size[1]; }
 		inline float SizeZ() const { return size[2]; }

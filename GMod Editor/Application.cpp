@@ -17,7 +17,7 @@ const std::wstring Application::m_appName = L"GMod Editor";
 int Application::m_winWidth = 1024;
 int Application::m_winHeight = 720;
 const float Application::m_near = 0.05f;
-const float Application::m_far = 100.0f;
+const float Application::m_far = 1000.0f;
 const float Application::m_FOV = DirectX::XM_PIDIV2;
 
 std::unique_ptr<AxesModel> Application::m_axesModel = std::make_unique<AxesModel>();
@@ -394,14 +394,14 @@ gmod::matrix4<float> Application::projMatrix() const {
 	const float& f = m_far;
 
 	const float h = 1 / std::tan(0.5f * m_FOV);
-	const float l = h / aspect();
-	const float d = f - n;
+	const float w = h / aspect();
+	const float d = f / (n - f);
 
 	return gmod::matrix4<float>(
-		l, 0,  0,           0,
-		0, h,  0,           0,
-		0, 0, (f + n) / d, (2 * f * n) / d,
-		0, 0, -1,	        0
+		w, 0,   0,     0,
+		0, h,   0,     0,
+		0, 0,   d, d * n,
+		0, 0,  -1,     0
 	);
 }
 
@@ -411,16 +411,19 @@ gmod::matrix4<float> Application::projMatrix_inv() const {
 
 	const float h_1 = std::tan(0.5f * m_FOV);
 	const float w_1 = h_1 * aspect();
-	const float d = 2 * f * n;
+	const float d_1 = (n - f) / f;
+	const float n_1 = 1.f / n;
 
 	return gmod::matrix4<float>(
-		w_1, 0,	  0,		   0,
-		0,   h_1, 0,		   0,
-		0,   0,	  0,		  -1,
-		0,   0,  (f - n) / d, (f + n) / d
+		w_1, 0,	        0,   0,
+		0,   h_1,       0,   0,
+		0,   0,	        0,  -1,
+		0,   0, d_1 * n_1, n_1
 	);
 }
 
+// this probably doesn't work well anymore, with depth and clipping
+// TODO : test & fix
 gmod::matrix4<float> Application::stereoProjMatrix(int sign) const {
 	const float& n = m_near;
 	const float& f = m_far;

@@ -84,7 +84,7 @@ RasterizerDescription::RasterizerDescription() {
 	DepthBias = 0;
 	DepthBiasClamp = 0.0f;
 	SlopeScaledDepthBias = 0.0f;
-	DepthClipEnable = false;
+	DepthClipEnable = true;
 	ScissorEnable = false;
 	MultisampleEnable = false;
 	AntialiasedLineEnable = true;

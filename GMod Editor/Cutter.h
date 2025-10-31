@@ -45,8 +45,8 @@ namespace app {
 
 		// all in millimetres
 		float m_millingPartDiameter = 10.f;
-		float m_millingPartHeight = 25.f;
-		float m_totalCutterLength = 50.f;
+		float m_millingPartHeight = 40.f;
+		float m_totalCutterLength = 60.f;
 
 		CutterType m_cutterType = CutterType::Spherical;
 		float m_maxHorizontalDeviationAngle = 5.0f; // degrees
