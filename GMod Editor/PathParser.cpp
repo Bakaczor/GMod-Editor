@@ -160,7 +160,7 @@ std::optional<PathParser::NextStep> PathParser::GetNextStep(float step) {
     if (m_stepIt >= m_path.size()) {
         return std::nullopt;
     }
-    constexpr float fzero = 1000.f * std::numeric_limits<float>::epsilon();
+    constexpr float fzero = 100.f * std::numeric_limits<float>::epsilon();
     float length = (m_path[m_stepIt].coordinates - m_stepPos).length();
     if (std::abs(length - step) < fzero) {
         auto& currCmd = m_path[m_stepIt];

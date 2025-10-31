@@ -44,7 +44,7 @@ namespace app {
 		std::optional<std::string> Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos);
 	private:
 		// value to consider as 0 for floats
-		const float FZERO = 1000.f * std::numeric_limits<float>::epsilon();
+		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
 
 		Mesh m_planeMesh;
 		std::vector<std::vector<float>> m_heightMap;
