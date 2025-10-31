@@ -17,7 +17,6 @@ struct HSPatchOutput
 {
     float edges[4] : SV_TessFactor;
     float inside[2] : SV_InsideTessFactor;
-    uint patchID : ID;
 };
 
 struct DSInput
@@ -34,7 +33,6 @@ HSPatchOutput HSPatch(InputPatch<HSInput, PATCH_SIZE> patch, uint patchID : SV_P
     output.edges[1] = output.edges[3] = (float) resolutions.y;
     output.inside[0] = (float) resolutions.y;
     output.inside[1] = (float) resolutions.x;
-    output.patchID = patchID;
     return output;
 }
 

@@ -14,7 +14,7 @@ cbuffer cbMaterial : register(b3)
     float4 diffuse;
     float4 specular;
     float shininess;
-    float3 padding3;
+    float3 padding;
 };
 
 struct PSInput

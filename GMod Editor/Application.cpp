@@ -360,7 +360,8 @@ void Application::Update() {
 			DirectX::XMFLOAT4(m_UI->display.ambient.data()),
 			DirectX::XMFLOAT4(m_UI->display.diffuse.data()),
 			DirectX::XMFLOAT4(m_UI->display.specular.data()),
-			m_UI->display.shininess
+			m_UI->display.shininess,
+			{ 0.f, 0.f, 0.f }
 		};
 		m_device.UpdateBuffer(m_constBuffMaterial, material);
 
