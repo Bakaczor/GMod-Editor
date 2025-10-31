@@ -25,7 +25,7 @@ std::unique_ptr<CubeModel> Application::m_cubeModel = std::make_unique<CubeModel
 std::unique_ptr<PointModel> Application::m_pointModel = std::make_unique<PointModel>();
 
 Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_winWidth, m_winHeight, m_appName),
-	m_device(m_window), m_camera(-2.0f), 
+	m_device(m_window), m_camera(-150.0f), 
 	m_constBuffModel(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffView(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),
 	m_constBuffViewInv(m_device.CreateConstantBuffer<DirectX::XMFLOAT4X4>()),

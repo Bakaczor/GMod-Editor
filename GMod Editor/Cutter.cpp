@@ -235,12 +235,19 @@ gmod::matrix4<float> Cutter::modelMatrix() {
     auto MM = m_transform.modelMatrix();
     if (!m_useCutterBase) {
         auto oldPos = m_transform.position();
-        auto newPos = oldPos + gmod::vector3<float>(0, -m_millingPartHeight / 2.f, 0);
+        auto newPos = oldPos + gmod::vector3<float>(0, -GetTipCentreDiff(), 0);
         m_transform.SetTranslation(newPos.x(), newPos.y(), newPos.z());
         MM = m_transform.modelMatrix();
         m_transform.SetTranslation(oldPos.x(), oldPos.y(), oldPos.z());
     }
 	return MM;
+}
+
+float Cutter::GetTipCentreDiff() const {
+    if (m_useCutterBase) {
+        return 0.f;
+    }
+    return m_millingPartHeight / 2.f;
 }
 
 float Cutter::GetRadius() const {
@@ -259,6 +266,14 @@ float Cutter::GetMaxAngle() const {
 	return m_maxHorizontalDeviationAngle;
 }
 
+bool Cutter::shouldApplyToBothDirections() const {
+    return m_applyToBothDirections;
+}
+
+CutterType Cutter::GetCutterType() const {
+    return m_cutterType;
+}
+
 bool Cutter::isBaseOriented() const {
 	return m_useCutterBase;
 }
@@ -270,7 +285,8 @@ gmod::vector3<float> Cutter::GetPosition() const {
 void Cutter::SetCutterDiameter(int diameter) {
 	m_millingPartDiameter = static_cast<float>(diameter);
 	propertiesChanged = true;
-    if (m_cutterType == CutterType::Spherical) {
+
+    if (m_millingPartDiameter > m_millingPartHeight) {
         m_millingPartHeight = m_millingPartDiameter;
     }
     if (m_millingPartDiameter > m_totalCutterLength) {
@@ -325,16 +341,15 @@ void Cutter::RenderProperties() {
     }
 	ImGui::NextColumn();
 
-	if (m_cutterType == CutterType::Cylindrical) {
-		ImGui::Text("height [mm]:");  ImGui::NextColumn();
-		ImGui::SetNextItemWidth(inputWidth);
-        oldValue = m_millingPartHeight;
-		ImGui::InputFloat("##height", &m_millingPartHeight, 0.01f, 1.f);
-        checkChange(oldValue, m_millingPartHeight);
-		ImGui::NextColumn();
-    } else {
+	ImGui::Text("height [mm]:");  ImGui::NextColumn();
+	ImGui::SetNextItemWidth(inputWidth);
+    oldValue = m_millingPartHeight;
+	ImGui::InputFloat("##height", &m_millingPartHeight, 0.01f, 1.f);
+    checkChange(oldValue, m_millingPartHeight);
+    if (m_millingPartDiameter > m_millingPartHeight) {
         m_millingPartHeight = m_millingPartDiameter;
     }
+	ImGui::NextColumn();
 
 	ImGui::Text("total length [mm]:");  ImGui::NextColumn();
 	ImGui::SetNextItemWidth(inputWidth);
@@ -349,6 +364,7 @@ void Cutter::RenderProperties() {
 	ImGui::NextColumn();
 
 	ImGui::Columns(1);
+    ImGui::Checkbox("Apply to both directions", &m_applyToBothDirections);
 }
 
 void Cutter::RenderCutterOrientation() {

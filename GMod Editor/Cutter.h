@@ -19,10 +19,13 @@ namespace app {
 		void RenderProperties();
 		void RenderCutterOrientation();
 
+		float GetTipCentreDiff() const;
 		float GetRadius() const;
 		float GetCuttingHeight() const;
 		float GetTotalLength() const;
 		float GetMaxAngle() const;
+		bool shouldApplyToBothDirections() const;
+		CutterType GetCutterType() const;
 		bool isBaseOriented() const;
 		gmod::vector3<float> GetPosition() const;
 
@@ -42,11 +45,12 @@ namespace app {
 
 		// all in millimetres
 		float m_millingPartDiameter = 10.f;
-		float m_millingPartHeight = 10.f;
-		float m_totalCutterLength = 20.f;
+		float m_millingPartHeight = 25.f;
+		float m_totalCutterLength = 50.f;
 
 		CutterType m_cutterType = CutterType::Spherical;
-		float m_maxHorizontalDeviationAngle = 0.0f; // degrees
+		float m_maxHorizontalDeviationAngle = 5.0f; // degrees
+		bool m_applyToBothDirections = false;
 
 		bool m_useCutterBase = true;
 
