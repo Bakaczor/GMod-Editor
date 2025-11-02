@@ -143,8 +143,11 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 			return "ERROR: move to " + positionString + " is outside of milling zone";
 		}
 	}
-	mH = FloodFill(canvas, midX, midY);
-	maxHeight = mH > maxHeight ? mH : maxHeight;
+	// if mid is already true, it probably means we are dealing with tiny movements
+	if (!canvas[midX][midY]) {
+		mH = FloodFill(canvas, midX, midY);
+		maxHeight = mH > maxHeight ? mH : maxHeight;
+	}
 
 	float tipStartY = currPos.y();
 	float tipEndY = nextPos.y();
@@ -194,7 +197,7 @@ void Milling::UpdateMesh(const Device& device) {
 	for (unsigned int x = 0; x < size; ++x) {
 		for (unsigned int y = 0; y < size; ++y) {
 			unsigned int index = x * size + y;
-			verts[index].normal = CalculateNormal(x, y, size, stepX, stepY, verts);
+			verts[index].normal = CalculateNormal(x, y, stepX, stepY);
 		}
 	}
 
@@ -216,47 +219,52 @@ void Milling::UpdateMesh(const Device& device) {
 	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 }
 
-DirectX::XMFLOAT3 Milling::CalculateNormal(unsigned int x, unsigned int y, unsigned int size, float stepX, float stepY, const std::vector<Vertex_PoNo>& verts) {
-	float z_center = verts[x * size + y].position.y;
+DirectX::XMFLOAT3 Milling::CalculateNormal(unsigned int x, unsigned int y, float stepX, float stepY) const {
+	unsigned int xTex = x * resolutionX;
+	unsigned int yTex = y * resolutionY;
+
+	float z_center = m_heightMap[xTex][yTex];
 	float dz_dx, dz_dy;
 
-	if (x == 0) {
+	if (xTex == 0) {
 		// top edge
-		float z_below = verts[(x + 1) * size + y].position.y;
+		float z_below = m_heightMap[xTex + 1][yTex];
 		dz_dx = (z_below - z_center) / stepX;
-	} else if (x == size - 1) {
+	} else if (xTex == TextureSizeX() - 1) {
 		// bottom edge
-		float z_above = verts[(x - 1) * size + y].position.y;
+		float z_above = m_heightMap[xTex - 1][yTex];
 		dz_dx = (z_center - z_above) / stepX;
 	} else {
 		// interior
-		float z_above = verts[(x - 1) * size + y].position.y;
-		float z_below = verts[(x + 1) * size + y].position.y;
+		float z_above = m_heightMap[xTex - 1][yTex];
+		float z_below = m_heightMap[xTex + 1][yTex];
 		dz_dx = (z_below - z_above) / (2 * stepX);
 	}
 
-	if (y == 0) {
+	if (yTex == 0) {
 		// left edge
-		float z_toRight = verts[x * size + (y + 1)].position.y;
+		float z_toRight = m_heightMap[xTex][yTex + 1];
 		dz_dy = (z_toRight - z_center) / stepY;
-	} else if (y == size - 1) {
+	} else if (yTex == TextureSizeY() - 1) {
 		// right edge  
-		float z_toLeft = verts[x * size + (y - 1)].position.y;
+		float z_toLeft = m_heightMap[xTex][yTex - 1];
 		dz_dy = (z_center - z_toLeft) / stepY;
 	} else {
 		// interior
-		float z_toLeft = verts[x * size + (y - 1)].position.y;
-		float z_toRight = verts[x * size + (y + 1)].position.y;
+		float z_toLeft = m_heightMap[xTex][yTex - 1];
+		float z_toRight = m_heightMap[xTex][yTex + 1];
 		dz_dy = (z_toRight - z_toLeft) / (2 * stepY);
 	}
 
 	DirectX::XMFLOAT3 normal(-dz_dy, 1.0f, -dz_dx);
 
 	float length = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-	if (length > 0.0001f) {
+	if (length > FZERO) {
 		normal.x /= length;
 		normal.y /= length;
 		normal.z /= length;
+	} else {
+		normal = DirectX::XMFLOAT3(0.f, 1.f, 0.f);
 	}
 
 	return normal;

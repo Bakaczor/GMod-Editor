@@ -1,5 +1,3 @@
-#define PATCH_SIZE 4
-
 cbuffer cbMillInfo : register(b3)
 {
     float4 size;
@@ -25,14 +23,17 @@ struct DSInput
     float3 normal : NORMAL;
 };
 
+#define PATCH_SIZE 4
 
 HSPatchOutput HSPatch(InputPatch<HSInput, PATCH_SIZE> patch, uint patchID : SV_PrimitiveID)
 {
     HSPatchOutput output;
-    output.edges[0] = output.edges[2] = (float) resolutions.x;
-    output.edges[1] = output.edges[3] = (float) resolutions.y;
-    output.inside[0] = (float) resolutions.y;
-    output.inside[1] = (float) resolutions.x;
+    // adding "... * 1" fixes issues with compiler optimization in release
+    // TODO : investigate the reason
+    output.edges[0] = output.edges[2] = resolutions.x * 1;
+    output.edges[1] = output.edges[3] = resolutions.y * 1;
+    output.inside[0] = resolutions.y * 1;
+    output.inside[1] = resolutions.x * 1;
     return output;
 }
 

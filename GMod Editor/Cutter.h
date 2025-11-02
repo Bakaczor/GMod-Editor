@@ -49,7 +49,7 @@ namespace app {
 		float m_totalCutterLength = 60.f;
 
 		CutterType m_cutterType = CutterType::Spherical;
-		float m_maxHorizontalDeviationAngle = 5.0f; // degrees
+		float m_maxHorizontalDeviationAngle = 15.0f; // degrees
 		bool m_applyToBothDirections = false;
 
 		bool m_useCutterBase = true;

@@ -370,7 +370,7 @@ void Application::Update() {
 			MillingInfo millInfo {
 				DirectX::XMFLOAT4(milling.size.data()),
 				DirectX::XMFLOAT4(milling.centre.data()),
-				DirectX::XMUINT4(milling.resolutionX, milling.resolutionY, milling.baseMeshSize, 0)
+				DirectX::XMUINT4(milling.resolutionX, milling.resolutionY, milling.baseMeshSize, 0U)
 			};
 			m_device.UpdateBuffer(m_constBuffMillInfo, millInfo);
 		}
@@ -572,10 +572,13 @@ void Application::Render() {
 		if (m_UI->completeAnimation) {
 			m_UI->completeAnimation = false;
 			animator.CompleteAnimation(m_device);
+			milling.UpdateMesh(m_device); // update normals
 		}
 		// make animation step
 		if (animator.isRunning) {
-			animator.MakeStep(m_device);
+			if (!animator.MakeStep(m_device)) {
+				milling.UpdateMesh(m_device); // update normals
+			}
 		}
 		// display path
 		if (animator.displayPath && animator.canRender) {

@@ -51,7 +51,7 @@ namespace app {
 		mini::dx_ptr<ID3D11Texture2D> m_heightMapTex;		
 		mini::dx_ptr<ID3D11ShaderResourceView> m_heightMapTexSRV;
 
-		DirectX::XMFLOAT3 CalculateNormal(unsigned int x, unsigned int y, unsigned int size, float stepX, float stepY, const std::vector<Vertex_PoNo>& verts);
+		DirectX::XMFLOAT3 CalculateNormal(unsigned int x, unsigned int y, float stepX, float stepY) const;
 
 		bool IsWithinMargins(const gmod::vector3<float>& nextPos) const;
 		bool IsAboveBase(const gmod::vector3<float>& nextPos) const;
