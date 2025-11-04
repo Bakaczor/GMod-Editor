@@ -74,7 +74,7 @@ namespace app {
 		struct Display {
 			std::array<float, 3> color = { 1.f, 1.f, 1.f };
 			std::array<float, 3> direction = { 1.f, -1.f, 1.f };
-			std::array<float, 3> weights = { 1.f, 1.f, 1.f };
+			std::array<float, 3> weights = { 0.5f, 0.7f, 0.8f };
 			std::array<float, 3> ambient = { 0.25f, 0.25f, 0.25f };
 			std::array<float, 3> diffuse = { 0.4f, 0.4f, 0.4f };
 			std::array<float, 3> specular = { 0.774597f, 0.774597f, 0.774597f };
