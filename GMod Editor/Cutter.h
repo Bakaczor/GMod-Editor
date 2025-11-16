@@ -52,7 +52,8 @@ namespace app {
 		float m_maxHorizontalDeviationAngle = 15.0f; // degrees
 		bool m_applyToBothDirections = false;
 
-		bool m_useCutterBase = true;
+		// always use cutter base
+		const bool m_useCutterBase = true;
 
 		void GenerateSpherical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs);
 		void GenerateCylindrical(std::vector<Vertex_PoNo>& verts, std::vector<USHORT>& idxs) const;

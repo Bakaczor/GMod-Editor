@@ -87,7 +87,6 @@ namespace app {
 		Milling milling;
 		PathParser parser;
 		PathAnimator animator;
-		bool completeAnimation = false;
 
 		UI();
 		void Render(bool firstPass, Camera& camera);

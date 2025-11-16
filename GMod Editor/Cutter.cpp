@@ -368,16 +368,16 @@ void Cutter::RenderProperties() {
 }
 
 void Cutter::RenderCutterOrientation() {
-	ImGui::BeginGroup();
-	ImGui::Text("Use cutter:");
-	ImGui::SameLine();
-	if (ImGui::RadioButton("base", m_useCutterBase)) {
-		m_useCutterBase = true;
-	}
-	ImGui::SameLine();
-	if (ImGui::RadioButton("centre", !m_useCutterBase)) {
-		m_useCutterBase = false;
-	}
-	ImGui::EndGroup();
+	//ImGui::BeginGroup();
+	//ImGui::Text("Use cutter:");
+	//ImGui::SameLine();
+	//if (ImGui::RadioButton("base", m_useCutterBase)) {
+	//	m_useCutterBase = true;
+	//}
+	//ImGui::SameLine();
+	//if (ImGui::RadioButton("centre", !m_useCutterBase)) {
+	//	m_useCutterBase = false;
+	//}
+	//ImGui::EndGroup();
     ImGui::Checkbox("Show cutter", &showCutter);
 }

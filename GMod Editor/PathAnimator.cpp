@@ -1,5 +1,6 @@
 #include "PathAnimator.h"
 #include <numeric>
+#include <thread>
 
 using namespace app;
 
@@ -11,6 +12,7 @@ void PathAnimator::StartAnimation() {
 
 void PathAnimator::StopAnimation() {
 	isRunning = false;
+	completeAnimation = false;
 }
 
 void PathAnimator::ClearMesh() {
@@ -25,6 +27,8 @@ void PathAnimator::RestartAnimation() {
 	errorDetected = false;
 	m_path.ResetStepIterator();
 	m_path.ResetCommandIterator();
+
+	StopAnimation();
 }
 
 void PathAnimator::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
@@ -32,8 +36,22 @@ void PathAnimator::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, 
 	m_polylineMesh.Render(context);
 }
 
+void PathAnimator::CompleteAnimationAsync(const Device& device) {
+	if (!isRunning) {
+		std::thread([this, &device]() {
+			CompleteAnimation(device);
+			m_milling.UpdateHeightMap(device);
+		}).detach(); 
+	}
+}
+
 void PathAnimator::CompleteAnimation(const Device& device) {
-	if (m_path.Empty()) { return; }
+	if (m_path.Empty()) { 
+		RestartAnimation();
+		return; 
+	}
+	isRunning = true;
+
 	std::optional<PathParser::MillingCommand> cmd;
 	while ((cmd = m_path.GetNextCommand()).has_value()) {
 		auto& coords = cmd.value().coordinates;
@@ -45,7 +63,7 @@ void PathAnimator::CompleteAnimation(const Device& device) {
 		}
 
 		// verify and mill
-		auto veridct = m_milling.Mill(m_currPos, coords);
+		auto veridct = m_milling.Mill(m_currPos, coords, false);
 		if (veridct.has_value()) {
 			errorMsg = veridct.value() + " [N" + std::to_string(cmd.value().commandNumber) + "]";
 			errorDetected = true;
@@ -57,19 +75,18 @@ void PathAnimator::CompleteAnimation(const Device& device) {
 	}
 	auto& last = m_points.back();
 	m_milling.cutter.MoveTo(gmod::vector3<float>(last.x, last.y, last.z));
-	UpdateMesh(device);
 
+	UpdateMesh(device);
 	RestartAnimation();
 }
 
-bool PathAnimator::MakeStep(const Device& device) {
-	auto step = m_path.GetNextStep(stepSize);
+bool PathAnimator::MakeStep(const Device& device, float deltaTime) {
+	auto step = m_path.GetNextStep(deltaTime * speed);
 	int it = 0;
 	// first command
 	if (m_firstStep) {
 		m_firstStep = false;
 		if (!step.has_value()) {
-			StopAnimation();
 			RestartAnimation();
 			return false;
 		}
@@ -85,7 +102,6 @@ bool PathAnimator::MakeStep(const Device& device) {
 
 	// end of path
 	if (!step.has_value()) {
-		StopAnimation();
 		RestartAnimation();
 		return false;
 	}

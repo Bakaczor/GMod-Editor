@@ -44,10 +44,10 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept {
 	return *this;
 }
 
-void Mesh::Render(const mini::dx_ptr<ID3D11DeviceContext>& context) const {
+void Mesh::Render(const mini::dx_ptr<ID3D11DeviceContext>& context, DXGI_FORMAT format) const {
 	if (!m_indexBuffer || m_vertexBuffers.empty()) { return; }
 	context->IASetPrimitiveTopology(m_primitiveType);
-	context->IASetIndexBuffer(m_indexBuffer.get(), DXGI_FORMAT_R16_UINT, 0);
+	context->IASetIndexBuffer(m_indexBuffer.get(), format, 0);
 	context->IASetVertexBuffers(0, m_vertexBuffers.size(), m_vertexBuffers.data(), m_strides.data(), m_offsets.data());
 	context->DrawIndexed(m_indexCount, 0, 0);
 }

@@ -30,10 +30,10 @@ namespace app {
 
 		Mesh& operator=(const Mesh& other) = delete;
 		Mesh& operator=(Mesh&& other) noexcept;
-		void Render(const mini::dx_ptr<ID3D11DeviceContext>& context) const;
+		void Render(const mini::dx_ptr<ID3D11DeviceContext>& context, DXGI_FORMAT format = DXGI_FORMAT_R16_UINT) const;
 
-		template<typename Vertex>
-		void Update(const Device& device, const std::vector<Vertex> verts, const std::vector<USHORT> idxs, D3D_PRIMITIVE_TOPOLOGY primitiveType) {
+		template<typename Vertex, typename T>
+		void Update(const Device& device, const std::vector<Vertex> verts, const std::vector<T> idxs, D3D_PRIMITIVE_TOPOLOGY primitiveType) {
 			m_indexBuffer = device.CreateIndexBuffer(idxs);
 			m_vertexBuffers.clear();
 			m_vertexBuffers.push_back(device.CreateVertexBuffer(verts));

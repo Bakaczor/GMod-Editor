@@ -427,11 +427,5 @@
     <FxCompile Include="gs_milling.hlsl">
       <Filter>Pliki zasobów\Milling</Filter>
     </FxCompile>
-    <FxCompile Include="ds_milling.hlsl">
-      <Filter>Pliki zasobów\Milling</Filter>
-    </FxCompile>
-    <FxCompile Include="hs_milling.hlsl">
-      <Filter>Pliki zasobów\Milling</Filter>
-    </FxCompile>
   </ItemGroup>
 </Project>

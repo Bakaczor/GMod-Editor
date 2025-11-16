@@ -116,9 +116,9 @@ void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
 		ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
 		animator.isRunning ? "RUNNING" : "STOPPED"); ImGui::NextColumn();
 
-	ImGui::Text("Step size [mm]:"); ImGui::NextColumn();
+	ImGui::Text("Speed [mm/s]:"); ImGui::NextColumn();
 	ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputFloat("##simulationspeed", &animator.stepSize, 1.f, 10.f, "%.1f"); ImGui::NextColumn();
+	ImGui::InputFloat("##simulationspeed", &animator.speed, 1.f, 10.f, "%.1f"); ImGui::NextColumn();
 
 	ImGui::Columns(1);
 	ImGui::Checkbox("Display path", &animator.displayPath);
@@ -142,7 +142,7 @@ void UI::RenderRightPanel_CAM(bool firstPass, Camera& camera) {
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Complete", ImVec2(buttonWidth, 0))) {
-		completeAnimation = true;
+		animator.completeAnimation = true;
 	}
 	ImGui::EndGroup();
 

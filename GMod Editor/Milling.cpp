@@ -7,33 +7,28 @@
 using namespace app;
 
 Milling::Milling() {
-	m_heightMap = std::vector<std::vector<float>>(TextureSizeX(), std::vector<float>(TextureSizeY(), SizeZ()));
+	m_heightMap = std::vector<std::vector<float>>(resolutionX, std::vector<float>(resolutionY, SizeZ()));
 }
 
 void Milling::ResetHeightMap(const Device& device) {
-	resetHeightMap = false;
-	m_heightMap = std::vector<std::vector<float>>(TextureSizeX(), std::vector<float>(TextureSizeY(), SizeZ()));
+	resolutionChanged = false;
+	m_heightMap = std::vector<std::vector<float>>(resolutionX, std::vector<float>(resolutionY, SizeZ()));
 
-	auto texDesc = Texture2DDescription::DynamicTextureDescription(TextureSizeY(), TextureSizeX());
+	auto texDesc = Texture2DDescription::DynamicTextureDescription(resolutionY, resolutionX);
 	m_heightMapTex = device.CreateTexture(texDesc);
 
 	UpdateHeightMap(device);
 
 	m_heightMapTexSRV = device.CreateShaderResourceView(m_heightMapTex);
 
-	ID3D11ShaderResourceView* gsr[] = { m_heightMapTexSRV.get() };
-	device.deviceContext()->GSSetShaderResources(0, 1, gsr);
+	ID3D11ShaderResourceView* vsr[] = { m_heightMapTexSRV.get() };
+	device.deviceContext()->VSSetShaderResources(0, 1, vsr);
 
-	if (baseMeshSizeChanged) {
-		UpdateMesh(device);
-		baseMeshSizeChanged = false;
-	}
+	UpdateMesh(device);
 }
 
 void Milling::UpdateHeightMap(const Device& device) {
 	updateHeightMap = false;
-	const unsigned int sizeX = TextureSizeX();
-	const unsigned int sizeY = TextureSizeY();
 
 	uint8_t whole = static_cast<uint8_t>(SizeZ()); // assume max height is 255
 	uint8_t frac = static_cast<uint8_t>((SizeZ() - whole) * 100); // up to 2 decimals
@@ -41,8 +36,8 @@ void Milling::UpdateHeightMap(const Device& device) {
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	device.deviceContext()->Map(m_heightMapTex.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
 	auto* data = static_cast<uint8_t*>(mapped.pData);
-	for (unsigned int x = 0; x < sizeX; ++x) {
-		for (unsigned int y = 0; y < sizeY; ++y) {
+	for (unsigned int x = 0; x < resolutionX; ++x) {
+		for (unsigned int y = 0; y < resolutionY; ++y) {
 			float& height = m_heightMap[x][y];
 			size_t idx = x * mapped.RowPitch + y * 4;
 			data[idx + 0] = static_cast<uint8_t>(std::clamp(height / SizeZ(), 0.f, 1.f) * 255); // relative height
@@ -54,7 +49,7 @@ void Milling::UpdateHeightMap(const Device& device) {
 	device.deviceContext()->Unmap(m_heightMapTex.get(), 0);
 }
 
-std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos) {
+std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos, bool updateTexture) {
 	std::string positionString = "(" + std::to_string(nextPos.z()) + "," + std::to_string(nextPos.x()) + "," + std::to_string(nextPos.y()) + ")";
 	if (!IsWithinMargins(nextPos)) {
 		return "ERROR: next position " + positionString + " is outside milling margins";
@@ -62,7 +57,7 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 	if (!IsAboveBase(nextPos)) {
 		return "ERROR: next position " + positionString + " is below milling base";
 	}
-	std::vector<std::vector<bool>> canvas(TextureSizeX(), std::vector<bool>(TextureSizeY(), false));
+	std::vector<std::vector<bool>> canvas(resolutionX, std::vector<bool>(resolutionY, false));
 
 	auto [currX, currY] = Scene2Canvas(currPos);
 	auto [nextX, nextY] = Scene2Canvas(nextPos);
@@ -97,8 +92,8 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 	auto [nextX2, nextY2] = Scene2Canvas(nextPos2);
 
 	// mill
-	const float xScaling = ((TextureSizeX() - 1) / size[0]);
-	const float yScaling = ((TextureSizeY() - 1) / size[1]);
+	const float xScaling = ((resolutionX - 1) / size[0]);
+	const float yScaling = ((resolutionY - 1) / size[1]);
 	const float canvasR = R * std::sqrt((xScaling * xScaling + yScaling * yScaling) / 2);
 
 	float maxHeight = 0.f;
@@ -164,110 +159,54 @@ std::optional<std::string> Milling::Mill(const gmod::vector3<float>& currPos, co
 			return "ERROR: the movement to " + positionString + " uses non-milling part";
 		}
 		UpdateHeights(currPos, nextPos, canvas);
-		updateHeightMap = true;
+		updateHeightMap = updateTexture;
 	}
 	return std::nullopt;
 }
 
 void Milling::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const {
 	map.at(ShaderType::Milling).Set(context);
-	m_planeMesh.Render(context);
+	m_planeMesh.Render(context, DXGI_FORMAT_R32_UINT);
 }
 
 void Milling::UpdateMesh(const Device& device) {
 	sceneChanged = false;
-	const unsigned int size = baseMeshSize + 1;
 
-	std::vector<Vertex_PoNo> verts(size * size);
-	std::vector<USHORT> idxs(4 * baseMeshSize * baseMeshSize);
+	std::vector<Vertex_Po> verts(resolutionX * resolutionY);
+	std::vector<UINT> idxs(3 * 2 * (resolutionX - 1) * (resolutionY - 1));
 
-	float stepX = SizeX() / baseMeshSize;
-	float stepY = SizeY() / baseMeshSize;
+	float stepX = SizeX() / (resolutionX - 1);
+	float stepY = SizeY() / (resolutionY - 1);
 
-	for (unsigned int x = 0; x < size; ++x) {
-		for (unsigned int y = 0; y < size; ++y) {
-			unsigned int index = x * size + y;
-			float posX = -SizeX() / 2 + x * stepX + centre[0];
-			float posY = -SizeY() / 2 + y * stepY + centre[1];
-			float posZ = SizeZ() + centre[2];
-			verts[index] = Vertex_PoNo{ DirectX::XMFLOAT3(posY, posZ, posX), DirectX::XMFLOAT3(0, 0, 0) };
-		}
-	}
-
-	for (unsigned int x = 0; x < size; ++x) {
-		for (unsigned int y = 0; y < size; ++y) {
-			unsigned int index = x * size + y;
-			verts[index].normal = CalculateNormal(x, y, stepX, stepY);
+	for (unsigned int x = 0; x < resolutionX; ++x) {
+		for (unsigned int y = 0; y < resolutionY; ++y) {
+			unsigned int index = x * resolutionY + y;
+			float posX = -SizeX() / 2 + x * stepX + CentreX();
+			float posY = -SizeY() / 2 + y * stepY + CentreY();
+			float posZ = SizeZ() + CentreZ();
+			verts[index] = Vertex_Po{ DirectX::XMFLOAT3(posY, posZ, posX) };
 		}
 	}
 
 	unsigned int idx = 0;
-	for (unsigned int patchX = 0; patchX < baseMeshSize; ++patchX) {
-		for (unsigned int patchY = 0; patchY < baseMeshSize; ++patchY) {
-			// 4 corners of the current patch
-			USHORT tl = patchX * size + patchY;
-			USHORT tr = patchX * size + patchY + 1;
-			USHORT bl = (patchX + 1) * size + patchY;
-			USHORT br = (patchX + 1) * size + patchY + 1;
+	for (unsigned int quadX = 0; quadX < resolutionX - 1; ++quadX) {
+		for (unsigned int quadY = 0; quadY < resolutionY - 1; ++quadY) {
+			// 4 corners of the current quad
+			UINT tl = quadX * resolutionY + quadY;
+			UINT tr = quadX * resolutionY + quadY + 1;
+			UINT bl = (quadX + 1) * resolutionY + quadY;
+			UINT br = (quadX + 1) * resolutionY + quadY + 1;
 
 			idxs[idx++] = tl;
+			idxs[idx++] = bl;
+			idxs[idx++] = tr;
+
 			idxs[idx++] = tr;
 			idxs[idx++] = bl;
 			idxs[idx++] = br;
 		}
 	}
-	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
-}
-
-DirectX::XMFLOAT3 Milling::CalculateNormal(unsigned int x, unsigned int y, float stepX, float stepY) const {
-	unsigned int xTex = x * resolutionX;
-	unsigned int yTex = y * resolutionY;
-
-	float z_center = m_heightMap[xTex][yTex];
-	float dz_dx, dz_dy;
-
-	if (xTex == 0) {
-		// top edge
-		float z_below = m_heightMap[xTex + 1][yTex];
-		dz_dx = (z_below - z_center) / stepX;
-	} else if (xTex == TextureSizeX() - 1) {
-		// bottom edge
-		float z_above = m_heightMap[xTex - 1][yTex];
-		dz_dx = (z_center - z_above) / stepX;
-	} else {
-		// interior
-		float z_above = m_heightMap[xTex - 1][yTex];
-		float z_below = m_heightMap[xTex + 1][yTex];
-		dz_dx = (z_below - z_above) / (2 * stepX);
-	}
-
-	if (yTex == 0) {
-		// left edge
-		float z_toRight = m_heightMap[xTex][yTex + 1];
-		dz_dy = (z_toRight - z_center) / stepY;
-	} else if (yTex == TextureSizeY() - 1) {
-		// right edge  
-		float z_toLeft = m_heightMap[xTex][yTex - 1];
-		dz_dy = (z_center - z_toLeft) / stepY;
-	} else {
-		// interior
-		float z_toLeft = m_heightMap[xTex][yTex - 1];
-		float z_toRight = m_heightMap[xTex][yTex + 1];
-		dz_dy = (z_toRight - z_toLeft) / (2 * stepY);
-	}
-
-	DirectX::XMFLOAT3 normal(-dz_dy, 1.0f, -dz_dx);
-
-	float length = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-	if (length > FZERO) {
-		normal.x /= length;
-		normal.y /= length;
-		normal.z /= length;
-	} else {
-		normal = DirectX::XMFLOAT3(0.f, 1.f, 0.f);
-	}
-
-	return normal;
+	m_planeMesh.Update(device, verts, idxs, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 bool Milling::IsWithinMargins(const gmod::vector3<float>& nextPos) const {
@@ -289,26 +228,22 @@ bool Milling::IsAboveBase(const gmod::vector3<float>& nextPos) const {
 }
 
 std::pair<int, int> Milling::Scene2Canvas(const gmod::vector3<float>& coord) const {
-	const float xScaled = std::floor((coord.z() + size[0] / 2 - centre[0]) * ((TextureSizeX() - 1) / size[0]));
-	const float yScaled = std::floor((coord.x() + size[1] / 2 - centre[1]) * ((TextureSizeY() - 1) / size[1]));
-	//const int maxX = TextureSizeX() - 1;
-	//const int maxY = TextureSizeY() - 1;
-	//unsigned int x = std::max(0, std::min(maxX, static_cast<int>(std::floor(xScaled))));
-	//unsigned int y = std::max(0, std::min(maxY, static_cast<int>(std::floor(yScaled))));
+	const float xScaled = std::floor((coord.z() + size[0] / 2 - centre[0]) * ((resolutionX - 1) / size[0]));
+	const float yScaled = std::floor((coord.x() + size[1] / 2 - centre[1]) * ((resolutionY - 1) / size[1]));
 
 	return std::make_pair(xScaled, yScaled);
 }
 
 gmod::vector3<float> Milling::Canvas2Scene(unsigned int x, unsigned int y) const {
-	float coordZ = static_cast<float>(x) * (size[0] / (TextureSizeX() - 1)) - size[0] / 2 + centre[0];
+	float coordZ = static_cast<float>(x) * (size[0] / (resolutionX - 1)) - size[0] / 2 + centre[0];
 	float coordY = m_heightMap[x][y] + centre[2];
-	float coordX = static_cast<float>(y) * (size[1] / (TextureSizeY() - 1)) - size[1] / 2 + centre[1];
+	float coordX = static_cast<float>(y) * (size[1] / (resolutionY - 1)) - size[1] / 2 + centre[1];
 
 	return gmod::vector3<float>(coordX, coordY, coordZ);
 }
 
 bool Milling::AreWithinCanvas(int x, int y) const {
-	return 0 <= x && x < TextureSizeX() && 0 <= y && y < TextureSizeY();
+	return 0 <= x && x < resolutionX && 0 <= y && y < resolutionY;
 }
 
 void Milling::DrawInAllOctants(std::vector<std::vector<bool>>& canvas, int cx, int cy, int x, int y, float& maxHeight) const {
@@ -449,8 +384,8 @@ float Milling::FloodFill(std::vector<std::vector<bool>>& canvas, int xStart, int
 	float maxHeight = m_heightMap[xStart][yStart];
 	canvas[xStart][yStart] = true;
 
-	const float sizeX = TextureSizeX();
-	const float sizeY = TextureSizeY();
+	const float sizeX = resolutionX;
+	const float sizeY = resolutionY;
 
 	std::queue<std::pair<int, int>> q;
 	std::vector<bool> visited(sizeX * sizeY, false);
@@ -502,6 +437,10 @@ bool Milling::IsWithinAngle(const gmod::vector3<float>& currPos, const gmod::vec
 	} else {
 		// cutter moves down
 		vertical = { 0, -1, 0 };
+		// cutter moves straight down
+		if (std::abs(currPos.x() - nextPos.x()) < FZERO && std::abs(currPos.z() - nextPos.z()) < FZERO) {
+			return false;
+		}
 	}
 	// cos(90deg - alpha) = sin(alpha)
 	const float sinAlpha = gmod::dot<float>(moveDir, vertical);
@@ -527,8 +466,8 @@ bool Milling::IsWithinMillingPart(const gmod::vector3<float>& currPos, const gmo
 		return currPos + t * dirMove;
 	};
 
-	for (unsigned int x = 0; x < TextureSizeX(); ++x) {
-		for (unsigned int y = 0; y < TextureSizeY(); ++y) {
+	for (unsigned int x = 0; x < resolutionX; ++x) {
+		for (unsigned int y = 0; y < resolutionY; ++y) {
 			if (!canvas[x][y]) { continue; }
 			auto pos = Canvas2Scene(x, y);
 			pos.y() += centre[2];
@@ -564,8 +503,8 @@ void Milling::UpdateHeights(const gmod::vector3<float>& currPos, const gmod::vec
 		return currPos + t * dirMove;
 	};
 
-	for (unsigned int x = 0; x < TextureSizeX(); ++x) {
-		for (unsigned int y = 0; y < TextureSizeY(); ++y) {
+	for (unsigned int x = 0; x < resolutionX; ++x) {
+		for (unsigned int y = 0; y < resolutionY; ++y) {
 			if (!canvas[x][y]) { continue; }
 			auto pos = Canvas2Scene(x, y);
 			pos.y() += centre[2];
@@ -602,23 +541,24 @@ void Milling::RenderProperties() {
 	ImGui::Columns(2, "milling_settings", false);
 	ImGui::SetColumnWidth(0, 150.f);
 
-	ImGui::Text("Base thickness [cm]:"); ImGui::NextColumn();
+	ImGui::Text("Base thickness [mm]:"); ImGui::NextColumn();
 	ImGui::SetNextItemWidth(inputWidth);
 	ImGui::InputFloat("##base_thickness", &baseThickness, 0.01f, 1.f); ImGui::NextColumn();
 
-	ImGui::Text("Margin [cm]:"); ImGui::NextColumn();
+	ImGui::Text("Margin [mm]:"); ImGui::NextColumn();
 	ImGui::SetNextItemWidth(inputWidth);
 	ImGui::InputFloat("##margin", &margin, 0.01f, 1.f); ImGui::NextColumn();
-
+	/*
 	ImGui::Text("Base mesh size:"); ImGui::NextColumn();
 	int bms = baseMeshSize;
 	ImGui::SetNextItemWidth(inputWidth);
 	ImGui::InputInt("##bms", &bms, 1, 10); ImGui::NextColumn();
 	if (bms != baseMeshSize && bms > 0) {
 		baseMeshSize = bms;
-		resetHeightMap = true;
-		baseMeshSizeChanged = true;
+		resolutionChanged = true;
+		resolutionChanged = true;
 	}
+	*/
 	ImGui::Columns(1);
 
 	ImGui::Text("Resolution:");
@@ -626,23 +566,23 @@ void Milling::RenderProperties() {
 	int resX = resolutionX;
 	ImGui::SetNextItemWidth(90.f);
 	ImGui::InputInt("##resolution_X", &resX, 1, 10);
-	if (resX != resolutionX && resX > 0 && resX <= 64) {
+	if (resX != resolutionX && resX > 1) {
 		resolutionX = resX;
-		resetHeightMap = true;
+		resolutionChanged = true;
 	}
 	ImGui::SameLine();
 	ImGui::Text("Y:"); ImGui::SameLine();
 	int resY = resolutionY;
 	ImGui::SetNextItemWidth(90.f);
 	ImGui::InputInt("##resolution_Y", &resY, 1, 10);
-	if (resY != resolutionY && resY > 0 && resY <= 64) {
+	if (resY != resolutionY && resY > 1) {
 		resolutionY = resY;
-		resetHeightMap = true;
+		resolutionChanged = true;
 	}
 
 	ImGui::Spacing();
 	if (ImGui::Button("Reset scene", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
-		resetHeightMap = true;
+		resolutionChanged = true;
 	}
 }
 

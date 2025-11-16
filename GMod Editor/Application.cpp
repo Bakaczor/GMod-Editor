@@ -172,25 +172,23 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 		));
 		// Milling
 		const auto vsBytes_milling = Device::LoadByteCode(L"vs_milling.cso");
-		const auto hsBytes_milling = Device::LoadByteCode(L"hs_milling.cso");
-		const auto dsBytes_milling = Device::LoadByteCode(L"ds_milling.cso");
 		const auto gsBytes_milling = Device::LoadByteCode(L"gs_milling.cso");
 		const auto psBytes_milling = Device::LoadByteCode(L"ps_milling.cso");
 		m_shaders.insert(std::make_pair(ShaderType::Milling, Shaders{
 				m_device.CreateVertexShader(vsBytes_milling),
-				m_device.CreateHullShader(hsBytes_milling),
-				m_device.CreateDomainShader(dsBytes_milling),
+				nullptr,
+				nullptr,
 				m_device.CreateGeometryShader(gsBytes_milling),
 				m_device.CreatePixelShader(psBytes_milling),
-				m_device.CreateInputLayout<Vertex_PoNo>(vsBytes_milling)
+				m_device.CreateInputLayout<Vertex_Po>(vsBytes_milling)
 			}
 		));
 	}
 
 	// CONSTANT BUFFERS
 	{
-		ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get(), m_constBuffViewInv.get() };
-		m_device.deviceContext()->VSSetConstantBuffers(0, 4, vsb);
+		ID3D11Buffer* vsb[] = { m_constBuffModel.get(),  m_constBuffView.get(), m_constBuffProj.get(), m_constBuffViewInv.get(), m_constBuffMillInfo.get() };
+		m_device.deviceContext()->VSSetConstantBuffers(0, 5, vsb);
 		ID3D11Buffer* hsb[] = { m_constBuffView.get(), m_constBuffProj.get(), m_constBuffTessConst.get(), m_constBuffMillInfo.get() };
 		m_device.deviceContext()->HSSetConstantBuffers(0, 4, hsb);
 		ID3D11Buffer* dsb[] = { m_constBuffView.get(), m_constBuffProj.get() };
@@ -213,7 +211,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_sampState = m_device.CreateSamplerState(SamplerDescription());
 	auto s_ptr = m_sampState.get();
-	m_device.deviceContext()->GSSetSamplers(0, 1, &s_ptr);
+	m_device.deviceContext()->VSSetSamplers(0, 1, &s_ptr);
 	m_device.deviceContext()->PSSetSamplers(0, 1, &s_ptr);
 
 	BindPSTextures();
@@ -366,15 +364,15 @@ void Application::Update() {
 		m_device.UpdateBuffer(m_constBuffMaterial, material);
 
 		auto& milling = m_UI->milling;
-		if (milling.resetHeightMap || milling.sceneChanged) {
+		if (milling.resolutionChanged || milling.sceneChanged) {
 			MillingInfo millInfo {
 				DirectX::XMFLOAT4(milling.size.data()),
 				DirectX::XMFLOAT4(milling.centre.data()),
-				DirectX::XMUINT4(milling.resolutionX, milling.resolutionY, milling.baseMeshSize, 0U)
+				DirectX::XMUINT4(milling.resolutionX, milling.resolutionY, 0U, 0U)
 			};
 			m_device.UpdateBuffer(m_constBuffMillInfo, millInfo);
 		}
-		if (milling.resetHeightMap) {
+		if (milling.resolutionChanged) {
 			milling.ResetHeightMap(m_device);
 		}
 		if (milling.updateHeightMap) {
@@ -569,16 +567,12 @@ void Application::Render() {
 
 		auto& animator = m_UI->animator;
 		// complete animation button
-		if (m_UI->completeAnimation) {
-			m_UI->completeAnimation = false;
-			animator.CompleteAnimation(m_device);
-			milling.UpdateMesh(m_device); // update normals
+		if (animator.completeAnimation) {
+			animator.CompleteAnimationAsync(m_device);
 		}
 		// make animation step
-		if (animator.isRunning) {
-			if (!animator.MakeStep(m_device)) {
-				milling.UpdateMesh(m_device); // update normals
-			}
+		if (!animator.completeAnimation && animator.isRunning) {
+			animator.MakeStep(m_device, ImGui::GetIO().DeltaTime);
 		}
 		// display path
 		if (animator.displayPath && animator.canRender) {

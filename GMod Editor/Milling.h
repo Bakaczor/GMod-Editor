@@ -14,15 +14,15 @@ namespace app {
 
 		Cutter cutter;
 
-		bool baseMeshSizeChanged = true;
-		unsigned int baseMeshSize = 8;
-		unsigned int resolutionX = 8;
-		inline unsigned int TextureSizeX() const { return baseMeshSize * resolutionX + 1; }
-		unsigned int resolutionY = 8;
-		inline unsigned int TextureSizeY() const { return baseMeshSize * resolutionY + 1; }
+		bool resolutionChanged = true;
+		unsigned int resolutionX = 150;
+		unsigned int resolutionY = 150;
 
 		// all in millimetres, milling space
 		std::array<float, 3> centre = { 0.f, 0.f, 0.f };
+		inline float CentreX() const { return centre[0]; }
+		inline float CentreY() const { return centre[1]; }
+		inline float CentreZ() const { return centre[2]; }
 		std::array<float, 3> size = { 250.f, 250.f, 50.f };
 		inline float SizeX() const { return size[0]; }
 		inline float SizeY() const { return size[1]; }
@@ -36,12 +36,11 @@ namespace app {
 		void UpdateMesh(const Device& device);
 		void RenderProperties();
 
-		bool resetHeightMap = true;
 		void ResetHeightMap(const Device& device);
 		bool updateHeightMap = false;
 		void UpdateHeightMap(const Device& device);
 
-		std::optional<std::string> Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos);
+		std::optional<std::string> Mill(const gmod::vector3<float>& currPos, const gmod::vector3<float>& nextPos, bool updateTexture = true);
 	private:
 		// value to consider as 0 for floats
 		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
@@ -50,8 +49,6 @@ namespace app {
 		std::vector<std::vector<float>> m_heightMap;
 		mini::dx_ptr<ID3D11Texture2D> m_heightMapTex;		
 		mini::dx_ptr<ID3D11ShaderResourceView> m_heightMapTexSRV;
-
-		DirectX::XMFLOAT3 CalculateNormal(unsigned int x, unsigned int y, float stepX, float stepY) const;
 
 		bool IsWithinMargins(const gmod::vector3<float>& nextPos) const;
 		bool IsAboveBase(const gmod::vector3<float>& nextPos) const;
