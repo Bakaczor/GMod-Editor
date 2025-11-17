@@ -36,16 +36,7 @@ void PathAnimator::RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, 
 	m_polylineMesh.Render(context);
 }
 
-void PathAnimator::CompleteAnimationAsync(const Device& device) {
-	if (!isRunning) {
-		std::thread([this, &device]() {
-			CompleteAnimation(device);
-			m_milling.UpdateHeightMap(device);
-		}).detach(); 
-	}
-}
-
-void PathAnimator::CompleteAnimation(const Device& device) {
+void PathAnimator::CompleteAnimation(Device& device) {
 	if (m_path.Empty()) { 
 		RestartAnimation();
 		return; 
@@ -63,7 +54,7 @@ void PathAnimator::CompleteAnimation(const Device& device) {
 		}
 
 		// verify and mill
-		auto veridct = m_milling.Mill(m_currPos, coords, false);
+		auto veridct = m_milling.Mill(device, m_currPos, coords, false);
 		if (veridct.has_value()) {
 			errorMsg = veridct.value() + " [N" + std::to_string(cmd.value().commandNumber) + "]";
 			errorDetected = true;
@@ -80,7 +71,7 @@ void PathAnimator::CompleteAnimation(const Device& device) {
 	RestartAnimation();
 }
 
-bool PathAnimator::MakeStep(const Device& device, float deltaTime) {
+bool PathAnimator::MakeStep(Device& device, float deltaTime) {
 	auto step = m_path.GetNextStep(deltaTime * speed);
 	int it = 0;
 	// first command
@@ -111,7 +102,7 @@ bool PathAnimator::MakeStep(const Device& device, float deltaTime) {
 		auto& currDest = destinations[it];
 
 		// verify and mill
-		auto veridct = m_milling.Mill(m_currPos, currDest);
+		auto veridct = m_milling.Mill(device, m_currPos, currDest);
 		if (veridct.has_value()) {
 			errorMsg = veridct.value() + " [N" + std::to_string(step.value().associatedCommandNumbers[it]) + "]";
 			errorDetected = true;
@@ -123,6 +114,7 @@ bool PathAnimator::MakeStep(const Device& device, float deltaTime) {
 		m_points.push_back(DirectX::XMFLOAT3(m_currPos.x(), m_currPos.y(), m_currPos.z()));
 	}
 	UpdateMesh(device);
+	return true;
 }
 
 void PathAnimator::UpdateMesh(const Device& device) {

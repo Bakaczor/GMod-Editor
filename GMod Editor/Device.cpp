@@ -135,6 +135,27 @@ mini::dx_ptr<ID3D11ShaderResourceView> Device::CreateShaderResourceView(const st
 	}
 	return resourceView;
 }
+
+mini::dx_ptr<ID3D11UnorderedAccessView> Device::CreateUnorderedAccessView(const mini::dx_ptr<ID3D11Texture2D>& texture) const {
+	ID3D11UnorderedAccessView* temp;
+	auto hr = m_device->CreateUnorderedAccessView(texture.get(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11UnorderedAccessView> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11UnorderedAccessView> Device::CreateUnorderedAccessView(const mini::dx_ptr<ID3D11Buffer>& buffer, const UAVDescription& desc) const {
+	ID3D11UnorderedAccessView* temp;
+	auto hr = m_device->CreateUnorderedAccessView(buffer.get(), &desc, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11UnorderedAccessView> result(temp);
+	return result;
+}
+
 #pragma endregion
 
 #pragma region BUFFERS
@@ -151,7 +172,6 @@ mini::dx_ptr<ID3D11Buffer> Device::CreateBuffer(const void* data, const D3D11_BU
 	mini::dx_ptr<ID3D11Buffer> result(temp);
 	return result;
 }
-
 
 void Device::UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const void* data, std::size_t count) {
 	D3D11_MAPPED_SUBRESOURCE res;
@@ -212,6 +232,16 @@ mini::dx_ptr<ID3D11PixelShader> Device::CreatePixelShader(std::vector<BYTE> psCo
 		THROW_DX(hr);
 	}
 	mini::dx_ptr<ID3D11PixelShader> result(temp);
+	return result;
+}
+
+mini::dx_ptr<ID3D11ComputeShader> app::Device::CreateComputeShader(std::vector<BYTE> csCode) const {
+	ID3D11ComputeShader* temp;
+	auto hr = m_device->CreateComputeShader(reinterpret_cast<const void*>(csCode.data()), csCode.size(), nullptr, &temp);
+	if (FAILED(hr)) {
+		THROW_DX(hr);
+	}
+	mini::dx_ptr<ID3D11ComputeShader> result(temp);
 	return result;
 }
 

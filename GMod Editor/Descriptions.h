@@ -12,11 +12,13 @@ namespace app {
 	};
 
 	struct Texture2DDescription : D3D11_TEXTURE2D_DESC {
-		Texture2DDescription(UINT width, UINT height);
+		Texture2DDescription(UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 
 		static Texture2DDescription DepthStencilDescription(UINT width, UINT height);
 
-		static Texture2DDescription DynamicTextureDescription(UINT width, UINT height);
+		static Texture2DDescription DynamicTextureDescription(UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		static Texture2DDescription RWTextureDescription(UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 	};
 
 	struct BufferDescription : D3D11_BUFFER_DESC {
@@ -31,6 +33,12 @@ namespace app {
 		}
 
 		static BufferDescription ConstantBufferDescription(size_t byteWidth);
+
+		static BufferDescription RawBufferDescription(size_t byteWidth);
+
+		static BufferDescription StagingBufferDescription(size_t byteWidth);
+
+		static BufferDescription DynamicBufferDescription(size_t byteWidth);
 	};
 
 	struct RasterizerDescription : D3D11_RASTERIZER_DESC {
@@ -50,5 +58,9 @@ namespace app {
 
 	struct SamplerDescription : D3D11_SAMPLER_DESC {
 		SamplerDescription();
+	};
+
+	struct UAVDescription : D3D11_UNORDERED_ACCESS_VIEW_DESC {
+		UAVDescription(UINT N, DXGI_FORMAT format);
 	};
 }

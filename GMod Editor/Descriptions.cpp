@@ -30,13 +30,13 @@ Viewport::Viewport(SIZE size) {
 	MaxDepth = 1.0f;
 }
 
-Texture2DDescription::Texture2DDescription(UINT width, UINT height) {
+Texture2DDescription::Texture2DDescription(UINT width, UINT height, DXGI_FORMAT format) {
 	ZeroMemory(this, sizeof(Texture2DDescription));
 	Width = width;
 	Height = height;
 	MipLevels = 1;
 	ArraySize = 1;
-	Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	Format = format;
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Usage = D3D11_USAGE_DEFAULT;
@@ -52,10 +52,16 @@ Texture2DDescription Texture2DDescription::DepthStencilDescription(UINT width, U
 	return desc;
 }
 
-Texture2DDescription Texture2DDescription::DynamicTextureDescription(UINT width, UINT height) {
-	Texture2DDescription desc(width, height);
+Texture2DDescription Texture2DDescription::DynamicTextureDescription(UINT width, UINT height, DXGI_FORMAT format) {
+	Texture2DDescription desc(width, height, format);
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	return desc;
+}
+
+Texture2DDescription Texture2DDescription::RWTextureDescription(UINT width, UINT height, DXGI_FORMAT format) {
+	Texture2DDescription desc(width, height, format);
+	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 	return desc;
 }
 
@@ -73,6 +79,26 @@ BufferDescription BufferDescription::ConstantBufferDescription(size_t byteWidth)
 	BufferDescription desc(D3D11_BIND_CONSTANT_BUFFER, byteWidth);
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	return desc;
+}
+
+BufferDescription BufferDescription::RawBufferDescription(size_t byteWidth) {
+	BufferDescription desc(D3D11_BIND_UNORDERED_ACCESS, byteWidth);
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+	return desc;
+}
+
+BufferDescription BufferDescription::DynamicBufferDescription(size_t byteWidth) {
+	BufferDescription desc(0, byteWidth);
+	desc.Usage = D3D11_USAGE_DYNAMIC;  
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	return desc;
+}
+
+BufferDescription app::BufferDescription::StagingBufferDescription(size_t byteWidth) {
+	BufferDescription desc(0, byteWidth);
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
 	return desc;
 }
 
@@ -144,4 +170,12 @@ SamplerDescription::SamplerDescription() {
 	BorderColor[1] = 1.0f;
 	BorderColor[2] = 1.0f;
 	BorderColor[3] = 1.0f;
+}
+
+UAVDescription::UAVDescription(UINT N, DXGI_FORMAT format) {
+	ZeroMemory(this, sizeof(UAVDescription));
+	Format = format;
+	ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = 0;
+	Buffer.NumElements = N;
 }

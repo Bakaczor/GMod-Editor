@@ -227,6 +227,8 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_UI->selection.color = { 0.0f, 0.0f, 1.0f, 1.0f };
 	m_UI->selection.SetModel(m_pointModel.get());
+
+	m_UI->milling.Initialize(m_device);
 }
 
 void Application::BindPSTextures() {
@@ -374,9 +376,6 @@ void Application::Update() {
 		}
 		if (milling.resolutionChanged) {
 			milling.ResetHeightMap(m_device);
-		}
-		if (milling.updateHeightMap) {
-			milling.UpdateHeightMap(m_device);
 		}
 		if (milling.sceneChanged) {
 			milling.UpdateMesh(m_device);
@@ -568,7 +567,8 @@ void Application::Render() {
 		auto& animator = m_UI->animator;
 		// complete animation button
 		if (animator.completeAnimation) {
-			animator.CompleteAnimationAsync(m_device);
+			animator.CompleteAnimation(m_device);
+			milling.UpdateHeightMap(m_device);
 		}
 		// make animation step
 		if (!animator.completeAnimation && animator.isRunning) {

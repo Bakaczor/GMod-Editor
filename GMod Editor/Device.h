@@ -31,6 +31,10 @@ namespace app {
 		mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(SIZE size) const;
 
 		mini::dx_ptr<ID3D11ShaderResourceView> CreateShaderResourceView(const std::wstring& texPath) const;
+
+		mini::dx_ptr<ID3D11UnorderedAccessView> CreateUnorderedAccessView(const mini::dx_ptr<ID3D11Texture2D>& texture) const;
+
+		mini::dx_ptr<ID3D11UnorderedAccessView> CreateUnorderedAccessView(const mini::dx_ptr<ID3D11Buffer>& buffer, const UAVDescription& desc) const;
 #pragma endregion
 
 #pragma region BUFFERS
@@ -60,6 +64,24 @@ namespace app {
 		void UpdateBuffer(const mini::dx_ptr<ID3D11Buffer>& buffer, const T& data) {
 			UpdateBuffer(buffer, &data, sizeof(T));
 		}
+		
+		template<typename T>
+		mini::dx_ptr<ID3D11Buffer> CreateRawBuffer(size_t N) const {
+			auto desc = BufferDescription::RawBufferDescription(N * sizeof(T));
+			return CreateBuffer(nullptr, desc);
+		}
+
+		template<typename T>
+		mini::dx_ptr<ID3D11Buffer> CreateStagingBuffer(size_t N) const {
+			auto desc = BufferDescription::StagingBufferDescription(N * sizeof(T));
+			return CreateBuffer(nullptr, desc);
+		}
+
+		template<typename T>
+		mini::dx_ptr<ID3D11Buffer> CreateDynamicBuffer(size_t N) const {
+			auto desc = BufferDescription::DynamicBufferDescription(N * sizeof(T));
+			return CreateBuffer(nullptr, desc);
+		}
 #pragma endregion
 
 #pragma region SHADERS
@@ -72,6 +94,8 @@ namespace app {
 		mini::dx_ptr<ID3D11GeometryShader> CreateGeometryShader(std::vector<BYTE> gsCode) const;
 
 		mini::dx_ptr<ID3D11PixelShader> CreatePixelShader(std::vector<BYTE> psCode) const;
+
+		mini::dx_ptr<ID3D11ComputeShader> CreateComputeShader(std::vector<BYTE> csCode) const;
 
 		static std::vector<BYTE> LoadByteCode(const std::wstring& filename);
 #pragma endregion

@@ -1,6 +1,5 @@
 #pragma once
 #include <array>
-#include <atomic>
 #include "Milling.h"
 #include "PathParser.h"
 #include "Mesh.h"
@@ -10,11 +9,11 @@ namespace app {
 	class PathAnimator {
 	public:
 		// millimetres per frame
-		float speed = 1.f;
+		float speed = 100.f;
 		bool canRender = false;
 
-		std::atomic<bool> isRunning = false;
-		std::atomic<bool> completeAnimation = false;
+		bool isRunning = false;
+		bool completeAnimation = false;
 
 		bool errorDetected = false;
 		std::string errorMsg;
@@ -31,10 +30,8 @@ namespace app {
 		void StartAnimation();
 		void StopAnimation();
 		void RestartAnimation();
-		void CompleteAnimation(const Device& device);
-		bool MakeStep(const Device& device, float deltaTime);
-
-		void CompleteAnimationAsync(const Device& device);
+		void CompleteAnimation(Device& device);
+		bool MakeStep(Device& device, float deltaTime);
 	private:
 		std::vector<DirectX::XMFLOAT3> m_points;
 		Mesh m_polylineMesh;

@@ -1,4 +1,4 @@
-Texture2D heightMap : register(t0);
+Texture2D<float> heightMap : register(t0);
 SamplerState samp : register(s0);
 
 cbuffer cbMillInfo : register(b4)
@@ -30,9 +30,10 @@ float2 calculate_uv(float3 pos)
 
 float get_y(float2 uv)
 {
-    float3 tex = heightMap.SampleLevel(samp, uv.yx, 0).rgb;
-    float maxH = (tex.g + tex.b / 100.0f) * 255.f;
-    return tex.r * maxH + centre.z;
+    //float3 tex = heightMap.SampleLevel(samp, uv.yx, 0).rgb;
+    //float maxH = (tex.g + tex.b / 100.0f) * 255.f;
+    //return tex.r * maxH + centre.z;
+    return heightMap.SampleLevel(samp, uv, 0);
 }
 
 float3 calculate_normal(float2 uv)
