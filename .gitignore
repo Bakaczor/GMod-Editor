@@ -4,3 +4,4 @@
 *.cso
 **/vcpkg_installed
 *.ini
+imgui.ini # literally
