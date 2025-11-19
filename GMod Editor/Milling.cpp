@@ -225,8 +225,9 @@ std::optional<std::string> Milling::Mill(Device& device, const gmod::vector3<flo
 }
 
 void Milling::ResetErrorBuffer(const Device& device) {
-	UINT zero = 0;
+	UINT zero = 0U;
 	device.deviceContext()->UpdateSubresource(m_errorBuffer_raw.get(), 0, nullptr, &zero, 0, 0);
+	device.deviceContext()->CopyResource(m_errorBuffer_staging.get(), m_errorBuffer_raw.get());
 }
 
 UINT Milling::ReadComputeErrors(const Device& device) {
@@ -234,7 +235,7 @@ UINT Milling::ReadComputeErrors(const Device& device) {
 
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	device.deviceContext()->Map(m_errorBuffer_staging.get(), 0, D3D11_MAP_READ, 0, &mapped);
-	UINT errorCode = *(UINT*)mapped.pData;
+	UINT errorCode = *((UINT*)mapped.pData);
 	device.deviceContext()->Unmap(m_errorBuffer_staging.get(), 0);
 	return errorCode;
 }

@@ -61,7 +61,7 @@ bool isWithinAngle()
     if (nextPos.y > currPos.y)
     {
         vertical = float3(0, 1, 0);
-        if (checkBothDirections == 0)
+        if (checkBothDirections == 0U)
         {
             return true;
         }
@@ -69,10 +69,11 @@ bool isWithinAngle()
     else
     {
         vertical = float3(0, -1, 0);
-        if (abs(currPos.x - nextPos.x) < 1e-7f && abs(currPos.z - nextPos.z) < 1e-7f)
-        {
-            return false;
-        }
+        // better to allow user to specify, whether they care or not
+        //if (abs(currPos.x - nextPos.x) < 1e-7f && abs(currPos.z - nextPos.z) < 1e-7f)
+        //{
+        //    return false;
+        //}
     }
     
     // cos(90deg - alpha) = sin(alpha)
