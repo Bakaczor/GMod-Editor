@@ -70,9 +70,6 @@
     <Filter Include="Pliki nagłówkowe\CAM">
       <UniqueIdentifier>{e7ae4c04-0a68-488d-a8d8-4dd4ee0d6898}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Pliki źródłowe\CAM">
-      <UniqueIdentifier>{70a0aa8d-e9bd-4b1b-8803-ba325c481674}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Pliki zasobów\RegularWithTesselationCISpline">
       <UniqueIdentifier>{7b404e89-2b04-4f5c-8a00-675d61d3c7c5}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,9 @@
     </Filter>
     <Filter Include="Pliki nagłówkowe\d3dx\DirectX">
       <UniqueIdentifier>{5a40f91a-55bb-4a6c-976a-0b4f237e7109}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\CAM">
+      <UniqueIdentifier>{70a0aa8d-e9bd-4b1b-8803-ba325c481674}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -275,9 +275,6 @@
     <ClCompile Include="Polyline.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
-    <ClCompile Include="Axes.cpp">
-      <Filter>Pliki źródłowe\app</Filter>
-    </ClCompile>
     <ClCompile Include="Point.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
@@ -349,6 +346,9 @@
     </ClCompile>
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Pliki źródłowe\d3dx\DirectX</Filter>
+    </ClCompile>
+    <ClCompile Include="Axes.cpp">
+      <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

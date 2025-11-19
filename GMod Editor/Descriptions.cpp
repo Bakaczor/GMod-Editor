@@ -106,7 +106,7 @@ RasterizerDescription::RasterizerDescription() {
 	FillMode = D3D11_FILL_SOLID;
 	//FillMode = D3D11_FILL_WIREFRAME;
 	CullMode = D3D11_CULL_BACK;
-	//FrontCounterClockwise = false;
+	FrontCounterClockwise = true;
 	DepthBias = 0;
 	DepthBiasClamp = 0.0f;
 	SlopeScaledDepthBias = 0.0f;

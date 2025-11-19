@@ -91,6 +91,8 @@ namespace app {
 		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
+		int m_lastSelectedIndex = -1;
+
 		int m_selectedObjType = 0;
 		const static std::vector<ObjectType> m_objectTypes;
 		const static std::vector<const char*> m_objectTypeNames;

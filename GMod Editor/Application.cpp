@@ -223,7 +223,7 @@ Application::Application(HINSTANCE hInstance) : WindowApplication(hInstance, m_w
 
 	m_axes.SetModel(m_axesModel.get());
 	m_UI->cursor.SetModel(m_axesModel.get());
-	m_UI->cursor.transform.SetScaling(1, 1, 1);
+	m_UI->cursor.transform.SetScaling(75, 75, 75);
 
 	m_UI->selection.color = { 0.0f, 0.0f, 1.0f, 1.0f };
 	m_UI->selection.SetModel(m_pointModel.get());

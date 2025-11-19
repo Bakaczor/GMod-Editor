@@ -598,6 +598,8 @@ void UI::RenderObjectTable() {
 	}
 	ImGui::Spacing();
 	ImGui::BeginChild("ObjectTableWindow", ImVec2(0, tableHeight(sceneObjects.size())), false, ImGuiWindowFlags_None);
+	
+	int currentIndex = 0;
 	if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_ScrollY)) {
 		ImGui::TableSetupColumn("Name");
 		ImGui::TableSetupColumn("Type");
@@ -609,13 +611,25 @@ void UI::RenderObjectTable() {
 			bool selected = selection.Contains(obj->id);
 			ImGui::PushID(obj->id);
 			if (ImGui::Selectable(obj->name.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns)) {
-				if (ImGui::GetIO().KeyCtrl) {
+				ImGuiIO& io = ImGui::GetIO();
+				if (io.KeyCtrl) {
 					if (selected) {
 						selection.RemoveObject(obj.get());
+						if (m_lastSelectedIndex == currentIndex) {
+							m_lastSelectedIndex = -1;
+						}
 					} else {
 						selection.AddObject(obj.get());
+						m_lastSelectedIndex = currentIndex;
 					}
-				} else if (ImGui::GetIO().KeyAlt && typeid(Point) == typeid(*obj.get())) {
+				} else if (io.KeyShift && m_lastSelectedIndex != -1) {
+					int start = std::min(m_lastSelectedIndex, currentIndex);
+					int end = std::max(m_lastSelectedIndex, currentIndex);
+					selection.Clear();
+					for (int i = start; i <= end; i++) {
+						selection.AddObject(sceneObjects[i].get());
+					}
+				} else if (io.KeyAlt && typeid(Point) == typeid(*obj.get())) {
 					std::optional<Object*> opt = selection.Single();
 					ObjectGroup* selectedGrp = dynamic_cast<ObjectGroup*>(opt.has_value() ? opt.value() : nullptr);
 					if (nullptr != selectedGrp) {
@@ -624,23 +638,27 @@ void UI::RenderObjectTable() {
 				} else {
 					selection.Clear();
 					selection.AddObject(obj.get());
+					m_lastSelectedIndex = currentIndex;
 				}
 			}
 			ImGui::PopID();
 			ImGui::TableNextColumn();
 			ImGui::Text(obj->type().c_str());
+			currentIndex++;
 		}
 		ImGui::EndTable();
 	}
 	ImGui::EndChild();
+	
+	// spacebar unselects all
+	if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+		selection.Clear();
+		m_lastSelectedIndex = -1;
+	}
 }
 
 void UI::SelectObjectOnMouseClick(Object* obj) {
-	if (obj == nullptr) {
-		if (ImGui::GetIO().KeyShift) {
-			selection.Clear();
-		}
-	} else {
+	if (obj != nullptr) {
 		if (!ImGui::GetIO().KeyCtrl) {
 			selection.Clear();
 		}
@@ -757,14 +775,16 @@ void UI::RenderSettings(bool firstPass) {
 		ImGui::SetNextItemOpen(false);
 	}
 	if (ImGui::CollapsingHeader("Editor Settings")) {
-		ImVec2 size = ImGui::GetWindowSize();
-		ImGui::SetWindowSize(ImVec2(size.x, 0.f), ImGuiCond_Always);
+		const float windowWidth = 300.f;
+		ImGui::SetWindowSize(ImVec2(windowWidth, 0.f), ImGuiCond_Always);
 		ImGui::ColorEdit3("Background", reinterpret_cast<float*>(&bkgdColor));
 		ImGui::ColorEdit3("Selected", reinterpret_cast<float*>(&slctdColor));
-		ImGui::Checkbox("Show Grid", &showGrid);
+		// ImGui::Checkbox("Show Grid", &showGrid);
 		ImGui::Checkbox("Show Axes", &showAxes);
 		ImGui::Checkbox("Hide control points", &hideControlPoints);
 		ImGui::Checkbox("Use MMB", &useMMB);
+		// TODO: after changes to view matrices, stereoscopic has some issues
+		/*
 		if (ImGui::Checkbox("Stereoscopic view", &stereoscopicView)) {
 			stereoscopicChanged = true;
 		}
@@ -775,12 +795,13 @@ void UI::RenderSettings(bool firstPass) {
 			ImGui::SetNextItemWidth(125.f);
 			ImGui::InputFloat("f", &stereoF, 0.001f, 0.01f, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 		}
+		*/
 		if (showCAD) {
-			if (ImGui::Button("Switch to CAM", ImVec2(size.x, 0))) {
+			if (ImGui::Button("Switch to CAM", ImVec2(windowWidth, 0))) {
 				showCAD = false;
 			}
 		} else {
-			if (ImGui::Button("Switch to CAD", ImVec2(size.x, 0))) {
+			if (ImGui::Button("Switch to CAD", ImVec2(windowWidth, 0))) {
 				showCAD = true;
 			}
 		}
