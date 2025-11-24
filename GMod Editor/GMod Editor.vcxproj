@@ -266,6 +266,7 @@
     <ClCompile Include="PointModel.cpp" />
     <ClCompile Include="Shaders.cpp" />
     <ClCompile Include="StageOne.cpp" />
+    <ClCompile Include="StageTwo.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="SurfaceBuilder.cpp" />
     <ClCompile Include="tinyfiledialogs.c" />

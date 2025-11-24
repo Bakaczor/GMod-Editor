@@ -22,6 +22,8 @@ namespace app {
 	private:
 		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
 		const float m_radius = 5.f;
+		// one set may not be enough
+		// probably need specific sets of parameters for each type of surface
 		const Intersection::InterParams m_interParams = {
 			.gs = 5 * 1e-3,
 			.gt = 5 * 1e-5,

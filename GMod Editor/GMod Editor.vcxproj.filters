@@ -350,10 +350,13 @@
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Pliki źródłowe\d3dx\DirectX</Filter>
     </ClCompile>
-    <ClCompile Include="Axes.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="StageOne.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="Axes.cpp">
+      <Filter>Pliki źródłowe\app</Filter>
+    </ClCompile>
+    <ClCompile Include="StageTwo.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
   </ItemGroup>
