@@ -302,6 +302,21 @@ void Intersection::Clear() {
 	m_s2ID = -1;
 }
 
+void Intersection::SetIntersectionParameters(const InterParams& params) {
+	gradientStep = params.gs;
+	gradientTolerance = params.gt;
+	gradientMaxIterations = params.gmi;
+
+	newtonStep = params.ns;
+	newtonTolerance = params.nt;
+	newtonMaxIterations = params.nmi;
+	newtonMaxRepeats = params.nmr;
+
+	maxIntersectionPoints = params.mip;
+	distance = params.d;
+	closingPointTolerance = params.cpt;
+}
+
 void Intersection::UpdateMesh(const Device& device) {
 	std::vector<Vertex_Po> verts;
 	verts.reserve(m_pointsOfIntersection.size());

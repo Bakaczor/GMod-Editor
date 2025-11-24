@@ -223,6 +223,7 @@
     <ClInclude Include="ObjectGroup.h" />
     <ClInclude Include="PointModel.h" />
     <ClInclude Include="Shaders.h" />
+    <ClInclude Include="StageOne.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceBuilder.h" />
     <ClInclude Include="tinyfiledialogs.h" />
@@ -264,6 +265,7 @@
     <ClCompile Include="ObjectGroup.cpp" />
     <ClCompile Include="PointModel.cpp" />
     <ClCompile Include="Shaders.cpp" />
+    <ClCompile Include="StageOne.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="SurfaceBuilder.cpp" />
     <ClCompile Include="tinyfiledialogs.c" />

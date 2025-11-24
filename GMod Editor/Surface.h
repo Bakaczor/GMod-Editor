@@ -2,6 +2,7 @@
 #include "Divisable.h"
 #include "Edge.h"
 #include "Patch.h"
+#include "Point.h"
 #include "Transformable.h"
 #include "IGeometrical.h"
 #include <unordered_set>
@@ -35,6 +36,12 @@ namespace app {
 		void ClearControlPoints();
 		virtual std::pair<unsigned int, unsigned int> NumberOfPatches() const;
 		virtual std::pair<unsigned int, unsigned int> GetUVPatches() const override;
+
+		struct Plane {
+			std::vector<std::unique_ptr<app::Point>> controlPoints;
+			std::unique_ptr<Surface> surface;
+		};
+		static Plane MakePlane(gmod::vector3<double> centrePos, float width, float length, bool orientation, int id);
 
 #pragma region IGEOMETRICAL
 		virtual XYZBounds WorldBounds() const override;

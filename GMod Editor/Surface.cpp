@@ -2,10 +2,44 @@
 #include "Surface.h"
 #include <numbers>
 #include "BSurface.h"
+#include "Application.h"
 
 using namespace app;
 
 unsigned short Surface::m_globalSurfaceNum = 0;
+
+Surface::Plane Surface::MakePlane(gmod::vector3<double> centrePos, float width, float length, bool orientation, int id) {
+	Plane plane;
+
+	const unsigned int aPoints = 4;
+	const unsigned int bPoints = 4;
+	plane.controlPoints.reserve(aPoints * bPoints);
+	for (unsigned int i = 0; i < aPoints; ++i) {
+		for (unsigned int j = 0; j < bPoints; ++j) {
+			auto point = std::make_unique<app::Point>(Application::m_pointModel.get());
+			point->deletable = false;
+
+			float x = (width * i) / (aPoints - 1) - width / 2.0f;
+			float z = (length * j) / (bPoints - 1) - length / 2.0f;
+			
+			if (orientation) { // horizontal XZ
+				point->SetTranslation(x + centrePos.x(), centrePos.y(), z + centrePos.z());
+			} else { //vertical YZ
+				point->SetTranslation(centrePos.x(), x + centrePos.y(), z + centrePos.z());
+			}
+			plane.controlPoints.push_back(std::move(point));
+		}
+	}
+
+	std::vector<Object*> referencePoints;
+	referencePoints.reserve(aPoints * bPoints);
+	for (auto& p : plane.controlPoints) {
+		referencePoints.push_back(p.get());
+	}
+	plane.surface = std::make_unique<Surface>(SurfaceType::Flat, aPoints, bPoints, 2, referencePoints, id);
+
+	return plane;
+}
 
 #pragma region TOPOLOGY
 const std::vector<std::pair<USHORT, USHORT>> Surface::m_borderEdges = {

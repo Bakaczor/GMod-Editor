@@ -1,7 +1,35 @@
 #include "PathParser.h"
 #include <sstream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 using namespace app;
+
+void PathParser::Save(const std::vector<gmod::vector3<float>>& path, const std::string& stage, const std::string& type, const std::string& diameter) const {
+    fs::path currDir = fs::current_path();
+    std::string fileName = stage + "." + type + diameter;
+    fs::path filePath = currDir / fileName;
+
+    std::ofstream file(filePath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to create file for writing: " + filePath.string());
+    }
+
+    std::stringstream ss;
+
+    int cmdNum = 3;
+    for (const auto& point : path) {
+        std::string prefix = "N" + std::to_string(cmdNum) + "G01";
+        std::string valueX = "X" + Float2String(point.z());
+        std::string valueY = "Y" + Float2String(point.x());
+        std::string valueZ = "Z" + Float2String(point.y());
+        ss << prefix << valueX << valueY << valueZ << std::endl;
+        cmdNum++;
+    }
+
+    file << ss.str();
+    file.close();
+}
 
 void PathParser::Parse(std::ifstream& file) {
     std::string line;
@@ -232,4 +260,22 @@ void PathParser::ParseG(MillingCommand& cmd, std::istringstream& line, int& line
         throw std::runtime_error("Line " + std::to_string(lineNumber) + " : expected G01, got G0" + std::string(1, dot));
     }
     cmd.type = CommandType::WorkingMove;
+}
+
+std::string PathParser::Float2String(float value) {
+    std::string result = std::to_string(value);
+
+    size_t decimalPos = result.find('.');
+    if (decimalPos != std::string::npos) {
+        if (result.length() > decimalPos + 4) {
+            result = result.substr(0, decimalPos + 4);
+        } else {
+            // add missing zeros
+            result.append(4 - (result.length() - decimalPos), '0');
+        }
+    } else {
+        result += ".000";
+    }
+
+    return result;
 }

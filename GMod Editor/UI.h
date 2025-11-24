@@ -11,6 +11,7 @@
 #include "Cutter.h"
 #include "Milling.h"
 #include "PathAnimator.h"
+#include "StageOne.h";
 #include <memory>
 
 namespace app {
@@ -66,6 +67,9 @@ namespace app {
 		float stereoF = 1.f;
 		bool showCAD = true;
 
+		bool showPathGenerating = true;
+		int generatedMillingStage = 1;
+
 		// INTERSECTION
 		bool updatePreview = false;
 		Intersection intersection;
@@ -91,6 +95,10 @@ namespace app {
 		UI();
 		void Render(bool firstPass, Camera& camera);
 	private:
+		// PATH GENERATING
+		bool m_generatedFlag = true;
+		StageOne m_stageOne;
+
 		int m_lastSelectedIndex = -1;
 
 		int m_selectedObjType = 0;

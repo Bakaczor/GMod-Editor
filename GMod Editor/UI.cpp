@@ -215,6 +215,12 @@ void UI::RenderRightPanel_CAD(bool firstPass, Camera& camera) {
 		camera.cameraChanged = true;
 	}*/
 	ImGui::End();
+
+	// spacebar unselects all
+	if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+		selection.Clear();
+		m_lastSelectedIndex = -1;
+	}
 }
 
 void UI::RenderTransforms() {
@@ -396,7 +402,7 @@ void UI::RenderIntersections() {
 		ImGui::Separator();
 
 		ImGui::Text("Newton Method Step");
-		ImGui::InputDouble("###NewtonMethodStep", &intersection.newtonStep, 1e-2, 1e-1, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::InputDouble("###NewtonMethodStep", &intersection.newtonStep, 1e-3, 1e-1, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::Text("Newton Method Tolerance");
 		ImGui::InputDouble("###NewtonMethodTolerance", &intersection.newtonTolerance, 1e-6, 1e-4, "%.6f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::Text("Newton Method Max Iterations");
@@ -649,12 +655,6 @@ void UI::RenderObjectTable() {
 		ImGui::EndTable();
 	}
 	ImGui::EndChild();
-	
-	// spacebar unselects all
-	if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
-		selection.Clear();
-		m_lastSelectedIndex = -1;
-	}
 }
 
 void UI::SelectObjectOnMouseClick(Object* obj) {
@@ -796,6 +796,7 @@ void UI::RenderSettings(bool firstPass) {
 			ImGui::InputFloat("f", &stereoF, 0.001f, 0.01f, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 		}
 		*/
+		ImGui::Checkbox("Show path generating", &showPathGenerating);
 		if (showCAD) {
 			if (ImGui::Button("Switch to CAM", ImVec2(windowWidth, 0))) {
 				showCAD = false;
@@ -828,7 +829,38 @@ void UI::RenderIO_CAD() {
 		if (!file.empty()) {
 			LoadJSONFile(file);
 		}
-	}	
+	}
+	if (showPathGenerating) {
+		ImGui::SameLine();
+		ImGui::Text("Stage:");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(60.f);
+		ImGui::InputInt("##stage", &generatedMillingStage, 1, 1, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::SameLine();
+
+		if (ImGui::Button("Generate path", ImVec2(120.f, 0.f))) {
+			m_generatedFlag = true;
+			switch (generatedMillingStage) {
+				case 1: {
+					parser.Save(m_stageOne.GeneratePath(sceneObjects, intersection), m_stageOne.stage, m_stageOne.type, std::to_string(m_stageOne.diameter));
+					break;
+				}
+				default: {
+					m_generatedFlag = false;
+					break;
+				}
+			}
+			generatedMillingStage = 0;
+		}
+		if (generatedMillingStage == 0) {
+			ImGui::SameLine();
+			if (m_generatedFlag) {
+				ImGui::TextColored(ImVec4(0, 1, 0, 1), "Generated.");
+			} else {
+				ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid stage.");
+			}
+		}
+	}
 	ImGui::End();
 }
 

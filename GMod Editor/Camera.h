@@ -10,7 +10,7 @@ namespace app {
 		bool cameraChanged = false;
 		float moveSensitivity = 0.005f;
 		float rotateSensitivity = 0.005f;
-		float zoomSensitivity = 0.0005f;
+		float zoomSensitivity = 0.005f;
 
 		explicit Camera(gmod::Transform<float> target = gmod::Transform<float>(),
 			float dist = 0.0f, float minDist = -std::numeric_limits<float>::max(), float maxDist = std::numeric_limits<float>::max());

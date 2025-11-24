@@ -37,6 +37,7 @@ namespace app {
 		// in minutes
 		// float pathTime = 0.0f; // unavailable due to the lack of velocity
 
+		void Save(const std::vector<gmod::vector3<float>>& path, const std::string& stage, const std::string& type, const std::string& diameter) const;
 		void Parse(std::ifstream& file);
 		void Clear();
 
@@ -59,5 +60,6 @@ namespace app {
 
 		void ParseN(MillingCommand& cmd, std::istringstream& line, int& lineNumber);
 		void ParseG(MillingCommand& cmd, std::istringstream& line, int& lineNumber);
+		static std::string Float2String(float value);
 	};
 }

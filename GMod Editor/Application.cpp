@@ -9,7 +9,7 @@ using namespace app;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-const float Application::selectionRadius = 0.1f;
+const float Application::selectionRadius = 1.f;
 const float Application::traSensitivity = 0.005f;
 const float Application::rotSensitivity = 0.005f;
 const float Application::scaSensitivity = 0.005f;
