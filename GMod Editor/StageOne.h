@@ -39,7 +39,8 @@ namespace app {
 			.cpt = 1e-3
 		};
 
-		std::vector<std::vector<float>> CreateHeightMap(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
+		std::vector<std::vector<float>> CreateHeightmapByIntersections(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
+		std::vector<std::vector<float>> CreateHeightmapByUVSampling(const std::vector<std::unique_ptr<Object>>& sceneObjects) const;
 		std::vector<gmod::vector3<float>> MakeSmooth(const std::vector<gmod::vector3<float>>& path) const;
 		float CheckInRange(const std::vector<std::vector<float>>& heightmap, int currX, int currZ) const;
 	};

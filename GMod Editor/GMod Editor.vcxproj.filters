@@ -231,6 +231,9 @@
     <ClInclude Include="StageOne.h">
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
+    <ClInclude Include="StageTwo.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

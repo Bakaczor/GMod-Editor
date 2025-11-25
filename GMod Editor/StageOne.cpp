@@ -6,7 +6,7 @@
 using namespace app;
 
 std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
-	std::vector<std::vector<float>> heightmap = CreateHeightMap(sceneObjects, intersection);
+	std::vector<std::vector<float>> heightmap = CreateHeightmapByIntersections(sceneObjects, intersection);
 
 	// calculate boundaries 
 	const float xLeft = topLeftCorner.x();
@@ -155,7 +155,7 @@ float StageOne::CheckInRange(const std::vector<std::vector<float>>& heightmap, i
 	return y;
 }
 
-std::vector<std::vector<float>> StageOne::CreateHeightMap(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
+std::vector<std::vector<float>> StageOne::CreateHeightmapByIntersections(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
 	intersection.SetIntersectionParameters(m_interParams);
 
 	// get all surfaces on scene
@@ -218,6 +218,65 @@ std::vector<std::vector<float>> StageOne::CreateHeightMap(const std::vector<std:
 			}
 		}
 	}
+	return heightmap;
+}
+
+std::vector<std::vector<float>> StageOne::CreateHeightmapByUVSampling(const std::vector<std::unique_ptr<Object>>& sceneObjects) const {
+	std::vector<std::vector<float>> heightmap(m_resX + 1, std::vector<float>(m_resZ + 1, baseY));
+
+	// get all surfaces on scene
+	std::vector<IGeometrical*> sceneSurfaces;
+
+	for (const auto& so : sceneObjects) {
+		IGeometrical* g = dynamic_cast<IGeometrical*>(so.get());
+		if (g != nullptr) {
+			sceneSurfaces.push_back(g);
+		}
+	}
+
+	// sort based on y value
+	std::sort(sceneSurfaces.begin(), sceneSurfaces.end(), [](const auto& a, const auto& b) {
+		return a->WorldBounds().max.y() > b->WorldBounds().max.y();
+	});
+
+	const float stepX = width / m_resX;
+	const float stepZ = length / m_resZ;
+	const float xyzStep = 0.1f;
+	for (auto& surf : sceneSurfaces) {
+		// calculate u and v steps
+		const auto& xyzBounds = surf->WorldBounds();
+		const float diffX = xyzBounds.max.x() - xyzBounds.min.x();
+		const float diffY = xyzBounds.max.y() - xyzBounds.min.y();
+		const float diffZ = xyzBounds.max.z() - xyzBounds.min.z();
+		const float xyzMaxSpan = std::max(diffX, std::max(diffY, diffZ));
+		const int numOfSteps = static_cast<int>(xyzMaxSpan / xyzStep);
+
+		const auto& uvBounds = surf->ParametricBounds();
+		const float diffU = uvBounds.uMax - uvBounds.uMin;
+		const float diffV = uvBounds.vMax - uvBounds.vMin;
+		const float uStep = diffU / numOfSteps;
+		const float vStep = diffV / numOfSteps;
+
+		float u = uvBounds.uMin;
+		float v = uvBounds.vMin;
+		
+		// sample uv plane
+		while (u <= uvBounds.uMax) {
+			while (v <= uvBounds.vMax) {
+				auto p = surf->Point(u, v);
+				
+				const int x = static_cast<int>((p.x() - topLeftCorner.x()) / stepX);
+				const int z = static_cast<int>((p.z() - topLeftCorner.z()) / stepZ);
+				if (p.y() > heightmap[x][z]) {
+					heightmap[x][z] = p.y();
+				}
+
+				v += vStep;
+			}
+			u += uStep;
+		}
+	}
+
 	return heightmap;
 }
 

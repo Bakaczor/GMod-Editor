@@ -224,6 +224,7 @@
     <ClInclude Include="PointModel.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="StageOne.h" />
+    <ClInclude Include="StageTwo.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="SurfaceBuilder.h" />
     <ClInclude Include="tinyfiledialogs.h" />
