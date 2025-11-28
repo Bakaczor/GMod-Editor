@@ -366,15 +366,16 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 }
 
 void StageTwo::EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const {
-	if (points.size() < 3) return;
+	if (points.size() < 3) { return; }
 
-	const auto& p1 = points[0].pos;
-	const auto& p2 = points[1].pos;
-	const auto& p3 = points[2].pos;
+	float area = 0.f;
+	for (size_t i = 0; i < points.size(); ++i) {
+		const auto& p0 = points[i].pos;
+		const auto& p1 = points[(i + 1) % points.size()].pos;
+		area += (p0.x() * p1.z() - p1.x() * p0.z());
+	}
 
-	float area = (p2.x() - p1.x()) * (p3.z() - p1.z()) - (p2.z() - p1.z()) * (p3.x() - p1.x());
-
-	// if area is positive, points are counterclockwise -> reverse
+	// if area is positive, polygon is CCW -> reverse
 	if (area > 0) {
 		std::reverse(points.begin(), points.end());
 	}
