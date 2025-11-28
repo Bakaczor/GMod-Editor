@@ -201,6 +201,7 @@
     <ClInclude Include="Display.h" />
     <ClInclude Include="Divisable.h" />
     <ClInclude Include="Edge.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="IGeometrical.h" />
     <ClInclude Include="Gregory.h" />
     <ClInclude Include="Intersection.h" />
@@ -208,6 +209,7 @@
     <ClInclude Include="Patch.h" />
     <ClInclude Include="PathAnimator.h" />
     <ClInclude Include="PathParser.h" />
+    <ClInclude Include="SegmentGraph.h" />
     <ClInclude Include="SerializationManager.h" />
     <ClInclude Include="Spline.h" />
     <ClInclude Include="Data.h" />
@@ -252,6 +254,7 @@
     <ClCompile Include="Patch.cpp" />
     <ClCompile Include="PathAnimator.cpp" />
     <ClCompile Include="PathParser.cpp" />
+    <ClCompile Include="SegmentGraph.cpp" />
     <ClCompile Include="SerializationManager.cpp" />
     <ClCompile Include="Spline.cpp" />
     <ClCompile Include="Data.cpp" />

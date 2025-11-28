@@ -2,11 +2,12 @@
 #include "Surface.h"
 #include "IGeometrical.h"
 #include "Debug.h";
+#include "Helper.h"
 
 using namespace app;
 
 std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
-	std::vector<std::vector<float>> heightmap = CreateHeightmapByIntersections(sceneObjects, intersection);
+	std::vector<std::vector<float>> heightmap = CreateHeightmapByUVSampling(sceneObjects);
 
 	// calculate boundaries 
 	const float xLeft = topLeftCorner.x();
@@ -17,10 +18,10 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	const float zBottom = topLeftCorner.z() + length + m_radius + 1.0f;
 
 	// calcualte milling heights
-	const float heightBottom = baseY + epsilon;
+	const float heightBottom = baseY + offset;
 	const float heightTop = heightBottom + (totalHeight - baseY) / 2;
 
-	const float separation = diameter / 1.5f;
+	const float separation = diameter - epsilon * m_radius;
 
 	// calculate x values
 	std::vector<float> xValues;
@@ -55,7 +56,7 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 		
 		for (int z = dir ? 0 : m_resZ; dir ? z <= m_resZ : z >= 0; z += direction) {
 			const float zVal = z * stepZ + topLeftCorner.z();
-			const float yVal = CheckInRange(heightmap, x, z) + epsilon;
+			const float yVal = CheckInRange(heightmap, x, z) + offset;
 
 			topPath.push_back(gmod::vector3<float>(xVal, std::max(yVal, heightTop), zVal));
 			bottomPath.push_back(gmod::vector3<float>(xVal, std::max(yVal, heightBottom), zVal));
@@ -78,11 +79,10 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	for (int i = 1; i < topPath.size() - 1; i++) {
 		float currY = topPath[i].y();
 
-		if (std::abs(topPath[i].z() - zTop) < FZERO || std::abs(topPath[i].z() - zBottom) < FZERO) {
+		if (Helper::AreEqualF(topPath[i].z(), zTop, FZERO) || Helper::AreEqualF(topPath[i].z(), zBottom, FZERO)) {
 			topPathFiltered.push_back(topPath[i]);
 		}
-
-		if (std::abs(topPath[i - 1].y() - currY) < FZERO && std::abs(topPath[i + 1].y() - currY) < FZERO) {
+		if (Helper::AreEqualF(topPath[i - 1].y(), currY, FZERO) && Helper::AreEqualF(topPath[i + 1].y(), currY, FZERO)) {
 			continue;
 		}
 		topPathFiltered.push_back(topPath[i]);
@@ -94,10 +94,10 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	for (int i = 1; i < bottomPath.size() - 1; i++) {
 		float currY = bottomPath[i].y();
 
-		if (std::abs(bottomPath[i].z() - zTop) < FZERO || std::abs(bottomPath[i].z() - zBottom) < FZERO) {
+		if (Helper::AreEqualF(bottomPath[i].z(), zTop, FZERO) || Helper::AreEqualF(bottomPath[i].z(), zBottom, FZERO)) {
 			bottomPathFiltered.push_back(bottomPath[i]);
 		}
-		if (std::abs(bottomPath[i - 1].y() - currY) < FZERO && std::abs(bottomPath[i + 1].y() - currY) < FZERO) {
+		if (Helper::AreEqualF(bottomPath[i - 1].y(), currY, FZERO) && Helper::AreEqualF(bottomPath[i + 1].y(), currY, FZERO)) {
 			continue;
 		} 
 		bottomPathFiltered.push_back(bottomPath[i]);
@@ -257,11 +257,10 @@ std::vector<std::vector<float>> StageOne::CreateHeightmapByUVSampling(const std:
 		const float uStep = diffU / numOfSteps;
 		const float vStep = diffV / numOfSteps;
 
-		float u = uvBounds.uMin;
-		float v = uvBounds.vMin;
-		
 		// sample uv plane
+		float u = uvBounds.uMin;
 		while (u <= uvBounds.uMax) {
+			float v = uvBounds.vMin;
 			while (v <= uvBounds.vMax) {
 				auto p = surf->Point(u, v);
 				
@@ -326,7 +325,8 @@ std::vector<gmod::vector3<float>> StageOne::MakeSmooth(const std::vector<gmod::v
 				float newY = std::max(targetY, minAllowedY);
 
 				// only update if actually changing and it's an improvement
-				if (std::abs(newY - smoothed[i].y()) > FZERO) {
+
+				if (!Helper::AreEqualF(newY, smoothed[i].y(), FZERO)) {
 					smoothed[i].y() = newY;
 					changed = true;
 				} else {

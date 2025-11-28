@@ -10,8 +10,9 @@ namespace app {
 		const std::string type = "k";
 		const int diameter = 16;
 
-		const float maxSlopeInDeg = 30.f;
-		const float epsilon = 2.f;
+		const float epsilon = 0.2f; // usage: d - eps * r
+		const float maxSlopeInDeg = 20.f;
+		const float offset = 2.f;
 		const float totalHeight = 50.f;
 
 		const float baseY = 15.f;
@@ -23,8 +24,8 @@ namespace app {
 		std::vector<gmod::vector3<float>> GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
 	private:
 		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
-		const int m_resX = 300;
-		const int m_resZ = 300;
+		const int m_resX = 1500;
+		const int m_resZ = 1500;
 		const float m_radius = 8.f;
 		const Intersection::InterParams m_interParams = {
 			.gs = 5 * 1e-3,

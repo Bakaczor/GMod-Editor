@@ -234,6 +234,12 @@
     <ClInclude Include="StageTwo.h">
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
+    <ClInclude Include="Helper.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
+    <ClInclude Include="SegmentGraph.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -360,6 +366,9 @@
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
     <ClCompile Include="StageTwo.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="SegmentGraph.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
   </ItemGroup>
