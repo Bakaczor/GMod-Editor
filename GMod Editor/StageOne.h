@@ -11,7 +11,7 @@ namespace app {
 		const int diameter = 16;
 
 		const float epsilon = 0.2f; // usage: d - eps * r
-		const float maxSlopeInDeg = 20.f;
+		const float maxSlopeInDeg = 20.f; // TODO: actual is around double that - investigate
 		const float offset = 2.f;
 		const float totalHeight = 50.f;
 

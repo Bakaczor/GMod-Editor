@@ -12,6 +12,7 @@
 #include "Milling.h"
 #include "PathAnimator.h"
 #include "StageOne.h";
+#include "StageTwo.h"
 #include <memory>
 
 namespace app {
@@ -98,6 +99,7 @@ namespace app {
 		// PATH GENERATING
 		bool m_generatedFlag = true;
 		StageOne m_stageOne;
+		StageTwo m_stageTwo;
 
 		int m_lastSelectedIndex = -1;
 

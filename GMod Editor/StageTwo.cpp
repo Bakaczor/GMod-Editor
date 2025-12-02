@@ -49,7 +49,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 	int ID = 0; // future vertex index
 	std::vector<SegmentEnd> contourIntersections;
 	for (size_t i = 0; i < offsetContour.size(); i++) {
-		if (offsetContour[i].pos.z() > topCountourZ) {
+		if (offsetContour[i].pos.z() < topCountourZ) {
 			topCountourZ = offsetContour[i].pos.z();
 			topCountourIdx = i;
 		}
@@ -95,7 +95,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 		}
 
 		std::sort(intersections.begin(), intersections.end(), [](const SegmentEnd& a, const SegmentEnd& b) {
-			return a.z > b.z;
+			return a.z < b.z;
 		});
 	}
 
@@ -103,9 +103,6 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 	std::vector<std::pair<float, std::vector<Segment>>> verticalSegments;
 	for (auto& [xVal, ends] : xValIntersectionPoints) {
 		verticalSegments.push_back(std::make_pair(xVal, std::vector<Segment>()));
-
-		auto& segments = verticalSegments.back().second;
-		segments.reserve(ends.size() / 2);
 
 		SegmentEnd top = {
 			.x = xVal,
@@ -115,12 +112,6 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 			.id = ID
 		};
 		ID++;
-		segments.push_back(Segment{ top, ends.front() });
-
-		for (int i = 1; i < ends.size() - 1; i += 2) {
-			segments.push_back(Segment{ ends[i], ends[i + 1] });
-		}
-
 		SegmentEnd bottom = {
 			.x = xVal,
 			.z = zBottom,
@@ -129,7 +120,17 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 			.id = ID
 		};
 		ID++;
-		segments.push_back(Segment{ ends.back(), bottom});
+
+		auto& segments = verticalSegments.back().second;
+		if (!ends.empty()) {
+			segments.push_back(Segment{ top, ends.front() });
+			for (int i = 1; i < ends.size() - 1; i += 2) {
+				segments.push_back(Segment{ ends[i], ends[i + 1] });
+			}
+			segments.push_back(Segment{ ends.back(), bottom });
+		} else {
+			segments.push_back(Segment{ top, bottom });
+		}
 	}
 
 	// make sure vertical segments are sorted in regard to x
@@ -161,7 +162,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 
 std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
 	// get all surfaces on scene
-	std::vector<std::pair<Intersection::IDIG, StageTwoParams>> sceneSurfaces;
+	std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>> sceneSurfaces;
 
 	for (const auto& so : sceneObjects) {
 		if (m_contourSurfaces.contains(so->name)) {
@@ -182,7 +183,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 	const gmod::vector3<float> planeNormal = { 0, 1, 0 };
 	std::vector<StageTwo::InterPoint> offsetCountour;
 	for (auto& [surf, params] : sceneSurfaces) {
-		intersection.SetIntersectionParameters(params.interParams);
+		intersection.SetIntersectionParameters(params);
 		unsigned int res = intersection.FindIntersection(std::make_pair(surf, baseIDIG));
 		if (res != 0) { 
 			throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
@@ -195,6 +196,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 		for (const auto& poi : pointsOfIntersection) {
 			InterPoint offsetPoi{ .surf = surf.s };
 
+			// TODO : there is something wrong here from theoretical standpoint - investigate
 			gmod::vector3<double> normal1 = surf.s->Normal(poi.uvs.u1, poi.uvs.v1);
 			if (Helper::AreEqualV3(normal1, planeNormal, FZERO)) { // first set of UVs belongs to the base plane
 				gmod::vector3<double> normal2 = surf.s->Normal(poi.uvs.u2, poi.uvs.v2);
@@ -216,16 +218,13 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 			thisOffsetCountour.push_back(offsetPoi);
 		}
 
-		// TODO: here you could add distance and curve based filtration on thisOffsetCountour
-		// basically, if the next point is within given precision and has very similiar normal (1 or 2 degrees difference max) you can skip it
-		EnsureClockwiseOrder(thisOffsetCountour);
-		Combine(offsetCountour, thisOffsetCountour, params.combineParams);
+		Combine(offsetCountour, thisOffsetCountour);
 	}
 
 	return offsetCountour;
 }
 
-void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std::vector<StageTwo::InterPoint>& newContour, CombineParams combineParams) const {
+void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std::vector<StageTwo::InterPoint>& newContour) const {
 	if (newContour.empty()) { return; }
 
 	if (mainContour.empty()) {
@@ -233,16 +232,15 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 		return;
 	}
 
-	if (combineParams.expectedIntersections < 2) { return; }
-
 	struct InterPair {
 		size_t i;
 		size_t j;
 		float dist;
 	};
 
-	size_t startI = -1;
-	float bestDistToStart = width;
+	bool fromMain = true;
+	size_t s = -1;
+	float smallestX = centre.x() + width;
 
 	std::vector<InterPair> pairs(mainContour.size());
 	for (size_t i = 0; i < mainContour.size(); i++) {
@@ -259,10 +257,17 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 
 		pairs[i] = InterPair(i, bestJ, bestDist);
 
-		float distToStart = (mainContour[i].pos - combineParams.startPoint).length();
-		if (distToStart < bestDistToStart) {
-			bestDistToStart = i;
-			bestDistToStart = distToStart;
+		if (mainContour[i].pos.x() < smallestX) {
+			s = i;
+			smallestX = mainContour[i].pos.x();
+		}
+	}
+
+	for (size_t j = 0; j < newContour.size(); j++) {
+		if (newContour[j].pos.x() < smallestX) {
+			fromMain = false;
+			s = j;
+			smallestX = newContour[j].pos.x();
 		}
 	}
 
@@ -272,21 +277,99 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 
 	// TODO: it is possbile that there will be need to make sure they are not to close to each other
 	// it depends how dense contours will be
-	std::vector<InterPair> intersections(pairs.begin(), pairs.begin() + combineParams.expectedIntersections);
+	std::vector<InterPair> intersections(pairs.begin(), pairs.begin() + m_expectedIntersections);
 
-	std::sort(intersections.begin(), intersections.end(), [](const InterPair& a, const InterPair& b) {
-		return a.i < b.i;
-	});
-	// TODO
-	// find between which intersection is startI, put intersections in order startI -> i_j ... -> i_n -> i0 -> ... -> i_k -> startI
-	// add maincontour[startI->i_j] to result
-	// starting from i_j intersection start on newcontour
-	// put everything between i_j - i_j+1 to result
-	// switch to main and so on until i_k
-	// then add maincontour[i_k->startI]
-	// when switching there are two options to follow (increasing or decreasing index)
-	// it should be increasing index if the contours are ordered correctly, but make sure using normals 
-	// (pick the right direction in regard to normal from the contour you switch to)
+	const std::vector<StageTwo::InterPoint>* contourI = &mainContour;
+	const std::vector<StageTwo::InterPoint>* contourJ = &newContour;
+
+	if (!fromMain) {
+		contourI = &newContour;
+		contourJ = &mainContour;
+
+		size_t temp;
+		temp = intersections[0].i;
+		intersections[0].i = intersections[0].j;
+		intersections[0].j = temp;
+
+		temp = intersections[1].i;
+		intersections[1].i = intersections[1].j;
+		intersections[1].j = temp;
+	}
+	// we make sure that s refers to contourI
+	 
+	if (intersections[0].i > intersections[1].i) {
+		InterPair temp = intersections[0];
+		intersections[0] = intersections[1];
+		intersections[1] = temp;
+	}
+	// i1 < i2
+
+	size_t& i1 = intersections[0].i;
+	size_t& i2 = intersections[1].i;
+
+	size_t& j1 = intersections[0].j;
+	size_t& j2 = intersections[1].j;
+
+	size_t in = (j1 + j2) / 2;
+	bool takeIn = IsOutside(contourJ->at(in), contourI);
+
+	bool takeInAndj1j2 = takeIn && j1 < j2; // j1:j2
+	bool takeInAndj2j1 = takeIn && j1 > j2; // j2:j1
+	bool takeOutAndj1j2 = !takeIn && j1 < j2; // 0:j1 + j2:m
+	bool takeOutAndj2j1 = !takeIn && j1 > j2; // 0:j2 + j1:m
+
+	std::vector<StageTwo::InterPoint> result;
+	if (i1 < s && s < i2) { // i1:i2
+		for (size_t k = i1; k <= i2; k++) {
+			result.push_back(contourI->at(k));
+		}
+
+		if (takeInAndj2j1) { // j2:j1
+
+			// i1:i2 + j2:j1
+			for (size_t k = j2; k <= j1; k++) {
+				result.push_back(contourJ->at(k));
+			}
+		}
+		if (takeOutAndj1j2) { // 0:j1 + j2:m
+
+			// i1:i2 + j2:m + 0:j1
+			for (size_t k = j2; k < contourJ->size(); k++) {
+				result.push_back(contourJ->at(k));
+			}
+			for (size_t k = 0; k <= j1; k++) {
+				result.push_back(contourJ->at(k));
+			}
+		}
+	} else { // 0:i1 + i2:n
+		for (size_t k = 0; k <= i1; k++) {
+			result.push_back(contourI->at(k));
+		}
+
+		if (takeInAndj1j2) { // j1:j2
+
+			// 0:i1 + j1:j2 + i2:n
+			for (size_t k = j1; k <= j2; k++) {
+				result.push_back(contourJ->at(k));
+			}
+		}
+		if (takeOutAndj2j1) { // 0:j2 + j1:m
+
+			// 0:i1 + j1:m + 0:j2 + i2:n
+			for (size_t k = j1; k < contourJ->size(); k++) {
+				result.push_back(contourJ->at(k));
+			}
+			for (size_t k = 0; k <= j2; k++) {
+				result.push_back(contourJ->at(k));
+			}
+		}
+
+		for (size_t k = i2; k < contourI->size(); k++) {
+			result.push_back(contourI->at(k));
+		}
+	}
+
+	mainContour = result;
 }
 
 std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, const SegmentEnd& start, 
@@ -358,34 +441,64 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 		finalPath.push_back(offsetContour[currIdx].pos);
 	}
 
-	const auto& contourEnd = offsetContour.back().pos;
-	finalPath.push_back(gmod::vector3<float>(contourEnd.x(), totalHeight + 1.0f, contourEnd.z()));
+	auto& back = finalPath.back();
+	finalPath.push_back(gmod::vector3<float>(back.x(), totalHeight + 1.0f, back.z()));
 	finalPath.push_back(startPoint);
 
 	return finalPath;
 }
 
-void StageTwo::EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const {
-	if (points.size() < 3) { return; }
+//void StageTwo::EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const {
+//	if (points.size() < 3) { return; }
+//
+//	float area = 0.f;
+//	for (size_t i = 0; i < points.size(); ++i) {
+//		const auto& p0 = points[i].pos;
+//		const auto& p1 = points[(i + 1) % points.size()].pos;
+//		area += (p0.x() * p1.z() - p1.x() * p0.z());
+//	}
+//
+//	// if area is positive, polygon is CCW -> reverse
+//	if (area > 0) {
+//		std::reverse(points.begin(), points.end());
+//	}
+//}
 
-	float area = 0.f;
-	for (size_t i = 0; i < points.size(); ++i) {
-		const auto& p0 = points[i].pos;
-		const auto& p1 = points[(i + 1) % points.size()].pos;
-		area += (p0.x() * p1.z() - p1.x() * p0.z());
-	}
+bool StageTwo::IsOutside(const StageTwo::InterPoint& point, const std::vector<StageTwo::InterPoint>* contour) const {
+	int n = contour->size();
+	if (n < 3) return 0;
 
-	// if area is positive, polygon is CCW -> reverse
-	if (area > 0) {
-		std::reverse(points.begin(), points.end());
+	int winding = 0;
+	for (int i = 0; i < n; i++) {
+		int j = (i + 1) % n;
+		const StageTwo::InterPoint& vi = contour->at(i);
+		const StageTwo::InterPoint& vj = contour->at(j);
+
+		float cross = (vj.pos.x() - vi.pos.x()) * (point.pos.z() - vi.pos.z()) 
+			- (vj.pos.z() - vi.pos.z()) * (point.pos.x() - vi.pos.x());
+
+		// check if edge crosses upward
+		if (vi.pos.z() < point.pos.z()) {
+			if (vj.pos.z() > point.pos.z() && cross > 0) {
+				winding++; 
+			}
+		}
+		// check if edge crosses downward
+		else {
+			if (vj.pos.z() < point.pos.z() && cross < 0) {
+				winding--; 
+			}
+		}
 	}
+	return winding == 0;
 }
 
-
-// for part 3 (initial idea, read lectures before that)
-// for every surface find offset surface
-// for every offset surface find intersection with other surfaces and create bounded parametric surface (make it specific)
-// using vertical plane, cut find intersections with milling surface and constrain them using bounds found before
-// you will get milling parts like in part two
-// try to create paths the same way as in part two (this is basically the same, but we need to have intersections, because here y changes)
-// it should be very easy, except for face which has holes and will need special treatment
+// find between which intersection is startI, put intersections in order startI -> i_j ... -> i_n -> i0 -> ... -> i_k -> startI
+// add maincontour[startI->i_j] to result
+// starting from i_j intersection start on newcontour
+// put everything between i_j - i_j+1 to result
+// switch to main and so on until i_k
+// then add maincontour[i_k->startI]
+// when switching there are two options to follow (increasing or decreasing index)
+// it should be increasing index if the contours are ordered correctly, but make sure using normals 
+// (pick the right direction in regard to normal from the contour you switch to)

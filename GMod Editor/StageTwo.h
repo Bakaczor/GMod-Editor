@@ -11,7 +11,7 @@ namespace app {
 		const std::string type = "f";
 		const int diameter = 10;
 
-		const float epsilon = 2.f;
+		const float epsilon = 0.2f; // usage: d - eps * r
 		const float totalHeight = 50.f;
 
 		const float baseY = 15.f;
@@ -24,34 +24,25 @@ namespace app {
 	private:
 		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
 		const float m_radius = 5.f;
+		const int m_expectedIntersections = 2;
 		
 		const Intersection::InterParams m_interParams = {
 			.gs = 5 * 1e-3,
 			.gt = 5 * 1e-5,
 			.gmi = 10000,
 			.ns = 0.01,
-			.nt = 5 * 1e-3,
-			.nmi = 6,
-			.nmr = 7,
-			.mip = 100,
-			.d = 1e-2,
-			.cpt = 1e-3
-		};
-
-		struct CombineParams {
-			int expectedIntersections;
-			gmod::vector3<float> startPoint;
-		};
-
-		struct StageTwoParams {
-			Intersection::InterParams interParams;
-			CombineParams combineParams;
+			.nt = 5 * 1e-2,
+			.nmi = 10,
+			.nmr = 5,
+			.mip = 500,
+			.d = 0.5,
+			.cpt = 0.5
 		};
 		
 		// second and any next surface should have at least one intersection with any previous surface
-		const std::unordered_map<std::string, StageTwoParams> m_contourSurfaces = {
-			{ "name1", { m_interParams, 0 }},
-			{ "name2", { m_interParams, 2 }}
+		const std::unordered_map<std::string, Intersection::InterParams> m_contourSurfaces = {
+			{ "bsurface_1", m_interParams },
+			{ "bsurface_2", m_interParams }
 		};
 
 		struct InterPoint {
@@ -61,9 +52,10 @@ namespace app {
 			const IGeometrical* surf;
 		};
 		std::vector<InterPoint> CreateOffsetContour(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
-		void Combine(std::vector<StageTwo::InterPoint>& mainContour, const std::vector<StageTwo::InterPoint>& newContour, CombineParams combineParams) const;
+		void Combine(std::vector<StageTwo::InterPoint>& mainContour, const std::vector<StageTwo::InterPoint>& newContour) const;
 		std::vector<gmod::vector3<float>> GetFinalPath(const SegmentGraph& G, const SegmentEnd& start, 
 			const std::vector<StageTwo::InterPoint>& offsetContour, int topCountourIdx, float zTop) const;
-		void EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const;
+		bool IsOutside(const StageTwo::InterPoint& point, const std::vector<StageTwo::InterPoint>* contour) const;
+		//void EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const;
 	};
 }

@@ -68,8 +68,8 @@ SegmentGraph::SegmentGraph(const std::vector<std::pair<float, std::vector<Segmen
 		vertices[v1Bottom].segEnd = leftBottom;
 		vertices[v2Bottom].segEnd = rightBottom;
 
-		vertices[v1Bottom].neighbours.push_back(std::make_pair(v2Bottom, Edge{ bottomSeg, v1Bottom, v2Bottom, diffX, false }));
-		vertices[v2Bottom].neighbours.push_back(std::make_pair(v1Bottom, Edge{ bottomSeg, v2Bottom, v1Bottom, diffX, false }));
+		vertices[v1Bottom].neighbours.push_back(std::make_pair(v2Bottom, Edge{ bottomSeg, v1Bottom, v2Bottom, diffX, false, true }));
+		vertices[v2Bottom].neighbours.push_back(std::make_pair(v1Bottom, Edge{ bottomSeg, v2Bottom, v1Bottom, diffX, false, true }));
 	}
 }
 
@@ -104,6 +104,7 @@ std::vector<int> SegmentGraph::SpecialDFS(int startVertex) const {
 		for (int i = 0; i < neighbours.size(); i++) {
 			const auto& [nb, edge] = vertices[u].neighbours[i];
 
+			// TODO : possibly we should prioritize visiting vertical edges over not visiting already visited vertices
 			if (visited[nb]) { continue; }
 
             float score = 0.0f;
@@ -135,6 +136,10 @@ std::vector<int> SegmentGraph::SpecialDFS(int startVertex) const {
             stack.push(bestNB);
         } else {
             stack.pop();
+			if (!stack.empty()) {
+				// moving back
+				path.push_back(stack.top());
+			}
         }
     }
 
