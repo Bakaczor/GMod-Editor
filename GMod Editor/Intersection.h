@@ -50,6 +50,7 @@ namespace app {
 			double d, cpt;
 		};
 		void SetIntersectionParameters(const InterParams& params);
+		inline bool IsClosed() const { return m_closed; }
 
 		void UpdateMesh(const Device& device);
 		void RenderMesh(const mini::dx_ptr<ID3D11DeviceContext>& context, const std::unordered_map<ShaderType, Shaders>& map) const;

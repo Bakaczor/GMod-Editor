@@ -56,6 +56,7 @@ namespace app {
 		std::vector<gmod::vector3<float>> GetFinalPath(const SegmentGraph& G, const SegmentEnd& start, 
 			const std::vector<StageTwo::InterPoint>& offsetContour, int topCountourIdx, float zTop) const;
 		bool IsOutside(const StageTwo::InterPoint& point, const std::vector<StageTwo::InterPoint>* contour) const;
+		bool IsCW(const std::vector<Intersection::PointOfIntersection>& contour) const;
 		//void EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const;
 	};
 }
