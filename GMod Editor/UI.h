@@ -13,6 +13,7 @@
 #include "PathAnimator.h"
 #include "StageOne.h";
 #include "StageTwo.h"
+#include "StageThree.h"
 #include <memory>
 
 namespace app {
@@ -100,6 +101,7 @@ namespace app {
 		bool m_generatedFlag = true;
 		StageOne m_stageOne;
 		StageTwo m_stageTwo;
+		StageThree m_stageThree;
 
 		int m_lastSelectedIndex = -1;
 

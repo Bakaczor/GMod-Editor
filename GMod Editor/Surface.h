@@ -41,7 +41,7 @@ namespace app {
 			std::vector<std::unique_ptr<app::Point>> controlPoints;
 			std::unique_ptr<Surface> surface;
 		};
-		static Plane MakePlane(gmod::vector3<double> centrePos, float width, float length, bool orientation, int id);
+		static Plane MakePlane(gmod::vector3<double> centrePos, float width, float length, gmod::vector3<double> orientation, int id);
 
 #pragma region IGEOMETRICAL
 		virtual XYZBounds WorldBounds() const override;

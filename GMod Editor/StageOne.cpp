@@ -180,7 +180,8 @@ std::vector<std::vector<float>> StageOne::CreateHeightmapByIntersections(const s
 	const float stepX = width / m_resX;
 	const float stepZ = length / m_resZ;
 
-	Surface::Plane ray = Surface::MakePlane(centre, rayLenght, rayWidth, false, -69);
+	// 90 degree rotation in Z results in YZ plane
+	Surface::Plane ray = Surface::MakePlane(centre, rayLenght, rayWidth, { 0,0,90 }, -69);
 
 	// complete heigtmap
 	std::vector<std::vector<float>> heightmap(m_resX + 1, std::vector<float>(m_resZ + 1, baseY));

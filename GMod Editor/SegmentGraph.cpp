@@ -74,12 +74,30 @@ SegmentGraph::SegmentGraph(const std::vector<std::pair<float, std::vector<Segmen
 }
 
 SegmentGraph::SegmentGraph(const std::vector<Segment3>& innerSegments, const std::vector<Segment3>& contourSegments) {
-	// TODO
+	vertices3 = std::vector<Vertex3>(contourSegments.size() / 2);
+	
+	// since innerSegments and contourSegments contain segments in both directions, we don't have to create incoming edges now
+
+	for (const auto& seg : contourSegments) {
+		int v1 = seg.p1.id;
+		int v2 = seg.p2.id;
+
+		vertices3[v1].segEnd = seg.p1;
+		vertices3[v1].neighbours.push_back(std::make_pair(v2, Edge3{ seg, v1, v2, seg.contourSegment }));
+	}
+
+	for (const auto& seg : innerSegments) {
+		int v1 = seg.p1.id;
+		int v2 = seg.p2.id;
+
+		vertices3[v1].segEnd = seg.p1;
+		vertices3[v1].neighbours.push_back(std::make_pair(v2, Edge3{ seg, v1, v2, seg.contourSegment }));
+	}
 }
 
 std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
 	std::set<std::pair<int, int>> uncoveredVerticalEdges;
-	for (const auto& vertex : vertices2) {
+	for (const Vertex2& vertex : vertices2) {
 		for (const auto& neighbour : vertex.neighbours) {
 			if (neighbour.second.isVertical) {
 				uncoveredVerticalEdges.insert(std::make_pair(
@@ -151,6 +169,72 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
 }
 
 std::vector<int> SegmentGraph::SpecialDFS3(int startVertex) const {
-	// TODO
-	return std::vector<int>();
+	std::set<std::pair<int, int>> uncoveredInnerEdges;
+	for (const Vertex3& vertex : vertices3) {
+		for (const auto& neighbour : vertex.neighbours) {
+			if (!neighbour.second.contourEdge) {
+				uncoveredInnerEdges.insert(std::make_pair(
+					std::min(neighbour.second.v1, neighbour.second.v2),
+					std::max(neighbour.second.v1, neighbour.second.v2)
+				));
+			}
+		}
+	}
+	std::vector<int> path = { startVertex };
+
+	std::stack<int> stack;
+	stack.push(startVertex);
+
+	std::vector<bool> visited(vertices3.size(), false);
+	visited[startVertex] = true;
+
+	while (!stack.empty() && !uncoveredInnerEdges.empty()) {
+		int u = stack.top();
+		auto& neighbours = vertices3[u].neighbours;
+
+		// find best neighbor (uncovered inner > other)
+		int bestNB = -1;
+		int bestNeighbourIdx = -1;
+		int bestScore = -1;
+		for (int i = 0; i < neighbours.size(); i++) {
+			const auto& [nb, edge] = vertices3[u].neighbours[i];
+
+			// TODO : possibly we should prioritize visiting vertical edges over not visiting already visited vertices
+			if (visited[nb]) { continue; }
+
+			int score = 0;
+			if (!edge.contourEdge) {
+				auto edgeKey = std::make_pair(std::min(u, nb), std::max(u, nb));
+				if (uncoveredInnerEdges.count(edgeKey) == 1) {
+					score += 100; // big bonus
+				}
+			}
+
+			if (score > bestScore) {
+				bestScore = score;
+				bestNB = nb;
+				bestNeighbourIdx = i;
+			}
+		}
+
+		if (bestNB != -1) {
+			const auto& edge = neighbours[bestNeighbourIdx].second;
+			if (!edge.contourEdge) {
+				auto edgeKey = std::make_pair(std::min(u, bestNB), std::max(u, bestNB));
+				uncoveredInnerEdges.erase(edgeKey);
+			}
+
+			visited[bestNB] = true;
+			path.push_back(bestNB);
+			stack.push(bestNB);
+		} else {
+			stack.pop();
+			if (!stack.empty()) {
+				// moving back
+				path.push_back(stack.top());
+			}
+		}
+	}
+
+	return path;
 }

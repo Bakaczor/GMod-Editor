@@ -20,8 +20,10 @@ namespace app {
 
 		std::vector<gmod::vector3<float>> GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
 	private:
-		const float FZERO = 100.f * std::numeric_limits<float>::epsilon();
+		const float FZERO_XYZ = 100.f * std::numeric_limits<float>::epsilon();
+		const float FZERO_UV = std::numeric_limits<float>::epsilon();
 		const float m_radius = 4.f;
+		const int m_samplingRes = 500;
 
 		const Intersection::InterParams m_baseInterParams = {
 			.gs = 5 * 1e-3,
@@ -29,11 +31,11 @@ namespace app {
 			.gmi = 10000,
 			.ns = 0.01,
 			.nt = 5 * 1e-2,
-			.nmi = 11,
+			.nmi = 20,
 			.nmr = 5,
-			.mip = 500,
-			.d = 0.5,
-			.cpt = 0.5
+			.mip = 2000,
+			.d = 0.2,
+			.cpt = 0.2
 		};
 
 		struct NamedInterParams {
@@ -43,6 +45,7 @@ namespace app {
 
 		struct MillingPartParams {
 			std::string name; // name of the part
+			Intersection::InterParams cuttingParams;
 			std::vector<NamedInterParams> intersectingSurfaces; // which surfaces intersect with this part
 			gmod::vector3<float> insidePoint; // the point that will be milled
 			float epsilon; // used for separation: d - eps * r
@@ -51,7 +54,7 @@ namespace app {
 		};
 
 		const std::vector<MillingPartParams> m_millingParams = {
-			MillingPartParams{ "bsurface_1", { { "bsurface_2", m_baseInterParams }, { "bsurface_3", m_baseInterParams } }, { 0.f, 0.f, 0.f }, 0.5f, true, 1 }
+			MillingPartParams{ "bsurface_1", m_baseInterParams, { { "bsurface_2", m_baseInterParams }, { "bsurface_3", m_baseInterParams } }, { 0.f, 0.f, 0.f }, 1.5f, false, 1 }
 		};
 
 		struct InterPoint {
@@ -69,23 +72,19 @@ namespace app {
 			const std::vector<InterPoint>& baseContour, const gmod::vector3<float>& insidePoint,
 			const Intersection::IDIG& part, const std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>>& intersectingSurfaces) const;
 
-		void Combine(std::vector<StageThree::InterPoint>& finalContour, const std::vector<StageThree::InterPoint>& intersectionLine,
-			float insideU, float insideV) const;
+		void Combine(std::vector<InterPoint>& finalContour, const std::vector<InterPoint>& intersectionLine,
+			float insideU, float insideV, const Intersection::IDIG& part) const;
 		
 		SegmentGraph CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour,
 			const Intersection::IDIG& part, float epsilon, bool cutVertical, int startFrom, SegmentEnd3& startingPoint) const;
+
+		void GetInnerSegments(const std::vector<InterPoint>& contour, const std::vector<InterPoint>& intersectionLine,
+			std::vector<Segment3>& innerSegements, std::vector<SegmentEnd3>& contourIntersections, int& ID, const Intersection::IDIG& part) const;
 
 		struct PartUVs {
 			float u, v;
 		};
 		bool DoSegementsCross(PartUVs A, PartUVs B, PartUVs C, PartUVs D, PartUVs& intersection) const;
+		bool IsInside(const PartUVs& point, const std::vector<StageThree::InterPoint>& closedContour) const;
 	};
 }
-
-// for part 3 (initial idea, read lectures before that)
-// for every surface find offset surface
-// for every offset surface find intersection with other surfaces and create bounded parametric surface (make it specific)
-// using vertical plane, cut find intersections with milling surface and constrain them using bounds found before
-// you will get milling parts like in part two
-// try to create paths the same way as in part two (this is basically the same, but we need to have intersections, because here y changes)
-// it should be very easy, except for face which has holes and will need special treatment

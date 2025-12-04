@@ -849,6 +849,10 @@ void UI::RenderIO_CAD() {
 					parser.Save(m_stageTwo.GeneratePath(sceneObjects, intersection), m_stageTwo.stage, m_stageTwo.type, std::to_string(m_stageTwo.diameter));
 					break;
 				}
+				case 3: {
+					parser.Save(m_stageThree.GeneratePath(sceneObjects, intersection), m_stageThree.stage, m_stageThree.type, std::to_string(m_stageThree.diameter));
+					break;
+				}
 				default: {
 					m_generatedFlag = false;
 					break;

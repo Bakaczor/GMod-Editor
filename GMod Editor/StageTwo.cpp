@@ -177,7 +177,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 	}
 
 	// create base
-	Surface::Plane base = Surface::MakePlane(centre, width, length, true, -69);
+	Surface::Plane base = Surface::MakePlane(centre, width, length, { 0,0,0 }, -69);
 	Intersection::IDIG baseIDIG = { base.surface->id, dynamic_cast<IGeometrical*>(base.surface.get()) };
 
 	std::vector<StageTwo::InterPoint> offsetCountour;

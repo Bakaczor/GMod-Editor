@@ -3,12 +3,13 @@
 #include <numbers>
 #include "BSurface.h"
 #include "Application.h"
+#include "../gmod/utility.h"
 
 using namespace app;
 
 unsigned short Surface::m_globalSurfaceNum = 0;
 
-Surface::Plane Surface::MakePlane(gmod::vector3<double> centrePos, float width, float length, bool orientation, int id) {
+Surface::Plane Surface::MakePlane(gmod::vector3<double> centrePos, float width, float length, gmod::vector3<double> orientation, int id) {
 	Plane plane;
 
 	const unsigned int aPoints = 4;
@@ -22,11 +23,8 @@ Surface::Plane Surface::MakePlane(gmod::vector3<double> centrePos, float width, 
 			float x = (width * i) / (aPoints - 1) - width / 2.0f;
 			float z = (length * j) / (bPoints - 1) - length / 2.0f;
 			
-			if (orientation) { // horizontal XZ
-				point->SetTranslation(x + centrePos.x(), centrePos.y(), z + centrePos.z());
-			} else { //vertical YZ
-				point->SetTranslation(centrePos.x(), x + centrePos.y(), z + centrePos.z());
-			}
+			// create plane in XZ plane
+			point->SetTranslation(x + centrePos.x(), centrePos.y(), z + centrePos.z());
 			plane.controlPoints.push_back(std::move(point));
 		}
 	}
@@ -37,6 +35,7 @@ Surface::Plane Surface::MakePlane(gmod::vector3<double> centrePos, float width, 
 		referencePoints.push_back(p.get());
 	}
 	plane.surface = std::make_unique<Surface>(SurfaceType::Flat, aPoints, bPoints, 2, referencePoints, id);
+	plane.surface->SetRotation(gmod::deg2rad(orientation.x()), gmod::deg2rad(orientation.y()), gmod::deg2rad(orientation.z()));
 
 	return plane;
 }

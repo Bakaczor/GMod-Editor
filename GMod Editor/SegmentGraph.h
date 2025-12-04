@@ -25,7 +25,7 @@ namespace app {
 
 	struct SegmentEnd3 {
 		int id = -1;
-		long long contourIdx = -1;
+		long contourIdx = -1;
 	};
 
 	struct Segment3 {
@@ -33,7 +33,6 @@ namespace app {
 		SegmentEnd3 p2;
 
 		bool contourSegment;
-		bool reverseDuringRebuild; // true, if during path building should go p2->p1
 		std::vector<gmod::vector3<float>> p1p2; // only populated if contourSegment == false
 	};
 
