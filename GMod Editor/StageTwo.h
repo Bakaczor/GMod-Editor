@@ -32,7 +32,7 @@ namespace app {
 			.gmi = 10000,
 			.ns = 0.01,
 			.nt = 5 * 1e-2,
-			.nmi = 10,
+			.nmi = 11,
 			.nmr = 5,
 			.mip = 500,
 			.d = 0.5,
@@ -42,21 +42,26 @@ namespace app {
 		// second and any next surface should have at least one intersection with any previous surface
 		const std::unordered_map<std::string, Intersection::InterParams> m_contourSurfaces = {
 			{ "bsurface_1", m_interParams },
-			{ "bsurface_2", m_interParams }
+			{ "bsurface_2", m_interParams },
+			{ "bsurface_3", m_interParams }
+
 		};
 
 		struct InterPoint {
 			gmod::vector3<float> pos; // at baseY
-			gmod::vector3<float> norm; // projected onto XZ
+			gmod::vector3<float> norm; // on XZ
 			float u, v;
 			const IGeometrical* surf;
 		};
 		std::vector<InterPoint> CreateOffsetContour(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
+
 		void Combine(std::vector<StageTwo::InterPoint>& mainContour, const std::vector<StageTwo::InterPoint>& newContour) const;
-		std::vector<gmod::vector3<float>> GetFinalPath(const SegmentGraph& G, const SegmentEnd& start, 
+
+		std::vector<gmod::vector3<float>> GetFinalPath(const SegmentGraph& G, const SegmentEnd2& start, 
 			const std::vector<StageTwo::InterPoint>& offsetContour, int topCountourIdx, float zTop) const;
+
 		bool IsOutside(const StageTwo::InterPoint& point, const std::vector<StageTwo::InterPoint>* contour) const;
+
 		bool IsCW(const std::vector<Intersection::PointOfIntersection>& contour) const;
-		//void EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const;
 	};
 }

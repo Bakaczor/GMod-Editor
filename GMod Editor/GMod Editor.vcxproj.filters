@@ -243,6 +243,9 @@
     <ClInclude Include="StageThree.h">
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
+    <ClInclude Include="OffsetSurface.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -372,6 +375,12 @@
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
     <ClCompile Include="SegmentGraph.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="StageThree.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="OffsetSurface.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
   </ItemGroup>

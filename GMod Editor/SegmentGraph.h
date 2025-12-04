@@ -1,8 +1,9 @@
 #pragma once
 #include <unordered_map>
+#include "../gmod/vector3.h"
 
 namespace app {
-	struct SegmentEnd {
+	struct SegmentEnd2 {
 		float x, z;
 		bool isTopOrBottom;
 		bool isOnContour; // !isTopOrBottom
@@ -13,36 +14,68 @@ namespace app {
 		long long nextIdx = -1;
 	};
 
-	struct Segment {
-		SegmentEnd p1;
-		SegmentEnd p2;
+	struct Segment2 {
+		SegmentEnd2 p1;
+		SegmentEnd2 p2;
 
 		// positive only for contour segements
 		long long interStartIdx = -1;
 		long long interEndIdx = -1;
 	};
 
+	struct SegmentEnd3 {
+		int id = -1;
+		long long contourIdx = -1;
+	};
+
+	struct Segment3 {
+		SegmentEnd3 p1;
+		SegmentEnd3 p2;
+
+		bool contourSegment;
+		bool reverseDuringRebuild; // true, if during path building should go p2->p1
+		std::vector<gmod::vector3<float>> p1p2; // only populated if contourSegment == false
+	};
+
 	class SegmentGraph {
 	public:
-		struct Edge {
-			Segment seg;
+		struct Edge2 {
+			Segment2 seg;
 
 			int v1, v2;
 			float dist;
 			bool isVertical;
 			bool isHorizontal;
 		};
-		struct Vertex {
-			SegmentEnd segEnd;
+		struct Vertex2 {
+			SegmentEnd2 segEnd;
 
-			std::vector<std::pair<int, Edge>> neighbours;
+			std::vector<std::pair<int, Edge2>> neighbours;
 		};
 
-		std::vector<Vertex> vertices;
+		struct Edge3 {
+			Segment3 seg;
 
-		SegmentGraph(const std::vector<std::pair<float, std::vector<Segment>>>& verticalSegments,
-			const std::vector<Segment>& contourSegments, int vertNum);
+			int v1, v2;
+			bool contourEdge;
+		};
+		struct Vertex3 {
+			SegmentEnd3 segEnd;
 
-		std::vector<int> SpecialDFS(int startVertex) const;
+			std::vector<std::pair<int, Edge3>> neighbours;
+		};
+
+		std::vector<Vertex2> vertices2;
+		std::vector<Vertex3> vertices3;
+
+		// for stage two
+		SegmentGraph(const std::vector<std::pair<float, std::vector<Segment2>>>& verticalSegments,
+			const std::vector<Segment2>& contourSegments, int vertNum);
+
+		// for stage three
+		SegmentGraph(const std::vector<Segment3>& innerSegments, const std::vector<Segment3>& contourSegments);
+
+		std::vector<int> SpecialDFS2(int startVertex) const;
+		std::vector<int> SpecialDFS3(int startVertex) const;
 	};
 }

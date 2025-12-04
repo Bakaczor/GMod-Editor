@@ -38,16 +38,16 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 
 	auto offsetContour = CreateOffsetContour(sceneObjects, intersection);
 
-	std::unordered_map<float, std::vector<SegmentEnd>> xValIntersectionPoints;
+	std::unordered_map<float, std::vector<SegmentEnd2>> xValIntersectionPoints;
 	for (const float& xVal : xValues) {
-		xValIntersectionPoints.insert({ xVal, std::vector<SegmentEnd>() });
+		xValIntersectionPoints.insert({ xVal, std::vector<SegmentEnd2>() });
 	}
 
 	float topCountourZ = 0.f;
 	int topCountourIdx = 0;
 
 	int ID = 0; // future vertex index
-	std::vector<SegmentEnd> contourIntersections;
+	std::vector<SegmentEnd2> contourIntersections;
 	for (size_t i = 0; i < offsetContour.size(); i++) {
 		if (offsetContour[i].pos.z() < topCountourZ) {
 			topCountourZ = offsetContour[i].pos.z();
@@ -68,7 +68,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 				float t = (xVal - p1.pos.x()) / (p2.pos.x() - p1.pos.x());
 				float z = p1.pos.z() + t * (p2.pos.z() - p1.pos.z());
 
-				SegmentEnd p = {
+				SegmentEnd2 p = {
 					.x = xVal,
 					.z = z,
 					.isTopOrBottom = false,
@@ -94,17 +94,17 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 			throw std::runtime_error("The number of points for each xVal should be even.");
 		}
 
-		std::sort(intersections.begin(), intersections.end(), [](const SegmentEnd& a, const SegmentEnd& b) {
+		std::sort(intersections.begin(), intersections.end(), [](const SegmentEnd2& a, const SegmentEnd2& b) {
 			return a.z < b.z;
 		});
 	}
 
 	// create vertical segments
-	std::vector<std::pair<float, std::vector<Segment>>> verticalSegments;
+	std::vector<std::pair<float, std::vector<Segment2>>> verticalSegments;
 	for (auto& [xVal, ends] : xValIntersectionPoints) {
-		verticalSegments.push_back(std::make_pair(xVal, std::vector<Segment>()));
+		verticalSegments.push_back(std::make_pair(xVal, std::vector<Segment2>()));
 
-		SegmentEnd top = {
+		SegmentEnd2 top = {
 			.x = xVal,
 			.z = zTop,
 			.isTopOrBottom = true,
@@ -112,7 +112,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 			.id = ID
 		};
 		ID++;
-		SegmentEnd bottom = {
+		SegmentEnd2 bottom = {
 			.x = xVal,
 			.z = zBottom,
 			.isTopOrBottom = true,
@@ -123,30 +123,30 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 
 		auto& segments = verticalSegments.back().second;
 		if (!ends.empty()) {
-			segments.push_back(Segment{ top, ends.front() });
+			segments.push_back(Segment2{ top, ends.front() });
 			for (int i = 1; i < ends.size() - 1; i += 2) {
-				segments.push_back(Segment{ ends[i], ends[i + 1] });
+				segments.push_back(Segment2{ ends[i], ends[i + 1] });
 			}
-			segments.push_back(Segment{ ends.back(), bottom });
+			segments.push_back(Segment2{ ends.back(), bottom });
 		} else {
-			segments.push_back(Segment{ top, bottom });
+			segments.push_back(Segment2{ top, bottom });
 		}
 	}
 
 	// make sure vertical segments are sorted in regard to x
 	std::sort(verticalSegments.begin(), verticalSegments.end(),
-		[](const std::pair<float, std::vector<Segment>>& a, const std::pair<float, std::vector<Segment>>& b) {
+		[](const std::pair<float, std::vector<Segment2>>& a, const std::pair<float, std::vector<Segment2>>& b) {
 		return a.first < b.first;
 	});
 
 	// create contour segements
-	std::vector<Segment> contourSegements;
+	std::vector<Segment2> contourSegements;
 	contourSegements.reserve(contourIntersections.size());
 	for (size_t i = 0; i < contourIntersections.size(); i++) {
 		size_t idx1 = i;
 		size_t idx2 = (i + 1) % contourIntersections.size();
 
-		Segment seg = {
+		Segment2 seg = {
 			.p1 = contourIntersections[idx1],
 			.p2 = contourIntersections[idx2],
 			.interStartIdx = contourIntersections[idx1].nextIdx,
@@ -180,7 +180,6 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 	Surface::Plane base = Surface::MakePlane(centre, width, length, true, -69);
 	Intersection::IDIG baseIDIG = { base.surface->id, dynamic_cast<IGeometrical*>(base.surface.get()) };
 
-	const gmod::vector3<float> planeNormal = { 0, 1, 0 };
 	std::vector<StageTwo::InterPoint> offsetCountour;
 	for (auto& [surf, params] : sceneSurfaces) {
 		intersection.SetIntersectionParameters(params);
@@ -423,10 +422,10 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 	mainContour = result;
 }
 
-std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, const SegmentEnd& start, 
+std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, const SegmentEnd2& start, 
 	const std::vector<StageTwo::InterPoint>& offsetContour, int topContourIdx, float zTop) const {
 
-	std::vector<int> path = G.SpecialDFS(start.id);
+	std::vector<int> path = G.SpecialDFS2(start.id);
 	
 	gmod::vector3<float> startPoint(0, totalHeight + 1.0f, 0);
 	gmod::vector3<float> overMillingStart(start.x, totalHeight + 1.0f, start.z);
@@ -440,10 +439,10 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 		int fromId = path[v];
 		int toId = path[v + 1];
 
-		const auto& fromVertex = G.vertices[fromId];
-		const auto& toVertex = G.vertices[toId];
+		const auto& fromVertex = G.vertices2[fromId];
+		const auto& toVertex = G.vertices2[toId];
 
-		auto it = std::find_if(fromVertex.neighbours.begin(), fromVertex.neighbours.end(), [&toId](const std::pair<int, SegmentGraph::Edge>& e) {
+		auto it = std::find_if(fromVertex.neighbours.begin(), fromVertex.neighbours.end(), [&toId](const std::pair<int, SegmentGraph::Edge2>& e) {
 			return e.first == toId;
 		});
 
@@ -478,7 +477,7 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 		} 
 	}
 
-	const SegmentEnd& last = G.vertices[path.back()].segEnd;
+	const SegmentEnd2& last = G.vertices2[path.back()].segEnd;
 	finalPath.push_back(gmod::vector3<float>(last.x, baseY, last.z));
 	finalPath.push_back(gmod::vector3<float>(last.x, totalHeight + 1.0f, last.z));
 
@@ -498,22 +497,6 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 
 	return finalPath;
 }
-
-//void StageTwo::EnsureClockwiseOrder(std::vector<StageTwo::InterPoint>& points) const {
-//	if (points.size() < 3) { return; }
-//
-//	float area = 0.f;
-//	for (size_t i = 0; i < points.size(); ++i) {
-//		const auto& p0 = points[i].pos;
-//		const auto& p1 = points[(i + 1) % points.size()].pos;
-//		area += (p0.x() * p1.z() - p1.x() * p0.z());
-//	}
-//
-//	// if area is positive, polygon is CCW -> reverse
-//	if (area > 0) {
-//		std::reverse(points.begin(), points.end());
-//	}
-//}
 
 bool StageTwo::IsOutside(const StageTwo::InterPoint& point, const std::vector<StageTwo::InterPoint>* contour) const {
 	int n = contour->size();
