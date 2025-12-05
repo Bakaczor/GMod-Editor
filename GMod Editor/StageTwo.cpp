@@ -62,7 +62,8 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 
 		for (const float& xVal : xValues) {
 			// check if this segment crosses any xVal line
-			if ((p1.pos.x() <= xVal && p2.pos.x() >= xVal) || (p1.pos.x() >= xVal && p2.pos.x() <= xVal)) {
+			if ((p1.pos.x() <= xVal + FZERO && p2.pos.x() >= xVal - FZERO) ||
+				(p1.pos.x() >= xVal - FZERO && p2.pos.x() <= xVal + FZERO)) {
 
 				// calculate intersection point (linear interpolation)
 				float t = (xVal - p1.pos.x()) / (p2.pos.x() - p1.pos.x());
@@ -162,16 +163,14 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 
 std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
 	// get all surfaces on scene
-	std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>> sceneSurfaces;
+	std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>> sceneSurfaces(m_numOfSurfaces);
 
 	for (const auto& so : sceneObjects) {
 		if (m_contourSurfaces.contains(so->name)) {
 			IGeometrical* g = dynamic_cast<IGeometrical*>(so.get());
 			if (g != nullptr) {
-				sceneSurfaces.push_back(std::make_pair(
-					Intersection::IDIG { so->id, g },
-					m_contourSurfaces.at(so->name))
-				);
+				const SurfParams& sp = m_contourSurfaces.at(so->name);
+				sceneSurfaces[sp.order] = std::make_pair(Intersection::IDIG { so->id, g }, sp.params);
 			}
 		}
 	}
@@ -192,31 +191,31 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 		std::vector<StageTwo::InterPoint> thisOffsetCountour;
 		thisOffsetCountour.reserve(pointsOfIntersection.size());
 
-		bool closed = intersection.IsClosed();
+		//bool closed = intersection.IsClosed();
 		int dir = IsCW(pointsOfIntersection) ? 1 : -1;
 
-		size_t start = 0;
-		size_t n = pointsOfIntersection.size();
+		size_t start = 1;// 0;
+		size_t n = pointsOfIntersection.size() - 1;
 
-		if (!closed) {
-			start = 1;
-			n = pointsOfIntersection.size() - 1;
-		}
+		//if (!closed) {
+		//	start = 1;
+		//	n = pointsOfIntersection.size() - 1;
+		//}
 
-		if (!closed) { // first
-			InterPoint offsetPoi{ .surf = surf.s };
-			const auto diff = pointsOfIntersection[1].pos - pointsOfIntersection[0].pos;
-			gmod::vector3<double> normal(-diff.z() * dir, 0, diff.x() * dir);
-			normal.normalize();
-			gmod::vector3<double> offsetPos = pointsOfIntersection[0].pos + normal * m_radius;
+		//if (!closed) { // first
+		//	InterPoint offsetPoi{ .surf = surf.s };
+		//	const auto diff = pointsOfIntersection[1].pos - pointsOfIntersection[0].pos;
+		//	gmod::vector3<double> normal(-diff.z() * dir, 0, diff.x() * dir);
+		//	normal.normalize();
+		//	gmod::vector3<double> offsetPos = pointsOfIntersection[0].pos + normal * m_radius;
 
-			offsetPoi.pos = gmod::vector3<float>(offsetPos.x(), baseY, offsetPos.z());
-			offsetPoi.norm = gmod::vector3<float>(normal.x(), 0, normal.z());
-			offsetPoi.u = pointsOfIntersection[0].uvs.u1;
-			offsetPoi.v = pointsOfIntersection[0].uvs.v1;
+		//	offsetPoi.pos = gmod::vector3<float>(offsetPos.x(), baseY, offsetPos.z());
+		//	offsetPoi.norm = gmod::vector3<float>(normal.x(), 0, normal.z());
+		//	offsetPoi.u = pointsOfIntersection[0].uvs.u1;
+		//	offsetPoi.v = pointsOfIntersection[0].uvs.v1;
 
-			thisOffsetCountour.push_back(offsetPoi);
-		}
+		//	thisOffsetCountour.push_back(offsetPoi);
+		//}
 
 		// TODO : think how to smoothen the offset contour - maybe add some intermidiate points?
 		// it is little jaggy now
@@ -224,14 +223,14 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 			size_t prevI = i - 1;
 			size_t nextI = i + 1;
 
-			if (closed) {
+			//if (closed) {
 				if (i == 0) {
 					prevI = n - 1;
 				}
 				if (i == n - 1) {
 					nextI = 0;
 				}
-			}
+			//}
 			const auto& prevP = pointsOfIntersection[prevI];
 			const auto& currP = pointsOfIntersection[i];
 			const auto& nextP = pointsOfIntersection[nextI];
@@ -255,20 +254,20 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 			thisOffsetCountour.push_back(offsetPoi);
 		}
 
-		if (!closed) { // last
-			InterPoint offsetPoi{ .surf = surf.s };
-			const auto diff = pointsOfIntersection[n].pos - pointsOfIntersection[n - 1].pos;
-			gmod::vector3<double> normal(-diff.z() * dir, 0, diff.x() * dir);
-			normal.normalize();
-			gmod::vector3<double> offsetPos = pointsOfIntersection[n].pos + normal * m_radius;
+		//if (!closed) { // last
+		//	InterPoint offsetPoi{ .surf = surf.s };
+		//	const auto diff = pointsOfIntersection[n].pos - pointsOfIntersection[n - 1].pos;
+		//	gmod::vector3<double> normal(-diff.z() * dir, 0, diff.x() * dir);
+		//	normal.normalize();
+		//	gmod::vector3<double> offsetPos = pointsOfIntersection[n].pos + normal * m_radius;
 
-			offsetPoi.pos = gmod::vector3<float>(offsetPos.x(), baseY, offsetPos.z());
-			offsetPoi.norm = gmod::vector3<float>(normal.x(), 0, normal.z());
-			offsetPoi.u = pointsOfIntersection[n].uvs.u1;
-			offsetPoi.v = pointsOfIntersection[n].uvs.v1;
+		//	offsetPoi.pos = gmod::vector3<float>(offsetPos.x(), baseY, offsetPos.z());
+		//	offsetPoi.norm = gmod::vector3<float>(normal.x(), 0, normal.z());
+		//	offsetPoi.u = pointsOfIntersection[n].uvs.u1;
+		//	offsetPoi.v = pointsOfIntersection[n].uvs.v1;
 
-			thisOffsetCountour.push_back(offsetPoi);
-		}
+		//	thisOffsetCountour.push_back(offsetPoi);
+		//}
 
 		Combine(offsetCountour, thisOffsetCountour);
 	}
@@ -284,30 +283,36 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 		return;
 	}
 
-	struct InterPair {
+	struct Crossing {
 		size_t i;
 		size_t j;
-		float dist;
+		gmod::vector3<float> pos;
 	};
 
 	bool fromMain = true;
 	size_t s = -1;
 	float smallestX = centre.x() + width;
 
-	std::vector<InterPair> pairs(mainContour.size());
-	for (size_t i = 0; i < mainContour.size(); i++) {
+	int n = mainContour.size();
+	int m = newContour.size();
 
-		size_t bestJ = 0;
-		float bestDist = width;
-		for (size_t j = 0; j < newContour.size(); j++) {
-			float dist = (mainContour[i].pos - newContour[j].pos).length();
-			if (dist < bestDist) { 
-				bestJ = j;
-				bestDist = dist;
+	std::vector<Crossing> intersections;
+	for (size_t i = 0; i < n; i++) {
+		auto& A = mainContour[i].pos;
+		size_t nextI = (i + 1) % n;
+		auto& B = mainContour[nextI].pos;
+
+		for (size_t j = 0; j < m; j++) {
+			auto& C = newContour[j].pos;
+			long nextJ = (j + 1) % m;
+			auto& D = newContour[nextJ].pos;
+
+			gmod::vector3<float> interPos;
+			if (DoSegementsCross(A, B, C, D, interPos)) {
+				intersections.push_back(Crossing{ i, j, interPos }); 
+				break;
 			}
 		}
-
-		pairs[i] = InterPair(i, bestJ, bestDist);
 
 		if (mainContour[i].pos.x() < smallestX) {
 			s = i;
@@ -315,7 +320,7 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 		}
 	}
 
-	for (size_t j = 0; j < newContour.size(); j++) {
+	for (size_t j = 0; j < m; j++) {
 		if (newContour[j].pos.x() < smallestX) {
 			fromMain = false;
 			s = j;
@@ -323,14 +328,14 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 		}
 	}
 
-	std::sort(pairs.begin(), pairs.end(), [](const InterPair& a, const InterPair& b) {
-		return a.dist < b.dist;
+	auto newEnd = std::unique(intersections.begin(), intersections.end(), [&](const Crossing& a, const Crossing& b) {
+		return Helper::AreEqualF(a.pos.x(), b.pos.x(), FZERO) && Helper::AreEqualF(a.pos.z(), b.pos.z(), FZERO);
 	});
+	intersections.erase(newEnd, intersections.end());
 
-	// TODO: it is possbile that there will be need to make sure they are not to close to each other
-	// it depends how dense contours will be - yeah, it happens
-	// instead of this method, use the method stage 3 - find intersecting segments and remove duplicates
-	std::vector<InterPair> intersections(pairs.begin(), pairs.begin() + m_expectedIntersections);
+	if (intersections.size() != m_expectedIntersections) {
+		throw std::runtime_error("Unexpected number of intersections.");
+	}
 
 	const std::vector<StageTwo::InterPoint>* contourI = &mainContour;
 	const std::vector<StageTwo::InterPoint>* contourJ = &newContour;
@@ -351,7 +356,7 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 	// we make sure that s refers to contourI
 	 
 	if (intersections[0].i > intersections[1].i) {
-		InterPair temp = intersections[0];
+		Crossing temp = intersections[0];
 		intersections[0] = intersections[1];
 		intersections[1] = temp;
 	}
@@ -538,6 +543,32 @@ bool StageTwo::IsCW(const std::vector<Intersection::PointOfIntersection>& contou
 		area += (currP.x() * nextP.z() - nextP.x() * currP.z());
 	}
 	return area < 0;
+}
+
+bool StageTwo::DoSegementsCross(gmod::vector3<float> A, gmod::vector3<float> B,
+	gmod::vector3<float> C, gmod::vector3<float> D, gmod::vector3<float>& intersection) const {
+
+	struct Point {
+		float x, z;
+	};
+
+	const Point p = { A.x(), A.z() };
+	const Point r = { B.x() - A.x(), B.z() - A.z() };
+	const Point q = { C.x(), C.z() };
+	const Point s = { D.x() - C.x(), D.z() - C.z() };
+
+	const float r_s = r.x * s.z - r.z * s.x; // cross2D equivalent
+	if (Helper::AreEqualF(r_s, 0.f, FZERO)) { return false; }
+
+	const Point q_p = { q.x - p.x, q.z - p.z };
+	const float t = (q_p.x * s.z - q_p.z * s.x) / r_s; // cross2D(q_p, s)
+	const float u = (q_p.x * r.z - q_p.z * r.x) / r_s; // cross2D(q_p, r)
+
+	if (t >= -FZERO && t <= 1 + FZERO && u >= -FZERO && u <= 1 + FZERO) {
+		intersection = gmod::vector3<float>(p.x + t * r.x, baseY, p.z + t * r.z);
+		return true;
+	}
+	return false;
 }
 
 // old, universal idea:

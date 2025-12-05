@@ -31,13 +31,13 @@ namespace app {
 		int gradientMaxIterations = 10000;
 
 		double newtonStep = 0.01;
-		double newtonTolerance = 5 * 1e-3;
-		int newtonMaxIterations = 6;
-		int newtonMaxRepeats = 7;
+		double newtonTolerance = 9 * 1e-3;
+		int newtonMaxIterations = 20;
+		int newtonMaxRepeats = 5;
 
-		int maxIntersectionPoints = 40000;
-		double distance = 1e-2;
-		double closingPointTolerance = 1e-3; 
+		int maxIntersectionPoints = 10000;
+		double distance = 0.1;
+		double closingPointTolerance = 0.09; 
 
 		struct InterParams {
 			double gs, gt;

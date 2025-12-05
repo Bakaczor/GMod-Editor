@@ -1,6 +1,7 @@
 #include "SegmentGraph.h"
 #include <set>
 #include <stack>
+#include <algorithm>
 
 using namespace app;
 
@@ -8,6 +9,22 @@ SegmentGraph::SegmentGraph(const std::vector<std::pair<float, std::vector<Segmen
 	const std::vector<Segment2>& contourSegments, int vertNum) {
 
 	vertices2 = std::vector<Vertex2>(vertNum);
+
+	// add vertical edges
+	for (const auto& [xVal, segments] : verticalSegments) {
+		for (const auto& seg : segments) {
+			float diffZ = seg.p1.z - seg.p2.z;
+
+			int v1 = seg.p1.id;
+			int v2 = seg.p2.id;
+		
+			vertices2[v1].segEnd = seg.p1;
+			vertices2[v1].neighbours.push_back(std::make_pair(v2, Edge2{ seg, v1, v2, diffZ, true, false }));
+			
+			vertices2[v2].segEnd = seg.p2;
+			vertices2[v2].neighbours.push_back(std::make_pair(v1, Edge2{ seg, v2, v1, diffZ, true, false }));
+		}
+	}
 
 	// add contour edges
 	for (const auto& seg : contourSegments) {
@@ -18,26 +35,22 @@ SegmentGraph::SegmentGraph(const std::vector<std::pair<float, std::vector<Segmen
 		int v1 = seg.p1.id;
 		int v2 = seg.p2.id;
 
-		vertices2[v1].segEnd = seg.p1;
-		vertices2[v2].segEnd = seg.p2;
-
-		vertices2[v1].neighbours.push_back(std::make_pair(v2, Edge2{ seg, v1, v2, dist, false, false }));
-		vertices2[v2].neighbours.push_back(std::make_pair(v1, Edge2{ seg, v2, v1, dist, false, false }));
-	}
-
-	// add vertical edges
-	for (const auto& [xVal, segments] : verticalSegments) {
-		for (const auto& seg : segments) {
-			float diffZ = seg.p1.z - seg.p2.z;
-
-			int v1 = seg.p1.id;
-			int v2 = seg.p2.id;
-
+		auto end1 = vertices2[v1].neighbours.end();
+		auto it1 = std::find_if(vertices2[v1].neighbours.begin(), end1, [&v2](const std::pair<int, Edge2>& el) {
+			return el.first == v2;
+		});
+		if (it1 == end1) {
 			vertices2[v1].segEnd = seg.p1;
-			vertices2[v2].segEnd = seg.p2;
+			vertices2[v1].neighbours.push_back(std::make_pair(v2, Edge2{ seg, v1, v2, dist, false, false }));
+		}
 
-			vertices2[v1].neighbours.push_back(std::make_pair(v2, Edge2{ seg, v1, v2, diffZ, true, false }));
-			vertices2[v2].neighbours.push_back(std::make_pair(v1, Edge2{ seg, v2, v1, diffZ, true, false }));
+		auto end2 = vertices2[v2].neighbours.end();
+		auto it2 = std::find_if(vertices2[v2].neighbours.begin(), end2, [&v1](const std::pair<int, Edge2>& el) {
+			return el.first == v1;
+		});
+		if (it2 == end2) {
+			vertices2[v2].segEnd = seg.p2;
+			vertices2[v2].neighbours.push_back(std::make_pair(v1, Edge2{ seg, v2, v1, dist, false, false }));
 		}
 	}
 
@@ -113,7 +126,7 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
     stack.push(startVertex);
 
 	std::vector<bool> visited(vertices2.size(), false);
-    visited[startVertex] = true;
+    visited[startVertex] = 1;
 
     while (!stack.empty() && !uncoveredVerticalEdges.empty()) {
         int u = stack.top();
@@ -126,9 +139,6 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
 		for (int i = 0; i < neighbours.size(); i++) {
 			const auto& [nb, edge] = vertices2[u].neighbours[i];
 
-			// TODO : possibly we should prioritize visiting vertical edges over not visiting already visited vertices
-			if (visited[nb]) { continue; }
-
             float score = 0.0f;
             if (edge.isVertical) {
                 auto edgeKey = std::make_pair(std::min(u, nb), std::max(u, nb));
@@ -138,6 +148,10 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
             }
             // prefer shorter
             score += 1.0f / (edge.dist + 0.1f);
+
+			if (visited[nb]) {
+				continue;
+			}
 
             if (score > bestScore) {
                 bestScore = score;

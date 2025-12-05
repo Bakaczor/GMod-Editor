@@ -32,12 +32,12 @@ namespace app {
 			.gt = 5 * 1e-5,
 			.gmi = 10000,
 			.ns = 0.01,
-			.nt = 5 * 1e-3,
-			.nmi = 6,
-			.nmr = 7,
-			.mip = 100,
-			.d = 1e-2,
-			.cpt = 1e-3
+			.nt = 9 * 1e-3,
+			.nmi = 20,
+			.nmr = 5,
+			.mip = 10000,
+			.d = 0.1,
+			.cpt = 0.09
 		};
 
 		std::vector<std::vector<float>> CreateHeightmapByIntersections(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
