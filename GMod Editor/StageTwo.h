@@ -32,11 +32,11 @@ namespace app {
 			.gmi = 10000,
 			.ns = 0.01,
 			.nt = 5 * 1e-2,
-			.nmi = 11,
+			.nmi = 20,
 			.nmr = 5,
-			.mip = 500,
-			.d = 0.5,
-			.cpt = 0.5
+			.mip = 2000,
+			.d = 0.1,
+			.cpt = 0.15
 		};
 		
 		// second and any next surface should have at least one intersection with any previous surface

@@ -8,7 +8,7 @@
 using namespace app;
 
 std::vector<gmod::vector3<float>> StageThree::GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
-	gmod::vector3<double> baseCentre(centre.x(), centre.y(), centre.z()); // TODO : +m_radius
+	gmod::vector3<double> baseCentre(centre.x(), centre.y() + m_radius, centre.z());
 	Surface::Plane base = Surface::MakePlane(baseCentre, width, length, { 0,0,0 }, -69);
 	Intersection::IDIG baseIDIG = { base.surface->id, dynamic_cast<IGeometrical*>(base.surface.get()) };
 
@@ -121,11 +121,12 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	}
 	// =====
 
+	const float lowerVal = m_radius * 0.95f;
 	std::vector<gmod::vector3<float>> fullPath;
 	long firstIdx = G.vertices3[path.front()].segEnd.contourIdx;
 	gmod::vector3<float> first = contour[firstIdx].pos;
 	fullPath.push_back(gmod::vector3<float>(first.x() + addX, totalHeight, first.z() + addZ));
-	fullPath.push_back(gmod::vector3<float>(first.x() + addX, first.y(), first.z() + addZ)); // TODO : lower y by radius
+	fullPath.push_back(gmod::vector3<float>(first.x() + addX, first.y() - lowerVal, first.z() + addZ));
 
 	for (int v = 0; v < path.size() - 1; v++) {
 		int fromId = path[v];
@@ -143,7 +144,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 		}
 
 		auto currPos = contour[fromVertex.segEnd.contourIdx].pos;
-		fullPath.push_back(currPos); // TODO : lower y by radius
+		fullPath.push_back(gmod::vector3<float>(currPos.x(), currPos.y() - lowerVal, currPos.z()));
 
 		const SegmentGraph::Edge3& edge = it->second;
 		if (edge.contourEdge) { // if we have contour edge, we need to add the points from contour
@@ -152,35 +153,42 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 
 			if (start < end) {
 				for (int j = start; j <= end; j++) {
-					fullPath.push_back(contour[j].pos); // TODO : lower y by radius
+					fullPath.push_back(
+						gmod::vector3<float>(contour[j].pos.x(), contour[j].pos.y() - lowerVal, contour[j].pos.z())
+					);
 				}
 			} else {
 				for (int j = start; j >= end; j--) {
-					fullPath.push_back(contour[j].pos); // TODO : lower y by radius
+					fullPath.push_back(
+						gmod::vector3<float>(contour[j].pos.x(), contour[j].pos.y() - lowerVal, contour[j].pos.z())
+					);
 				}
 			}
 		} else { // if we have inner edge we take points from segment
 			for (const auto& el : edge.seg.p1p2) {
-				fullPath.push_back(el); // TODO : lower y by radius
+				fullPath.push_back(gmod::vector3<float>(el.x(), el.y() - lowerVal, el.z()));
 			}
 		}
 	}
 
 	long lastIdx = G.vertices3[path.back()].segEnd.contourIdx;
 	gmod::vector3<float> last = contour[lastIdx].pos;
-	fullPath.push_back(last); // TODO : lower y by radius
+	last = gmod::vector3<float>(last.x(), last.y() - lowerVal, last.z());
+	fullPath.push_back(last);
 
 	long n = contour.size();
 	long overlapStart = (lastIdx + 1) % n;
 	long overlapEnd = lastIdx;
 
 	for (long k = overlapStart; k != overlapEnd; k = (k + 1) % n) {
-		fullPath.push_back(contour[k].pos); // TODO : lower y by radius
+		fullPath.push_back(
+			gmod::vector3<float>(contour[k].pos.x(), contour[k].pos.y() - lowerVal, contour[k].pos.z())
+		);
 	}
-	fullPath.push_back(last); // TODO : lower y by radius
+	fullPath.push_back(last);
 	fullPath.push_back(gmod::vector3<float>(last.x(), totalHeight, last.z()));
 
-	// TODO : remove later
+	// make sure to not mill the base (it shouldn't happen, but just in case)
 	for (auto& el : fullPath) {
 		if (el.y() < baseY) {
 			el = gmod::vector3<float>(el.x(), baseY, el.z());
@@ -444,9 +452,9 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	}
 	// =====
 
-	const float baseOffset = baseY; // TODO : +m_radius;
+	const float baseOffset = baseY + m_radius;
 	float knifeWidth = std::max(width, length);
-	float knifeHeight = totalHeight - baseOffset + m_radius;
+	float knifeHeight = totalHeight - baseOffset + m_radius; // add radius to a little below
 	float knifeY = (totalHeight + baseOffset) / 2.f;
 
 	Surface::Plane knife;

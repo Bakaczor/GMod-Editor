@@ -27,8 +27,7 @@ bool OffsetSurface::IsVClosed() const {
 }
 
 gmod::vector3<double> OffsetSurface::Point(double u, double v) const {
-	return m_g->Point(u, v);
-	// TODO : return m_g->Point(u, v) + m_radius * m_g->Normal(u, v);
+	return m_g->Point(u, v) + m_radius * m_g->Normal(u, v);
 }
 
 gmod::vector3<double> OffsetSurface::Tangent(double u, double v, gmod::vector3<double>* dPu, gmod::vector3<double>* dPv) const {

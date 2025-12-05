@@ -218,6 +218,8 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 			thisOffsetCountour.push_back(offsetPoi);
 		}
 
+		// TODO : think how to smoothen the offset contour - maybe add some intermidiate points?
+		// it is little jaggy now
 		for (size_t i = start; i < n; i++) {
 			size_t prevI = i - 1;
 			size_t nextI = i + 1;
@@ -326,7 +328,8 @@ void StageTwo::Combine(std::vector<StageTwo::InterPoint>& mainContour, const std
 	});
 
 	// TODO: it is possbile that there will be need to make sure they are not to close to each other
-	// it depends how dense contours will be
+	// it depends how dense contours will be - yeah, it happens
+	// instead of this method, use the method stage 3 - find intersecting segments and remove duplicates
 	std::vector<InterPair> intersections(pairs.begin(), pairs.begin() + m_expectedIntersections);
 
 	const std::vector<StageTwo::InterPoint>* contourI = &mainContour;
