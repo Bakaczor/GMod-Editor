@@ -5,7 +5,7 @@
 namespace app {
 	class OffsetSurface : public IGeometrical {
 	public:
-		OffsetSurface(Object* obj, float radius);
+		OffsetSurface(Object* obj, float radius, bool useNumerical = false);
 
 		virtual XYZBounds WorldBounds() const override;
 		virtual UVBounds ParametricBounds() const override;
@@ -17,5 +17,9 @@ namespace app {
 	private:
 		IGeometrical* m_g = nullptr;
 		float m_radius;
+		const float m_res = 100.f;
+		bool m_useNumerical = false;
+
+		gmod::vector3<double> NumericalNormal(double u, double v) const;
 	};
 }

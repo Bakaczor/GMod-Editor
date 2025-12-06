@@ -27,7 +27,7 @@ namespace app {
 		const int m_expectedIntersections = 2;
 		
 		const Intersection::InterParams m_interParams = {
-			.gs = 5 * 1e-3,
+			.gs = 1 * 1e-3,
 			.gt = 5 * 1e-5,
 			.gmi = 10000,
 			.ns = 0.01,
@@ -36,8 +36,21 @@ namespace app {
 			.nmr = 5,
 			.mip = 10000,
 			.d = 0.1,
-			.cpt = 0.075
+			.cpt = 0.09
 		};
+
+		//const Intersection::InterParams m_specialParams = {
+		//	.gs = 1 * 1e-3,
+		//	.gt = 5 * 1e-5,
+		//	.gmi = 10000,
+		//	.ns = 0.01,
+		//	.nt = 9 * 1e-3,
+		//	.nmi = 20,
+		//	.nmr = 5,
+		//	.mip = 10000,
+		//	.d = 0.1,
+		//	.cpt = 0.09
+		//};
 		
 		// second and any next surface should have at least one intersection with any previous surface
 		struct SurfParams {
@@ -45,6 +58,7 @@ namespace app {
 			Intersection::InterParams params;
 		};
 		const std::unordered_map<std::string, SurfParams> m_contourSurfaces = {
+			/*{ "test", { 0, m_specialParams } }*/
 			{ "head", { 0, m_interParams } },
 			{ "earL", { 1, m_interParams } },
 			{ "earR", { 2, m_interParams } },

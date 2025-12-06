@@ -1,5 +1,5 @@
 #include "StageTwo.h"
-#include "Surface.h"
+#include "BSurface.h"
 #include "IGeometrical.h"
 #include "Helper.h"
 
@@ -37,6 +37,27 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 	xValues.push_back(xCurr); // last additional
 
 	auto offsetContour = CreateOffsetContour(sceneObjects, intersection);
+
+	// == filter excess points ==
+	auto areSimilar = [&](const InterPoint& a, const InterPoint& b, const InterPoint& c) -> bool {
+		double area = std::abs(
+			(b.pos.x() - a.pos.x()) * (c.pos.z() - a.pos.z()) -
+			(c.pos.x() - a.pos.x()) * (b.pos.z() - a.pos.z()));
+		return area < 1e-4f;
+	};
+	std::vector<InterPoint> filtered;
+	filtered.push_back(offsetContour.front());
+	for (size_t k = 1; k < offsetContour.size() - 1; k++) {
+		auto& prev = filtered.back();
+		auto& curr = offsetContour[k];
+		auto& next = offsetContour[k + 1];
+
+		if (!areSimilar(prev, curr, next)) {
+			filtered.push_back(curr);
+		}
+	}
+	offsetContour = filtered;
+	// =====
 
 	std::unordered_map<float, std::vector<SegmentEnd2>> xValIntersectionPoints;
 	for (const float& xVal : xValues) {
@@ -176,7 +197,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 	}
 
 	// create base
-	Surface::Plane base = Surface::MakePlane(centre, width, length, { 0,0,0 }, -69);
+	BSurface::Plane base = BSurface::MakePlane(centre, width, length, { 0,0,0 }, -69);
 	Intersection::IDIG baseIDIG = { base.surface->id, dynamic_cast<IGeometrical*>(base.surface.get()) };
 
 	std::vector<StageTwo::InterPoint> offsetCountour;

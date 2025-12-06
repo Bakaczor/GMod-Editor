@@ -1,16 +1,58 @@
 #include "BSurface.h"
 #include <numbers>
+#include "Application.h"
+#include "../gmod/utility.h"
 
 using namespace app;
 
 unsigned short BSurface::m_globalBSurfaceNum = 0;
 
-BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints) {
+BSurface::Plane BSurface::MakePlane(gmod::vector3<double> centrePos, float width, float length, gmod::vector3<double> orientation, int id) {
+	Plane plane;
+
+	// BSurface is three times smaller then normal surface
+	width *= 3;
+	length *= 3;
+
+	const unsigned int aPoints = 4;
+	const unsigned int bPoints = 4;
+	plane.controlPoints.reserve(aPoints * bPoints);
+	for (unsigned int i = 0; i < aPoints; ++i) {
+		for (unsigned int j = 0; j < bPoints; ++j) {
+			auto point = std::make_unique<app::Point>(Application::m_pointModel.get());
+			point->deletable = false;
+
+			float x = (width * i) / (aPoints - 1) - width / 2.0f;
+			float z = (length * j) / (bPoints - 1) - length / 2.0f;
+
+			// create plane in XZ plane
+			point->SetTranslation(x + centrePos.x(), centrePos.y(), z + centrePos.z());
+			plane.controlPoints.push_back(std::move(point));
+		}
+	}
+
+	std::vector<Object*> referencePoints;
+	referencePoints.reserve(aPoints * bPoints);
+	for (auto& p : plane.controlPoints) {
+		referencePoints.push_back(p.get());
+	}
+	plane.surface = std::make_unique<BSurface>(SurfaceType::Flat, aPoints, bPoints, 2, referencePoints, id);
+	plane.surface->SetRotation(gmod::deg2rad(orientation.x()), gmod::deg2rad(orientation.y()), gmod::deg2rad(orientation.z()));
+
+	return plane;
+}
+
+
+BSurface::BSurface(SurfaceType type, unsigned int aPoints, unsigned int bPoints, unsigned int divisions, std::vector<Object*> controlPoints, int id) {
 	intersectable = true;
 	m_surfaceType = type;
 	m_aPoints = aPoints;
 	m_bPoints = bPoints;
 	m_divisions = divisions;
+
+	if (id != -1) {
+		this->id = id;
+	}
 
 	m_type = "BSurface";
 	std::ostringstream os;
