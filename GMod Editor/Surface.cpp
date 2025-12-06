@@ -552,8 +552,8 @@ std::array<gmod::vector3<double>, Patch::patchSize> Surface::GetPatch(double u, 
 }
 
 std::pair<double, double> Surface::LocalUV(double u, double v) const {
-	double localU = u - static_cast<int>(u);
-	double localV = v - static_cast<int>(v);
+	double localU = std::clamp(u - static_cast<int>(u), 0.0, 1.0);
+	double localV = std::clamp(v - static_cast<int>(v), 0.0, 1.0);
 	return std::make_pair(localU, localV);
 }
 

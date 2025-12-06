@@ -36,7 +36,7 @@ namespace app {
 			.nmr = 5,
 			.mip = 10000,
 			.d = 0.1,
-			.cpt = 0.09
+			.cpt = 0.075
 		};
 		
 		// second and any next surface should have at least one intersection with any previous surface

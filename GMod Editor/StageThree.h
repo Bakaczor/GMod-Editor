@@ -24,23 +24,52 @@ namespace app {
 		const float FZERO_UV = std::numeric_limits<float>::epsilon();
 		const float m_radius = 4.f;
 		const int m_samplingRes = 500;
+		const float m_offsetBaseY = baseY + m_radius;
 
 		const Intersection::InterParams m_baseInterParams = {
 			.gs = 5 * 1e-3,
 			.gt = 5 * 1e-5,
 			.gmi = 10000,
 			.ns = 0.01,
-			.nt = 5 * 1e-2,
+			.nt = 9 * 1e-3,
 			.nmi = 20,
 			.nmr = 5,
-			.mip = 2000,
-			.d = 0.2,
-			.cpt = 0.2
+			.mip = 10000,
+			.d = 0.1,
+			.cpt = 0.09
+		};
+
+		const Intersection::InterParams m_partInterParams = {
+			.gs = 5 * 1e-3,
+			.gt = 5 * 1e-5,
+			.gmi = 10000,
+			.ns = 0.01,
+			.nt = 9 * 1e-3,
+			.nmi = 20,
+			.nmr = 5,
+			.mip = 15000,
+			.d = 0.1,
+			.cpt = 0.09
+		};
+
+		const Intersection::InterParams m_tailLegBL = {
+			.gs = 5 * 1e-3,
+			.gt = 5 * 1e-5,
+			.gmi = 10000,
+			.ns = 0.01,
+			.nt = 9 * 1e-3,
+			.nmi = 20,
+			.nmr = 5,
+			.mip = 15000,
+			.d = 0.1,
+			.cpt = 0.09
 		};
 
 		struct NamedInterParams {
 			std::string name;
 			Intersection::InterParams params;
+			bool useCursor = false;
+			gmod::vector3<double> cursorPos = { 0,0,0 };
 		};
 
 		struct MillingPartParams {
@@ -54,7 +83,80 @@ namespace app {
 		};
 
 		const std::vector<MillingPartParams> m_millingParams = {
-			MillingPartParams{ "bsurface_1", m_baseInterParams, { { "bsurface_2", m_baseInterParams }, { "bsurface_3", m_baseInterParams } }, { 0.f, 0.f, 0.f }, 1.5f, false, 1 }
+			//// earL - it is just wrong
+			//MillingPartParams{
+			//	"earL", m_baseInterParams, {
+			//		//{ "head", m_partInterParams }
+			//	},
+			//	{ -27.f, 0.f, 28.5f }, 1.5f, false, 1
+			//},
+			//// earR - it is just wrong
+			//MillingPartParams{
+			//	"earR", m_baseInterParams, {
+			//		//{ "head", m_partInterParams }
+			//	},
+			//	{ 27.f, 0.f, 28.5f }, 1.5f, false, 1
+			//},
+			//// head - problem with ears
+			//MillingPartParams{
+			//	"head", m_baseInterParams, {
+			//		{ "earL", m_partInterParams },
+			//		{ "earR", m_partInterParams },
+			//		{ "body", m_partInterParams }
+			//	},
+			//	{ 0.f, 0.f, 0.f }, 1.5f, false, 1
+			//},
+			//// tail - ok
+			//MillingPartParams{
+			//	"tail", m_baseInterParams, {
+			//		{ "legBR", m_partInterParams, true, gmod::vector3<double>(20, 19, 45) }
+			//	},
+			//	{ 39.f, 0.f, 45.f }, 1.75f, true, 2
+			//},
+			//// legBL - ok
+			//MillingPartParams{
+			//	"legBL", m_baseInterParams, {
+			//		{ "body", m_partInterParams },
+			//		{ "legFL", m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+			//	},
+			//	{ -17.5, 0.f, 45.f }, 1.5f, false, 3
+			//},
+			// legFL - problem with base contour
+			MillingPartParams{
+				"legFL", m_baseInterParams, {
+					//{ "body", m_partInterParams },
+					//{ "legBL", m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+				},
+				{ -6.5f, 0.f, 52.f }, 1.5f, false, 3
+			},
+			//// legFR - ok
+			//MillingPartParams{
+			//	"legFR", m_baseInterParams, {
+			//		{ "body", m_partInterParams },
+			//		{ "legBR", m_partInterParams, true, gmod::vector3<double>(15.5, 19, 45) }
+			//	},
+			//	{ 6.5f, 0.f, 52.f }, 1.5f, false, 3
+			//},
+			//// legBR - ok
+			//MillingPartParams{
+			//	"legBR", m_baseInterParams, {
+			//		{ "body", m_partInterParams },
+			//		{ "tail", m_partInterParams, true, gmod::vector3<double>(20, 19, 45) },
+			//		{ "legFR", m_partInterParams, true,  gmod::vector3<double>(15.5, 19, 45) }
+			//	},
+			//	{ 17.5, 0.f, 48.5f }, 1.5f, false, 3
+			//},
+			//// body - problem with legFL
+			//MillingPartParams{
+			//	"body", m_baseInterParams, {
+			//		{ "head", m_partInterParams },
+			//		{ "legBR", m_partInterParams },
+			//		{ "legFR", m_partInterParams },
+			//		{ "legFL", m_partInterParams },
+			//		{ "legBL", m_partInterParams }
+			//	},
+			//	{ 0.f, 0.f, 24.f }, 1.5f, true, 4
+			//}
 		};
 
 		struct InterPoint {
@@ -70,12 +172,12 @@ namespace app {
 
 		std::vector<InterPoint> FindContour(Intersection& intersection,
 			const std::vector<InterPoint>& baseContour, const gmod::vector3<float>& insidePoint,
-			const Intersection::IDIG& part, const std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>>& intersectingSurfaces) const;
+			const Intersection::IDIG& part, const std::vector<std::pair<Intersection::IDIG, NamedInterParams>>& intersectingSurfaces) const;
 
 		void Combine(std::vector<InterPoint>& finalContour, const std::vector<InterPoint>& intersectionLine,
 			float insideU, float insideV, const Intersection::IDIG& part) const;
 		
-		SegmentGraph CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour,
+		SegmentGraph CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour, const Intersection::InterParams& cuttingParams,
 			const Intersection::IDIG& part, float epsilon, bool cutVertical, int startFrom, SegmentEnd3& startingPoint) const;
 
 		void GetInnerSegments(const std::vector<InterPoint>& contour, const std::vector<InterPoint>& intersectionLine,

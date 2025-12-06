@@ -218,7 +218,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 		//}
 
 		// TODO : think how to smoothen the offset contour - maybe add some intermidiate points?
-		// it is little jaggy now
+		// it is a little bit jaggy now, but acceptable
 		for (size_t i = start; i < n; i++) {
 			size_t prevI = i - 1;
 			size_t nextI = i + 1;

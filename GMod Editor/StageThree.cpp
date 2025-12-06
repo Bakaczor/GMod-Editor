@@ -27,7 +27,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection,
 	const MillingPartParams& params, const Intersection::IDIG& base) const {
 
-	std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>> surfaces;
+	std::vector<std::pair<Intersection::IDIG, NamedInterParams>> surfaces;
 	std::vector<std::unique_ptr<OffsetSurface>> offsetSurfaceStorage; // the offset surfaces must exist until we exit the function
 
 	// == offset part ==
@@ -70,7 +70,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 			throw std::exception("This object does not implement IGeometrical interface.");
 		}
 
-		surfaces.push_back(std::make_pair(Intersection::IDIG{ obj->id, g }, surf.params));
+		surfaces.push_back(std::make_pair(Intersection::IDIG{ obj->id, g }, surf));
 	}
 	// =====
 
@@ -99,7 +99,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	auto contour = FindContour(intersection, baseContour, params.insidePoint, part, surfaces);
 
 	SegmentEnd3 startingPoint;
-	SegmentGraph G = CutSurfaceIntoGraph(intersection, contour, part, params.epsilon, params.cutVertical, params.startFrom, startingPoint);
+	SegmentGraph G = CutSurfaceIntoGraph(intersection, contour, params.cuttingParams, part, params.epsilon, params.cutVertical, params.startFrom, startingPoint);
 	std::vector<int> path = G.SpecialDFS3(startingPoint.id);
 
 	// =====
@@ -121,7 +121,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	}
 	// =====
 
-	const float lowerVal = m_radius * 0.95f;
+	const float lowerVal = m_radius * 0.975f;
 	std::vector<gmod::vector3<float>> fullPath;
 	long firstIdx = G.vertices3[path.front()].segEnd.contourIdx;
 	gmod::vector3<float> first = contour[firstIdx].pos;
@@ -200,7 +200,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 
 std::vector<StageThree::InterPoint> StageThree::FindContour(Intersection& intersection,
 	const std::vector<InterPoint>& baseContour, const gmod::vector3<float>& insidePoint,
-	const Intersection::IDIG& part, const std::vector<std::pair<Intersection::IDIG, Intersection::InterParams>>& intersectingSurfaces) const {
+	const Intersection::IDIG& part, const std::vector<std::pair<Intersection::IDIG, NamedInterParams>>& intersectingSurfaces) const {
 	
 	// == UV search ==
 	const auto& uvBounds = part.s->ParametricBounds();
@@ -208,7 +208,6 @@ std::vector<StageThree::InterPoint> StageThree::FindContour(Intersection& inters
 	const float diffV = uvBounds.vMax - uvBounds.vMin;
 	const float uStep = diffU / m_samplingRes;
 	const float vStep = diffV / m_samplingRes;
-	const float offsetBaseHeight = baseY + m_radius;
 
 	float insideU = 0;
 	float insideV = 0;
@@ -220,7 +219,7 @@ std::vector<StageThree::InterPoint> StageThree::FindContour(Intersection& inters
 		float v = uvBounds.vMin;
 		while (v <= uvBounds.vMax) {
 			auto p = part.s->Point(u, v);
-			if (p.y() >= offsetBaseHeight) {
+			if (p.y() >= baseY) {
 				const float diffX = insidePoint.x() - p.x();
 				const float diffZ = insidePoint.z() - p.z();
 				const float dist = diffX * diffX + diffZ * diffZ;
@@ -238,25 +237,78 @@ std::vector<StageThree::InterPoint> StageThree::FindContour(Intersection& inters
 
 	std::vector<StageThree::InterPoint> finalContour = baseContour;
 	for (auto& [surf, params] : intersectingSurfaces) {
-		intersection.SetIntersectionParameters(params);
+		intersection.SetIntersectionParameters(params.params);
+		if (params.useCursor) {
+			intersection.useCursorAsStart = true;
+			intersection.cursorPosition = params.cursorPos;
+		}
 		unsigned int res = intersection.FindIntersection(std::make_pair(part, surf));
+		if (params.useCursor) {
+			intersection.useCursorAsStart = false;
+		}
 		if (res != 0) {
 			throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
 		}
 
 		auto& pointsOfIntersection = intersection.GetPointsOfIntersection();
-		std::vector<StageThree::InterPoint> intersectionLine(pointsOfIntersection.size());
-		std::transform(pointsOfIntersection.begin(), pointsOfIntersection.end(), intersectionLine.begin(),
-			[&part](const Intersection::PointOfIntersection& p) {
-			auto normal = part.s->Normal(p.uvs.u1, p.uvs.v1);
-			return StageThree::InterPoint{
-				.pos = gmod::vector3<float>(p.pos.x(), p.pos.y(), p.pos.z()),
+		//std::vector<StageThree::InterPoint> intersectionLine(pointsOfIntersection.size());
+		//std::transform(pointsOfIntersection.begin(), pointsOfIntersection.end(), intersectionLine.begin(),
+		//	[&part](const Intersection::PointOfIntersection& p) {
+		//	auto normal = part.s->Normal(p.uvs.u1, p.uvs.v1);
+		//	return StageThree::InterPoint{
+		//		.pos = gmod::vector3<float>(p.pos.x(), p.pos.y(), p.pos.z()),
+		//		.norm = gmod::vector3<float>(normal.x(), normal.y(), normal.z()),
+		//		.u = static_cast<float>(p.uvs.u1),
+		//		.v = static_cast<float>(p.uvs.v1),
+		//		.surf = part.s
+		//	};
+		//});
+
+		// the idea here is to skip points below baseY
+		std::vector<StageThree::InterPoint> intersectionLine;
+		std::vector<StageThree::InterPoint> endOfLine;
+		bool switchedToMain = false;
+
+		// this is a fallback - sometimes intersection should be closed, but isn't and instead it makes multiple loops unable to find the end
+		// this ensures that the loops are eliminated and only single part is taken
+		gmod::vector3<double> front = pointsOfIntersection.front().pos;
+		bool startsBelow = front.y() < baseY;
+		bool wentAbove = false;
+		bool wentBelow = false;
+
+		for (const auto& poi : pointsOfIntersection) {
+			if (poi.pos.y() < baseY) {
+				wentBelow = true;
+				if (startsBelow && wentAbove) { break; }
+
+				switchedToMain = true;
+				continue;
+			} else {
+				wentAbove = true;
+				if (!startsBelow && wentBelow) {
+					if (Helper::AreEqualV3(front, poi.pos, FZERO_XYZ)) { break; }
+				}
+			}
+			auto normal = part.s->Normal(poi.uvs.u1, poi.uvs.v1);
+
+			StageThree::InterPoint ip{
+				.pos = gmod::vector3<float>(poi.pos.x(), poi.pos.y(), poi.pos.z()),
 				.norm = gmod::vector3<float>(normal.x(), normal.y(), normal.z()),
-				.u = static_cast<float>(p.uvs.u1),
-				.v = static_cast<float>(p.uvs.v1),
+				.u = static_cast<float>(poi.uvs.u1),
+				.v = static_cast<float>(poi.uvs.v1),
 				.surf = part.s
 			};
-		});
+
+			if (switchedToMain) {
+				intersectionLine.push_back(ip);
+			} else {
+				endOfLine.push_back(ip);
+			}
+		}
+
+		if (!endOfLine.empty()) {
+			intersectionLine.insert(intersectionLine.end(), endOfLine.begin(), endOfLine.end());
+		}
 
 		Combine(finalContour, intersectionLine, insideU, insideV, part);
 	}
@@ -281,11 +333,11 @@ void StageThree::Combine(std::vector<InterPoint>& finalContour, const std::vecto
 
 	for (size_t i = 0; i < finalContour.size(); i++) {
 		auto& A = finalContour[i];
-		auto& B = finalContour[(i + 1) % n];
+		auto& B = finalContour[(i + 1) % n]; // assume closed
 
-		for (size_t j = 0; j < intersectionLine.size(); j++) {
+		for (size_t j = 0; j < intersectionLine.size() - 1; j++) {
 			auto& C = intersectionLine[j];
-			auto& D = intersectionLine[(j + 1) % m];
+			auto& D = intersectionLine[j + 1]; // assume open
 
 			PartUVs interUVs;
 			if (DoSegementsCross({ A.u, A.v }, { B.u, B.v }, { C.u, C.v }, { D.u, D.v }, interUVs)) {
@@ -377,7 +429,7 @@ void StageThree::Combine(std::vector<InterPoint>& finalContour, const std::vecto
 	}
 }
 
-SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour,
+SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour, const Intersection::InterParams& cuttingParams,
 	const Intersection::IDIG& part, float epsilon, bool cutVertical, int startFrom, SegmentEnd3& startingPoint) const {
 
 	// find starting point
@@ -452,10 +504,9 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	}
 	// =====
 
-	const float baseOffset = baseY + m_radius;
 	float knifeWidth = std::max(width, length);
-	float knifeHeight = totalHeight - baseOffset + m_radius; // add radius to a little below
-	float knifeY = (totalHeight + baseOffset) / 2.f;
+	float knifeHeight = totalHeight - m_offsetBaseY + m_radius; // add radius to a little below
+	float knifeY = (totalHeight + m_offsetBaseY) / 2.f;
 
 	Surface::Plane knife;
 	if (cutVertical) { // parallel to YZ
@@ -468,7 +519,8 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	std::vector<SegmentEnd3> contourIntersections;
 
 	float currVal = startVal + step;
-	while (currVal < endVal) {
+	int dirSign = step > 0 ? 1 : -1;
+	while (dirSign * currVal < dirSign * endVal) {
 		if (cutVertical) {
 			knife.surface->SetTranslation(currVal, knifeY, centre.z());
 		} else {
@@ -477,24 +529,62 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 
 		Intersection::IDIG knifeIDIG = { knife.surface->id, dynamic_cast<IGeometrical*>(knife.surface.get()) };
 
+		intersection.SetIntersectionParameters(cuttingParams);
 		unsigned int res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
-		if (res != 0) { 
-			throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
+
+		if (res == 1) { // fallback - try to use middle of knife as a hint
+			intersection.cursorPosition = gmod::vector3<double>(knife.surface->position().x(), m_offsetBaseY, knife.surface->position().z());
+			intersection.useCursorAsStart = true;
+			res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+			intersection.useCursorAsStart = false;
+		}
+		if (res != 0) {
+			// TODO : technically, knife could cut beyond the surface, so there really might be no intersection
+			//throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
 		}
 
 		auto& pointsOfIntersection = intersection.GetPointsOfIntersection();
-		std::vector<StageThree::InterPoint> intersectionLine(pointsOfIntersection.size());
-		std::transform(pointsOfIntersection.begin(), pointsOfIntersection.end(), intersectionLine.begin(),
-			[&part](const Intersection::PointOfIntersection& p) {
-			auto normal = part.s->Normal(p.uvs.u1, p.uvs.v1);
-			return StageThree::InterPoint{
-				.pos = gmod::vector3<float>(p.pos.x(), p.pos.y(), p.pos.z()),
+		//std::vector<StageThree::InterPoint> intersectionLine(pointsOfIntersection.size());
+		//std::transform(pointsOfIntersection.begin(), pointsOfIntersection.end(), intersectionLine.begin(),
+		//	[&part](const Intersection::PointOfIntersection& p) {
+		//	auto normal = part.s->Normal(p.uvs.u1, p.uvs.v1);
+		//	return StageThree::InterPoint{
+		//		.pos = gmod::vector3<float>(p.pos.x(), p.pos.y(), p.pos.z()),
+		//		.norm = gmod::vector3<float>(normal.x(), normal.y(), normal.z()),
+		//		.u = static_cast<float>(p.uvs.u1),
+		//		.v = static_cast<float>(p.uvs.v1),
+		//		.surf = part.s
+		//	};
+		//});
+		// TODO : revisit this idea (skipping points below base)
+		std::vector<StageThree::InterPoint> intersectionLine;
+		std::vector<StageThree::InterPoint> endOfLine;
+		bool switchedToMain = false;
+		for (const auto& poi : pointsOfIntersection) {
+			if (poi.pos.y() < baseY) {
+				switchedToMain = true;
+				continue;
+			}
+			auto normal = part.s->Normal(poi.uvs.u1, poi.uvs.v1);
+
+			StageThree::InterPoint ip{
+				.pos = gmod::vector3<float>(poi.pos.x(), poi.pos.y(), poi.pos.z()),
 				.norm = gmod::vector3<float>(normal.x(), normal.y(), normal.z()),
-				.u = static_cast<float>(p.uvs.u1),
-				.v = static_cast<float>(p.uvs.v1),
+				.u = static_cast<float>(poi.uvs.u1),
+				.v = static_cast<float>(poi.uvs.v1),
 				.surf = part.s
 			};
-		});
+
+			if (switchedToMain) {
+				intersectionLine.push_back(ip);
+			} else {
+				endOfLine.push_back(ip);
+			}
+		}
+
+		if (!endOfLine.empty()) {
+			intersectionLine.insert(intersectionLine.end(), endOfLine.begin(), endOfLine.end());
+		}
 
 		GetInnerSegments(contour, intersectionLine, innerSegements, contourIntersections, ID, part);
 		currVal += step;
@@ -540,19 +630,19 @@ void StageThree::GetInnerSegments(const std::vector<InterPoint>& contour, const 
 	int n = contour.size();
 	int m = intersectionLine.size();
 
-	for (long j = 0; j < m; j++) {
+	for (long j = 0; j < m - 1; j++) {
 		auto& A = intersectionLine[j];
-		long nextJ = (j + 1) % m;
+		long nextJ = j + 1; // assume open
 		auto& B = intersectionLine[nextJ];
 
 		for (long i = 0; i < n; i++) {
 			auto& C = contour[i];
-			long nextI = (i + 1) % n;
+			long nextI = (i + 1) % n; // assume closed
 			auto& D = contour[nextI];
 
 			PartUVs interUVs;
 			if (DoSegementsCross({ A.u, A.v }, { B.u, B.v }, { C.u, C.v }, { D.u, D.v }, interUVs)) {
-				intersections.push_back(Crossing{ i, j, interUVs.u, interUVs.v });\
+				intersections.push_back(Crossing{ i, j, interUVs.u, interUVs.v });
 				break;
 			}
 		}
@@ -562,6 +652,22 @@ void StageThree::GetInnerSegments(const std::vector<InterPoint>& contour, const 
 		return Helper::AreEqualF(a.u, b.u, FZERO_UV) && Helper::AreEqualF(a.v, b.v, FZERO_UV);
 	});
 	intersections.erase(newEnd, intersections.end());
+
+	// TODO : this should not happen
+	if (intersections.empty()) { return; }
+
+	// =====
+	//auto& front = intersections.front();
+	//auto& back = intersections.back();
+	//
+	//if (Helper::AreEqualF(front.u, back.u, 0.1) && Helper::AreEqualF(front.v, back.v, 0.1)) {
+	//	intersections.erase(intersections.end() - 1, intersections.end());
+	//}
+
+	//if (intersections.size() % 2 != 0) {
+	//	intersections.erase(intersections.end() - 1, intersections.end());
+	//}
+	// =====
 
 	for (int k = 0; k < intersections.size() - 1; k++) {
 		int nextK = k + 1;
@@ -620,22 +726,22 @@ void StageThree::GetInnerSegments(const std::vector<InterPoint>& contour, const 
 }
 
 bool StageThree::DoSegementsCross(PartUVs A, PartUVs B, PartUVs C, PartUVs D, PartUVs& intersection) const {
-	//if (std::max(A.u, B.u) < std::min(C.u, D.u) ||
-	//	std::max(C.u, D.u) < std::min(A.u, B.u) ||
-	//	std::max(A.v, B.v) < std::min(C.v, D.v) ||
-	//	std::max(C.v, D.v) < std::min(A.v, B.v)) {
-	//	return false;
-	//}
+	if (std::max(A.u, B.u) < std::min(C.u, D.u) ||
+		std::max(C.u, D.u) < std::min(A.u, B.u) ||
+		std::max(A.v, B.v) < std::min(C.v, D.v) ||
+		std::max(C.v, D.v) < std::min(A.v, B.v)) {
+		return false;
+	}
 
-	//// 2D cross for vectors OA and OB
-	//auto cross = [](const PartUVs& O, const PartUVs& A, const PartUVs& B) -> float {
-	//	return (A.u - O.u) * (B.v - O.v) - (A.v - O.v) * (B.u - O.u);
-	//};
+	// 2D cross for vectors OA and OB
+	auto cross = [](const PartUVs& O, const PartUVs& A, const PartUVs& B) -> float {
+		return (A.u - O.u) * (B.v - O.v) - (A.v - O.v) * (B.u - O.u);
+	};
 
-	//float d1 = cross(A, B, C);
-	//float d2 = cross(A, B, D);
-	//float d3 = cross(C, D, A);
-	//float d4 = cross(C, D, B);
+	float d1 = cross(A, B, C);
+	float d2 = cross(A, B, D);
+	float d3 = cross(C, D, A);
+	float d4 = cross(C, D, B);
 
 	//if (Helper::AreEqualF(d1, 0, FZERO_UV)) { // C is on AB
 	//	intersection = C;
@@ -654,34 +760,34 @@ bool StageThree::DoSegementsCross(PartUVs A, PartUVs B, PartUVs C, PartUVs D, Pa
 	//	return true;
 	//}
 
-	//if ((d1 * d2 < 0) && (d3 * d4 < 0)) {
-	//	float denominator = (A.u - B.u) * (C.v - D.v) - (A.v - B.v) * (C.u - D.u);
-	//	float t = ((A.u - C.u) * (C.v - D.v) - (A.v - C.v) * (C.u - D.u)) / denominator;
+	if ((d1 * d2 < 0) && (d3 * d4 < 0)) {
+		float denominator = (A.u - B.u) * (C.v - D.v) - (A.v - B.v) * (C.u - D.u);
+		float t = ((A.u - C.u) * (C.v - D.v) - (A.v - C.v) * (C.u - D.u)) / denominator;
 
-	//	intersection.u = A.u + t * (B.u - A.u);
-	//	intersection.v = A.v + t * (B.v - A.v);
-	//	return true;
-	//}
-
-	//return false;
-
-	const PartUVs p = A;
-	const PartUVs r = { B.u - A.u, B.v - A.v };
-	const PartUVs q = C;
-	const PartUVs s = { D.u - C.u, D.v - C.v };
-
-	const float r_s = r.u * s.v - r.v * s.u; // cross2D equivalent
-	if (Helper::AreEqualF(r_s, 0.f, FZERO_UV)) { return false; }
-
-	const PartUVs q_p = { q.u - p.u, q.v - p.v };
-	const float t = (q_p.u * s.v - q_p.v * s.u) / r_s; // cross2D(q_p, s)
-	const float u = (q_p.u * r.v - q_p.v * r.u) / r_s; // cross2D(q_p, r)
-
-	if (t >= -FZERO_UV && t <= 1 + FZERO_UV && u >= -FZERO_UV && u <= 1 + FZERO_UV) {
-		intersection = PartUVs{ p.u + t * r.u, p.v + t * r.v };
+		intersection.u = A.u + t * (B.u - A.u);
+		intersection.v = A.v + t * (B.v - A.v);
 		return true;
 	}
+
 	return false;
+
+	//const PartUVs p = A;
+	//const PartUVs r = { B.u - A.u, B.v - A.v };
+	//const PartUVs q = C;
+	//const PartUVs s = { D.u - C.u, D.v - C.v };
+
+	//const float r_s = r.u * s.v - r.v * s.u; // cross2D equivalent
+	//if (Helper::AreEqualF(r_s, 0.f, FZERO_UV)) { return false; }
+
+	//const PartUVs q_p = { q.u - p.u, q.v - p.v };
+	//const float t = (q_p.u * s.v - q_p.v * s.u) / r_s; // cross2D(q_p, s)
+	//const float u = (q_p.u * r.v - q_p.v * r.u) / r_s; // cross2D(q_p, r)
+
+	//if (t >= -FZERO_UV && t <= 1 + FZERO_UV && u >= -FZERO_UV && u <= 1 + FZERO_UV) {
+	//	intersection = PartUVs{ p.u + t * r.u, p.v + t * r.v };
+	//	return true;
+	//}
+	//return false;
 }
 
 bool StageThree::IsInside(const PartUVs& point, const std::vector<StageThree::InterPoint>& closedContour) const {

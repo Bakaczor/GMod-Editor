@@ -91,7 +91,7 @@ SegmentGraph::SegmentGraph(const std::vector<Segment3>& innerSegments, const std
 	
 	// since innerSegments and contourSegments contain segments in both directions, we don't have to create incoming edges now
 
-	for (const auto& seg : contourSegments) {
+	for (const auto& seg : innerSegments) {
 		int v1 = seg.p1.id;
 		int v2 = seg.p2.id;
 
@@ -99,12 +99,18 @@ SegmentGraph::SegmentGraph(const std::vector<Segment3>& innerSegments, const std
 		vertices3[v1].neighbours.push_back(std::make_pair(v2, Edge3{ seg, v1, v2, seg.contourSegment }));
 	}
 
-	for (const auto& seg : innerSegments) {
+	for (const auto& seg : contourSegments) {
 		int v1 = seg.p1.id;
 		int v2 = seg.p2.id;
 
-		vertices3[v1].segEnd = seg.p1;
-		vertices3[v1].neighbours.push_back(std::make_pair(v2, Edge3{ seg, v1, v2, seg.contourSegment }));
+		auto end = vertices3[v1].neighbours.end();
+		auto it = std::find_if(vertices3[v1].neighbours.begin(), end, [&v2](const std::pair<int, Edge3>& el) {
+			return el.first == v2;
+		});
+		if (it == end) {
+			vertices3[v1].segEnd = seg.p1;
+			vertices3[v1].neighbours.push_back(std::make_pair(v2, Edge3{ seg, v1, v2, seg.contourSegment }));
+		}
 	}
 }
 
@@ -139,6 +145,8 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
 		for (int i = 0; i < neighbours.size(); i++) {
 			const auto& [nb, edge] = vertices2[u].neighbours[i];
 
+			if (visited[nb]) { continue; }
+
             float score = 0.0f;
             if (edge.isVertical) {
                 auto edgeKey = std::make_pair(std::min(u, nb), std::max(u, nb));
@@ -148,10 +156,6 @@ std::vector<int> SegmentGraph::SpecialDFS2(int startVertex) const {
             }
             // prefer shorter
             score += 1.0f / (edge.dist + 0.1f);
-
-			if (visited[nb]) {
-				continue;
-			}
 
             if (score > bestScore) {
                 bestScore = score;
@@ -213,7 +217,6 @@ std::vector<int> SegmentGraph::SpecialDFS3(int startVertex) const {
 		for (int i = 0; i < neighbours.size(); i++) {
 			const auto& [nb, edge] = vertices3[u].neighbours[i];
 
-			// TODO : possibly we should prioritize visiting vertical edges over not visiting already visited vertices
 			if (visited[nb]) { continue; }
 
 			int score = 0;
