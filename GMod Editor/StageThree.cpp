@@ -98,6 +98,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 
 	auto contour = FindContour(intersection, baseContour, params.insidePoint, part, surfaces);
 
+	// TODO : this is a nice feature, but it is a) only applied for contour b) calcualtions are not really correct for 3D
 	// == filter excess points ==
 	auto areSimilar = [&](const InterPoint& a, const InterPoint& b, const InterPoint& c) -> bool {
 		double area = std::abs(
@@ -142,7 +143,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	}
 	// =====
 
-	const float lowerValPath = m_radius * 0.975f;
+	const float lowerValPath = m_radius * 0.98f;
 	std::vector<gmod::vector3<float>> fullPath;
 
 	long firstIdx = G.vertices3[path.front()].segEnd.contourIdx;
@@ -192,7 +193,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 		}
 	}
 
-	const float lowerValContour = m_radius * 0.985f;
+	const float lowerValContour = m_radius * 0.99f;
 	long lastIdx = G.vertices3[path.back()].segEnd.contourIdx;
 	gmod::vector3<float> last = contour[lastIdx].pos;
 	last = gmod::vector3<float>(last.x(), last.y() - lowerValContour, last.z());
@@ -309,7 +310,7 @@ std::vector<StageThree::InterPoint> StageThree::FindContour(Intersection& inters
 			} else {
 				wentAbove = true;
 				if (!startsBelow && wentBelow) {
-					if (Helper::AreEqualV3(front, poi.pos, FZERO_XYZ)) { break; }
+					if (Helper::AreEqualV3(front, poi.pos, FZERO)) { break; }
 				}
 			}
 			auto normal = part.s->Normal(poi.uvs.u1, poi.uvs.v1);
@@ -465,13 +466,15 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	const float separation = diameter - epsilon * m_radius;
 
 	// == starting point and move vector ==
-	float minX = centre.x();
+	constexpr float FLOAT_MAX = std::numeric_limits<float>::max();
+
+	float minX = FLOAT_MAX;
 	long minXidx = 0;
-	float maxX = centre.x();
+	float maxX = -FLOAT_MAX;
 	long maxXidx = 0;
-	float minZ = centre.z();
+	float minZ = FLOAT_MAX;
 	long minZidx = 0;
-	float maxZ = centre.z();
+	float maxZ = -FLOAT_MAX;
 	long maxZidx = 0;
 	for (long i = 0; i < contour.size(); i++) {
 		const auto& p = contour[i];
@@ -492,6 +495,9 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 			maxZidx = i;
 		}
 	}
+
+	const float midX = (minX + maxX) / 2;
+	const float midZ = (minZ + maxZ) / 2;
 
 	int ID = 0;
 	startingPoint = SegmentEnd3{ .id = ID };
@@ -544,11 +550,15 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	float currVal = startVal + step;
 	int dirSign = step > 0 ? 1 : -1;
 	while (dirSign * currVal < dirSign * endVal) {
+		float valX, valZ;
 		if (cutVertical) {
-			knife.surface->SetTranslation(currVal, knifeY, centre.z());
+			valX = currVal;
+			valZ = midZ;
 		} else {
-			knife.surface->SetTranslation(centre.x(), knifeY, currVal);
+			valX = midX;
+			valZ = currVal;
 		}
+		knife.surface->SetTranslation(valX, knifeY, valZ);
 
 		Intersection::IDIG knifeIDIG = { knife.surface->id, dynamic_cast<IGeometrical*>(knife.surface.get()) };
 
@@ -556,14 +566,13 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 		unsigned int res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
 
 		if (res == 1) { // fallback - try to use middle of knife as a hint
-			intersection.cursorPosition = gmod::vector3<double>(knife.surface->position().x(), m_offsetBaseY, knife.surface->position().z());
+			intersection.cursorPosition = gmod::vector3<double>(valX, m_offsetBaseY, valZ);
 			intersection.useCursorAsStart = true;
 			res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
 			intersection.useCursorAsStart = false;
 		}
 		if (res != 0) {
-			// TODO : technically, knife could cut beyond the surface, so there really might be no intersection
-			//throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
+			throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
 		}
 
 		auto& pointsOfIntersection = intersection.GetPointsOfIntersection();
@@ -585,7 +594,7 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 		std::vector<StageThree::InterPoint> endOfLine;
 		bool switchedToMain = false;
 		for (const auto& poi : pointsOfIntersection) {
-			if (poi.pos.y() < baseY) {
+			if (poi.pos.y() < m_offsetBaseY - 1.f) {
 				switchedToMain = true;
 				continue;
 			}
@@ -645,6 +654,10 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 void StageThree::GetInnerSegments(const std::vector<InterPoint>& contour, const std::vector<InterPoint>& intersectionLine,
 	std::vector<Segment3>& innerSegements, std::vector<SegmentEnd3>& contourIntersections, int& ID, const Intersection::IDIG& part) const {
 
+	if (intersectionLine.empty()) {
+		return;
+	}
+
 	struct Crossing {
 		long i, j;
 		float u, v;
@@ -671,16 +684,13 @@ void StageThree::GetInnerSegments(const std::vector<InterPoint>& contour, const 
 			}
 		}
 	}
-	if (intersections.empty()) {
-		int zero = 0;
-	}
 
 	auto newEnd = std::unique(intersections.begin(), intersections.end(), [&](const Crossing& a, const Crossing& b) {
 		return Helper::AreEqualF(a.u, b.u, FZERO_UV) && Helper::AreEqualF(a.v, b.v, FZERO_UV);
 	});
 	intersections.erase(newEnd, intersections.end());
 
-	// TODO : this should not happen I think
+	// TODO : normally, this should not happen I think
 	if (intersections.empty()) { 
 		return;
 	}
@@ -806,7 +816,7 @@ bool StageThree::DoSegementsCross(PartUVs A, PartUVs B, PartUVs C, PartUVs D, Pa
 	const PartUVs s = { D.u - C.u, D.v - C.v };
 
 	const float r_s = r.u * s.v - r.v * s.u; // cross2D equivalent
-	if (Helper::AreEqualF(r_s, 0.f, FZERO_UV)) { return false; }
+	if (Helper::AreEqualF(r_s, 0.f, FZERO)) { return false; }
 
 	const PartUVs q_p = { q.u - p.u, q.v - p.v };
 	const float t = (q_p.u * s.v - q_p.v * s.u) / r_s; // cross2D(q_p, s)

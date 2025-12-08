@@ -265,8 +265,8 @@ std::vector<std::vector<float>> StageOne::CreateHeightmapByUVSampling(const std:
 			while (v <= uvBounds.vMax) {
 				auto p = surf->Point(u, v);
 				
-				const int x = static_cast<int>((p.x() - topLeftCorner.x()) / stepX);
-				const int z = static_cast<int>((p.z() - topLeftCorner.z()) / stepZ);
+				const int x = std::clamp(static_cast<int>((p.x() - topLeftCorner.x()) / stepX), 0, m_resX);
+				const int z = std::clamp(static_cast<int>((p.z() - topLeftCorner.z()) / stepZ), 0, m_resZ);
 				if (p.y() > heightmap[x][z]) {
 					heightmap[x][z] = p.y();
 				}

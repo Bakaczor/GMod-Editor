@@ -20,8 +20,8 @@ namespace app {
 
 		std::vector<gmod::vector3<float>> GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
 	private:
-		const float FZERO_XYZ = 100.f * std::numeric_limits<float>::epsilon();
-		const float FZERO_UV = std::numeric_limits<float>::epsilon();
+		const float FZERO = 1e-2 * std::numeric_limits<float>::epsilon();
+		const float FZERO_UV = 1e-6 * std::numeric_limits<float>::epsilon();
 		const float m_radius = 4.f;
 		const int m_samplingRes = 500;
 		const float m_offsetBaseY = baseY + m_radius;
@@ -96,14 +96,14 @@ namespace app {
 				"earL", m_baseInterParams, {
 					{ "head", false, m_partInterParams }
 				},
-				{ -27.f, 0.f, 28.5f }, 1.65f, false, 1, true
+				{ -27.f, 0.f, -33.f }, 1.65f, false, 1, true
 			},
 			// earR - ok
 			MillingPartParams{
 				"earR", m_baseInterParams, {
 					{ "head", false, m_partInterParams }
 				},
-				{ 27.f, 0.f, 28.5f }, 1.65f, false, 1, true
+				{ 27.f, 0.f, -33.f }, 1.65f, false, 1, true
 			},
 			// head - ok
 			MillingPartParams{
@@ -117,42 +117,42 @@ namespace app {
 			// tail - ok
 			MillingPartParams{
 				"tail", m_baseInterParams, {
-					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(20, 19, 45) }
+					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(25, 19, 55) }
 				},
-				{ 39.f, 0.f, 45.f }, 1.75f, true, 2, false
+				{ 40.f, 0.f, 55.f }, 1.75f, true, 2, false
 			},
 			// legBL - ok
 			MillingPartParams{
 				"legBL", m_baseInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+					{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(-18, 19, 50) }
 				},
-				{ -17.5, 0.f, 45.f }, 1.75f, false, 3, false
+				{ -24.f, 0.f, 52.f }, 1.75f, false, 3, false
 			},
 			// legFL - ok
 			MillingPartParams{
 				"legFL", m_partInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "legBL", false, m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+					{ "legBL", false, m_partInterParams, true, gmod::vector3<double>(-18, 19, 50) }
 				},
-				{ -6.5f, 0.f, 52.f }, 1.75f, false, 3, false
+				{ -10.f, 0.f, 50.f }, 1.75f, false, 3, false
 			},
 			// legFR - ok
 			MillingPartParams{
 				"legFR", m_baseInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(15.5, 19, 45) }
+					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(18, 19, 50) }
 				},
-				{ 6.5f, 0.f, 52.f }, 1.75f, false, 3, false
+				{ 10.f, 0.f, 50.f }, 1.75f, false, 3, false
 			},
 			// legBR - ok
 			MillingPartParams{
 				"legBR", m_baseInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "tail", false, m_partInterParams, true, gmod::vector3<double>(20, 19, 45) },
-					{ "legFR", false, m_partInterParams, true,  gmod::vector3<double>(15.5, 19, 45) }
+					{ "tail", false, m_partInterParams, true, gmod::vector3<double>(25, 19, 55) },
+					{ "legFR", false, m_partInterParams, true,  gmod::vector3<double>(18, 19, 50) }
 				},
-				{ 17.5, 0.f, 48.5f }, 1.75f, false, 3, false
+				{ 24.f, 0.f, 52.f }, 1.75f, false, 3, false
 			},
 			// body - ok
 			MillingPartParams{
@@ -163,7 +163,7 @@ namespace app {
 					{ "legFL", false, m_partInterParams },
 					{ "legBL", false, m_partInterParams }
 				},
-				{ 0.f, 0.f, 24.f }, 1.75f, true, 4, false
+				{ 0.f, 0.f, 30.f }, 1.75f, true, 4, false
 			}
 		};
 

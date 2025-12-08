@@ -1,0 +1,74 @@
+// earL - ok
+MillingPartParams{
+	"earL", m_baseInterParams, {
+		{ "head", false, m_partInterParams }
+	},
+	{ -27.f, 0.f, 28.5f }, 1.65f, false, 1, true
+},
+// earR - ok
+MillingPartParams{
+	"earR", m_baseInterParams, {
+		{ "head", false, m_partInterParams }
+	},
+	{ 27.f, 0.f, 28.5f }, 1.65f, false, 1, true
+},
+// head - ok
+MillingPartParams{
+	"head", m_baseInterParams, {
+		{ "earL", true, m_partInterParams },
+		{ "earR", true, m_partInterParams },
+		{ "body", false, m_partInterParams }
+	},
+	{ 0.f, 0.f, 0.f }, 1.5f, false, 1, false
+},
+// tail - ok
+MillingPartParams{
+	"tail", m_baseInterParams, {
+		{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(20, 19, 45) }
+	},
+	{ 39.f, 0.f, 45.f }, 1.75f, true, 2, false
+},
+// legBL - ok
+MillingPartParams{
+	"legBL", m_baseInterParams, {
+		{ "body", false, m_partInterParams },
+		{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+	},
+	{ -17.5, 0.f, 45.f }, 1.75f, false, 3, false
+},
+// legFL - ok
+MillingPartParams{
+	"legFL", m_partInterParams, {
+		{ "body", false, m_partInterParams },
+		{ "legBL", false, m_partInterParams, true, gmod::vector3<double>(-15.5, 19, 45) }
+	},
+	{ -6.5f, 0.f, 52.f }, 1.75f, false, 3, false
+},
+// legFR - ok
+MillingPartParams{
+	"legFR", m_baseInterParams, {
+		{ "body", false, m_partInterParams },
+		{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(15.5, 19, 45) }
+	},
+	{ 6.5f, 0.f, 52.f }, 1.75f, false, 3, false
+},
+// legBR - ok
+MillingPartParams{
+	"legBR", m_baseInterParams, {
+		{ "body", false, m_partInterParams },
+		{ "tail", false, m_partInterParams, true, gmod::vector3<double>(20, 19, 45) },
+		{ "legFR", false, m_partInterParams, true,  gmod::vector3<double>(15.5, 19, 45) }
+	},
+	{ 17.5, 0.f, 48.5f }, 1.75f, false, 3, false
+},
+// body - ok
+MillingPartParams{
+	"body", m_baseInterParams, {
+		{ "head", false, m_partInterParams },
+		{ "legBR", false, m_partInterParams },
+		{ "legFR", false, m_partInterParams },
+		{ "legFL", false, m_partInterParams },
+		{ "legBL", false, m_partInterParams }
+	},
+	{ 0.f, 0.f, 24.f }, 1.75f, true, 4, false
+}
