@@ -88,6 +88,12 @@
     <Filter Include="Pliki źródłowe\CAM">
       <UniqueIdentifier>{70a0aa8d-e9bd-4b1b-8803-ba325c481674}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Pliki nagłówkowe\external">
+      <UniqueIdentifier>{a0b5f786-097b-4118-959a-9aaddf93ca74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pliki źródłowe\external">
+      <UniqueIdentifier>{b96c2db0-cb39-4f78-87d7-ce5758a0383c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">
@@ -180,9 +186,6 @@
     <ClInclude Include="SerializationManager.h">
       <Filter>Pliki nagłówkowe\app</Filter>
     </ClInclude>
-    <ClInclude Include="tinyfiledialogs.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
     <ClInclude Include="Gregory.h">
       <Filter>Pliki nagłówkowe\object</Filter>
     </ClInclude>
@@ -244,6 +247,15 @@
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
     <ClInclude Include="OffsetSurface.h">
+      <Filter>Pliki nagłówkowe\CAM</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyfiledialogs.h">
+      <Filter>Pliki nagłówkowe\external</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Pliki nagłówkowe\external</Filter>
+    </ClInclude>
+    <ClInclude Include="StageFour.h">
       <Filter>Pliki nagłówkowe\CAM</Filter>
     </ClInclude>
   </ItemGroup>
@@ -335,9 +347,6 @@
     <ClCompile Include="SerializationManager.cpp">
       <Filter>Pliki źródłowe\app</Filter>
     </ClCompile>
-    <ClCompile Include="tinyfiledialogs.c">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="Transformable.cpp">
       <Filter>Pliki źródłowe\object</Filter>
     </ClCompile>
@@ -381,6 +390,12 @@
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
     <ClCompile Include="OffsetSurface.cpp">
+      <Filter>Pliki źródłowe\CAM</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyfiledialogs.c">
+      <Filter>Pliki źródłowe\external</Filter>
+    </ClCompile>
+    <ClCompile Include="StageFour.cpp">
       <Filter>Pliki źródłowe\CAM</Filter>
     </ClCompile>
   </ItemGroup>
