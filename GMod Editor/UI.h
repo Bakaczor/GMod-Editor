@@ -15,6 +15,7 @@
 #include "StageTwo.h"
 #include "StageThree.h"
 #include <memory>
+#include "StageFour.h"
 
 namespace app {
 	class Application;
@@ -102,6 +103,7 @@ namespace app {
 		StageOne m_stageOne;
 		StageTwo m_stageTwo;
 		StageThree m_stageThree;
+		StageFour m_stageFour;
 
 		int m_lastSelectedIndex = -1;
 

@@ -15,7 +15,7 @@ namespace app {
 		const float offset = 2.f;
 		const float totalHeight = 50.f;
 
-		const float baseY = 15.f;
+		const float baseY = 15.1f;
 		const float width = 150.f;
 		const float length = 150.f;
 		const gmod::vector3<double> topLeftCorner = { -75, baseY, -75 };

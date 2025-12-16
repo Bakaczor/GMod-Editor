@@ -10,6 +10,9 @@ namespace app {
 		const std::string type = "k";
 		const int diameter = 1;
 
+		const float totalHeight = 50.f;
+		const float saveHeight = 20.f;
+
 		const float baseY = 15.f;
 		const float width = 150.f;
 		const float length = 150.f;
@@ -26,5 +29,11 @@ namespace app {
 		std::vector<std::vector<bool>> m_boolMap;
 
 		void LoadImageSTB();
+		struct Pixel {
+			int x = 0;
+			int z = 0;
+		};
+		std::vector<Pixel> PixelPath(std::vector<std::vector<bool>>& visited, int xStart, int zStart) const;
+		gmod::vector3<float> Pixel2Pos(int x, int z) const;
 	};
 }
