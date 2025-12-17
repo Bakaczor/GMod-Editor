@@ -524,14 +524,6 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 	finalPath.push_back(gmod::vector3<float>(back.x(), totalHeight + 1.0f, back.z()));
 	finalPath.push_back(startPoint);
 
-	// translate to (0, 0)
-	if (translateBack) {
-		gmod::vector3<float> diff(-centre.x(), 0, -centre.z());
-		for (auto& p : finalPath) {
-			p = p + diff;
-		}
-	}
-
 	return finalPath;
 }
 

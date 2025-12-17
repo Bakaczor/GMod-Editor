@@ -58,10 +58,12 @@ void PathParser::Parse(std::ifstream& file) {
                 throw std::runtime_error("Line " + std::to_string(lineNumber) + " : expected X, Y or Z, got " + std::string(1, character));
             }
 
+            bool negative = iss.peek() == '-';
+
             int whole;
             if (!(iss >> whole) || std::abs(whole) >= 1000) {
                 throw std::runtime_error("Line " + std::to_string(lineNumber) + " : invalid coordinate value for " + std::string(1, character));
-            } 
+            }
 
             char dot;
             if (!(iss >> dot) || dot != '.') {
@@ -85,10 +87,10 @@ void PathParser::Parse(std::ifstream& file) {
             } 
 
             float value = whole;
-            if (whole >= 0) {
-                value += fractional / 1000.f;
+            if (negative) {
+                value -= fractional * 1e-3f;
             } else {
-                value -= fractional / 1000.f; 
+                value += fractional * 1e-3f;
             }
 
             switch (character) {

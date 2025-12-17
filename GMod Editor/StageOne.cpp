@@ -127,16 +127,7 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	}
 	const auto& lastBottom = bottomPathFiltered.back();
 	path.push_back(gmod::vector3<float>(lastBottom.x(), totalHeight + 1.0f, lastBottom.z()));
-
 	path.push_back(startPoint);
-
-	// translate to (0, 0)
-	if (translateBack) {
-		gmod::vector3<float> diff(-centre.x(), 0, -centre.z());
-		for (auto& p : path) {
-			p = p + diff;
-		}
-	}
 
 	return path;
 }

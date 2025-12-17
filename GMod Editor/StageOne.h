@@ -18,9 +18,8 @@ namespace app {
 		const float baseY = 15.1f;
 		const float width = 150.f;
 		const float length = 150.f;
-		const gmod::vector3<double> topLeftCorner = { 25, baseY, 25 };
-		const gmod::vector3<double> centre = { 100, baseY, 100 };
-		const bool translateBack = true;
+		const gmod::vector3<double> topLeftCorner = { -75, baseY, -75 };
+		const gmod::vector3<double> centre = { 0, baseY, 0 };
 
 		std::vector<gmod::vector3<float>> GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
 	private:

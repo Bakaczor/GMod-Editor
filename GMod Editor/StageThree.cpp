@@ -7,20 +7,6 @@
 
 using namespace app;
 
-StageThree::StageThree() {
-	gmod::vector3<double> diffD(centre.x(), 0, centre.z());
-	gmod::vector3<float> diffF(centre.x(), 0, centre.z());
-
-	for (MillingPartParams& m : m_millingParams) {
-		m.insidePoint = m.insidePoint + diffF;
-		for (NamedInterParams& s : m.intersectingSurfaces) {
-			if (s.useCursor) {
-				s.cursorPos = s.cursorPos + diffD;
-			}
-		}
-	}
-}
-
 std::vector<gmod::vector3<float>> StageThree::GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const {
 	gmod::vector3<double> baseCentre(centre.x(), centre.y() + m_radius, centre.z());
 	BSurface::Plane base = BSurface::MakePlane(baseCentre, width, length, { 0,0,0 }, -69);
@@ -33,14 +19,6 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePath(const std::vector<std
 		std::copy(elementsPath.begin(), elementsPath.end(), std::back_inserter(path));
 	}
 	path.push_back(gmod::vector3<float>(0, totalHeight, 0));
-
-	// translate to (0, 0)
-	if (translateBack) {
-		gmod::vector3<float> diff(-centre.x(), 0, -centre.z());
-		for (auto& p : path) {
-			p = p + diff;
-		}
-	}
 
 	return path;
 }
@@ -165,7 +143,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	}
 	// =====
 
-	const float lowerValPath = m_radius * 0.98f;
+	const float lowerValPath = m_radius * 0.975f;
 	std::vector<gmod::vector3<float>> fullPath;
 
 	long firstIdx = G.vertices3[path.front()].segEnd.contourIdx;
