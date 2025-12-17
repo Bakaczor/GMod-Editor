@@ -64,7 +64,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 		xValIntersectionPoints.insert({ xVal, std::vector<SegmentEnd2>() });
 	}
 
-	float topCountourZ = 0.f;
+	float topCountourZ = zBottom;
 	int topCountourIdx = 0;
 
 	int ID = 0; // future vertex index
@@ -456,7 +456,7 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 
 	std::vector<int> path = G.SpecialDFS2(start.id);
 	
-	gmod::vector3<float> startPoint(0, totalHeight + 1.0f, 0);
+	gmod::vector3<float> startPoint(centre.x(), totalHeight + 1.0f, centre.z());
 	gmod::vector3<float> overMillingStart(start.x, totalHeight + 1.0f, start.z);
 
 	std::vector<gmod::vector3<float>> finalPath;
@@ -523,6 +523,14 @@ std::vector<gmod::vector3<float>> StageTwo::GetFinalPath(const SegmentGraph& G, 
 	auto& back = finalPath.back();
 	finalPath.push_back(gmod::vector3<float>(back.x(), totalHeight + 1.0f, back.z()));
 	finalPath.push_back(startPoint);
+
+	// translate to (0, 0)
+	if (translateBack) {
+		gmod::vector3<float> diff(-centre.x(), 0, -centre.z());
+		for (auto& p : finalPath) {
+			p = p + diff;
+		}
+	}
 
 	return finalPath;
 }

@@ -15,9 +15,11 @@ namespace app {
 		const float baseY = 15.f;
 		const float width = 150.f;
 		const float length = 150.f;
-		const gmod::vector3<double> topLeftCorner = { -75, baseY, -75 };
-		const gmod::vector3<double> centre = { 0, baseY, 0 };
+		const gmod::vector3<double> topLeftCorner = { 25, baseY, 25 };
+		const gmod::vector3<double> centre = { 100, baseY, 100 };
+		const bool translateBack = true;
 
+		StageThree();
 		std::vector<gmod::vector3<float>> GeneratePath(const std::vector<std::unique_ptr<Object>>& sceneObjects, Intersection& intersection) const;
 	private:
 		const float FZERO = 1e-2 * std::numeric_limits<float>::epsilon();
@@ -84,7 +86,7 @@ namespace app {
 			bool useNumericalNormal;
 		};
 
-		const std::vector<MillingPartParams> m_millingParams = {
+		std::vector<MillingPartParams> m_millingParams = {
 			//MillingPartParams{
 			//	"test", m_specialParams, {
 

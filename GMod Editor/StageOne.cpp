@@ -105,7 +105,7 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	bottomPathFiltered.push_back(bottomPath.back());
 
 	// special points
-	gmod::vector3<float> startPoint(0, totalHeight + 1.0f, 0);
+	gmod::vector3<float> startPoint(centre.x(), totalHeight + 1.0f, centre.z());
 	gmod::vector3<float> overMillingStart(xLeft, totalHeight + 1.0f, zTop);
 
 	std::vector<gmod::vector3<float>> path;
@@ -129,6 +129,14 @@ std::vector<gmod::vector3<float>> StageOne::GeneratePath(const std::vector<std::
 	path.push_back(gmod::vector3<float>(lastBottom.x(), totalHeight + 1.0f, lastBottom.z()));
 
 	path.push_back(startPoint);
+
+	// translate to (0, 0)
+	if (translateBack) {
+		gmod::vector3<float> diff(-centre.x(), 0, -centre.z());
+		for (auto& p : path) {
+			p = p + diff;
+		}
+	}
 
 	return path;
 }
