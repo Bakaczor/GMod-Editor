@@ -12,7 +12,7 @@ namespace app {
 
 		const float totalHeight = 50.f;
 
-		const float baseY = 15.05f;
+		const float baseY = 15.1f;
 		const float width = 150.f;
 		const float length = 150.f;
 		const gmod::vector3<double> topLeftCorner = { -75, baseY, -75 };
@@ -79,9 +79,10 @@ namespace app {
 			std::vector<NamedInterParams> intersectingSurfaces; // which surfaces intersect with this part
 			gmod::vector3<float> insidePoint; // the point that will be milled
 			float epsilon; // used for separation: d - eps * r
-			bool cutVertical; // should cut parallel to OZ or OX (horizontal)
-			int startFrom; // 1 - top, 2 - right, 3 - bottom, 4 - left
+			float YRotation; // specify rotation of the knife in degrees
+			int cuttingDir; // 1 - knive goes to the left, 2 - knife goes to the right
 			bool useNumericalNormal;
+			int startFrom; // 1(2) - top, 2(1) - right, 3(1) - bottom, 4(2) - left
 		};
 
 		std::vector<MillingPartParams> m_millingParams = {
@@ -96,14 +97,14 @@ namespace app {
 				"earL", m_baseInterParams, {
 					{ "head", false, m_partInterParams }
 				},
-				{ -27.f, 0.f, -33.f }, 1.65f, false, 1, true
+				{ -30.f, 0.f, -45.f }, 1.7f, 135, 2, true, 4 // 0, 2
 			},
 			// earR - ok
 			MillingPartParams{
 				"earR", m_baseInterParams, {
 					{ "head", false, m_partInterParams }
 				},
-				{ 27.f, 0.f, -33.f }, 1.65f, false, 1, true
+				{ 30.f, 0.f, -45.f }, 1.7f, 45, 1, true, 2 // 0, 2
 			},
 			// head - ok
 			MillingPartParams{
@@ -112,47 +113,50 @@ namespace app {
 					{ "earR", true, m_partInterParams },
 					{ "body", false, m_partInterParams }
 				},
-				{ 0.f, 0.f, 0.f }, 1.5f, false, 1, false
+				{ 0.f, 0.f, -10.f }, 1.7f, 0, 2, false, 1
 			},
 			// tail - ok
 			MillingPartParams{
 				"tail", m_baseInterParams, {
-					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(25, 19, 55) }
+					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(35, 19, 39) },
+					{ "body", false, m_partInterParams }
 				},
-				{ 40.f, 0.f, 55.f }, 1.75f, true, 2, false
+				{ 50.f, 0.f, 40.f }, 1.7f, 90, 1, false, 2
 			},
 			// legBL - ok
 			MillingPartParams{
 				"legBL", m_baseInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(-18, 19, 50) }
+					{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(-22.5, 19, 40) }
 				},
-				{ -24.f, 0.f, 52.f }, 1.75f, false, 3, false
+				{ -32.f, 0.f, 48.f }, 1.7f, 0, 1, false, 3
 			},
 			// legFL - ok
 			MillingPartParams{
 				"legFL", m_partInterParams, {
-					{ "body", false, m_partInterParams },
-					{ "legBL", false, m_partInterParams, true, gmod::vector3<double>(-18, 19, 50) }
+					{ "body", false, m_partInterParams, true, gmod::vector3<double>(0, 15, 55) },
+					{ "legBL", false, m_partInterParams, true, gmod::vector3<double>(-22.5, 19, 40) },
+					{ "legFR", false, m_partInterParams, true, gmod::vector3<double>(0, 15, 45) }
 				},
-				{ -10.f, 0.f, 50.f }, 1.75f, false, 3, false
+				{ -10.f, 0.f, 60.f }, 1.7f, 0, 1, false, 3
 			},
 			// legFR - ok
 			MillingPartParams{
 				"legFR", m_baseInterParams, {
-					{ "body", false, m_partInterParams },
-					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(18, 19, 50) }
+					{ "body", false, m_partInterParams, true, gmod::vector3<double>(0, 15, 55) },
+					{ "legBR", false, m_partInterParams, true, gmod::vector3<double>(22.5, 19, 40) },
+					{ "legFL", false, m_partInterParams, true, gmod::vector3<double>(0, 15, 45) }
 				},
-				{ 10.f, 0.f, 50.f }, 1.75f, false, 3, false
+				{ 10.f, 0.f, 60.f }, 1.7f, 0, 1, false, 3
 			},
 			// legBR - ok
 			MillingPartParams{
 				"legBR", m_baseInterParams, {
 					{ "body", false, m_partInterParams },
-					{ "tail", false, m_partInterParams, true, gmod::vector3<double>(25, 19, 55) },
-					{ "legFR", false, m_partInterParams, true,  gmod::vector3<double>(18, 19, 50) }
+					{ "tail", false, m_partInterParams, true, gmod::vector3<double>(35, 19, 39) },
+					{ "legFR", false, m_partInterParams, true,  gmod::vector3<double>(22.5, 19, 40) }
 				},
-				{ 24.f, 0.f, 52.f }, 1.75f, false, 3, false
+				{ 32.f, 0.f, 48.f }, 1.7f, 0, 1, false, 3
 			},
 			// body - ok
 			MillingPartParams{
@@ -161,9 +165,10 @@ namespace app {
 					{ "legBR", false, m_partInterParams },
 					{ "legFR", false, m_partInterParams },
 					{ "legFL", false, m_partInterParams },
-					{ "legBL", false, m_partInterParams }
+					{ "legBL", false, m_partInterParams },
+					{ "tail", false, m_partInterParams }
 				},
-				{ 0.f, 0.f, 30.f }, 1.75f, true, 4, false
+				{ 0.f, 0.f, 25.f }, 1.7f, 90, 2, false, 4
 			}
 		};
 
@@ -186,7 +191,7 @@ namespace app {
 			float insideU, float insideV, const Intersection::IDIG& part) const;
 		
 		SegmentGraph CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour, const Intersection::InterParams& cuttingParams,
-			const Intersection::IDIG& part, float epsilon, bool cutVertical, int startFrom, SegmentEnd3& startingPoint) const;
+			const Intersection::IDIG& part, float epsilon, float YRotation, int cuttingDir, SegmentEnd3& startingPoint) const;
 
 		void GetInnerSegments(const std::vector<InterPoint>& contour, const std::vector<InterPoint>& intersectionLine,
 			std::vector<Segment3>& innerSegements, std::vector<SegmentEnd3>& contourIntersections, int& ID, const Intersection::IDIG& part) const;
@@ -196,5 +201,7 @@ namespace app {
 		};
 		bool DoSegementsCross(PartUVs A, PartUVs B, PartUVs C, PartUVs D, PartUVs& intersection) const;
 		bool IsInside(const PartUVs& point, const std::vector<StageThree::InterPoint>& closedContour) const;
+
+		bool AreSimilar(const InterPoint& a, const InterPoint& b, const InterPoint& c) const;
 	};
 }

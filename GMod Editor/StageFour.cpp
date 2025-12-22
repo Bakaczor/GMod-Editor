@@ -19,7 +19,7 @@ void StageFour::LoadImageSTB() {
 
     m_boolMap = std::vector<std::vector<bool>>(m_resZ, std::vector<bool>(m_resX));
 
-    int t = 127;
+    int t = 200;
     if (channels == 1 || channels == 2) {
         for (int i = 0; i < m_resX * m_resZ; i++) {
             m_boolMap[i / m_resX][i % m_resX] = data[i * channels] < t;

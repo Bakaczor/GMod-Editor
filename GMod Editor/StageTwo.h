@@ -90,5 +90,7 @@ namespace app {
 
 		bool DoSegementsCross(gmod::vector3<float> A, gmod::vector3<float> B,
 			gmod::vector3<float> C, gmod::vector3<float> D, gmod::vector3<float>& intersection) const;
+
+		bool AreSimilarXZ(const InterPoint& a, const InterPoint& b, const InterPoint& c) const;
 	};
 }

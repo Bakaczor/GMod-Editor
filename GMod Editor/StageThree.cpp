@@ -18,8 +18,13 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePath(const std::vector<std
 		auto elementsPath = GeneratePathForPart(sceneObjects, intersection, params, baseIDIG);
 		std::copy(elementsPath.begin(), elementsPath.end(), std::back_inserter(path));
 	}
-	path.push_back(gmod::vector3<float>(0, totalHeight, 0));
+	// add manual correction between legs
+	path.push_back(gmod::vector3<float>(0, totalHeight, centre.z() + length / 2));
+	path.push_back(gmod::vector3<float>(0, baseY, centre.z() + length / 2));
+	path.push_back(gmod::vector3<float>(0, baseY, 62.f)); // manual value
+	path.push_back(gmod::vector3<float>(0, totalHeight, 62.f));
 
+	path.push_back(gmod::vector3<float>(0, totalHeight, 0));
 	return path;
 }
 
@@ -98,14 +103,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 
 	auto contour = FindContour(intersection, baseContour, params.insidePoint, part, surfaces);
 
-	// TODO : this is a nice feature, but it is a) only applied for contour b) calcualtions are not really correct for 3D
 	// == filter excess points ==
-	auto areSimilar = [&](const InterPoint& a, const InterPoint& b, const InterPoint& c) -> bool {
-		double area = std::abs(
-			(b.pos.x() - a.pos.x()) * (c.pos.z() - a.pos.z()) -
-			(c.pos.x() - a.pos.x()) * (b.pos.z() - a.pos.z()));
-		return area < 1e-4f;
-	};
 	std::vector<InterPoint> filtered;
 	filtered.push_back(contour.front());
 	for (size_t k = 1; k < contour.size() - 1; k++) {
@@ -113,7 +111,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 		auto& curr = contour[k];
 		auto& next = contour[k + 1];
 
-		if (!areSimilar(prev, curr, next)) {
+		if (!AreSimilar(prev, curr, next)) {
 			filtered.push_back(curr);
 		}
 	}
@@ -121,7 +119,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	// =====
 
 	SegmentEnd3 startingPoint;
-	SegmentGraph G = CutSurfaceIntoGraph(intersection, contour, params.cuttingParams, part, params.epsilon, params.cutVertical, params.startFrom, startingPoint);
+	SegmentGraph G = CutSurfaceIntoGraph(intersection, contour, params.cuttingParams, part, params.epsilon, params.YRotation, params.cuttingDir, startingPoint);
 	std::vector<int> path = G.SpecialDFS3(startingPoint.id);
 
 	// =====
@@ -143,7 +141,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 	}
 	// =====
 
-	const float lowerValPath = m_radius * 0.975f;
+	const float lowerValPath = m_radius * 0.99f;
 	std::vector<gmod::vector3<float>> fullPath;
 
 	long firstIdx = G.vertices3[path.front()].segEnd.contourIdx;
@@ -193,7 +191,7 @@ std::vector<gmod::vector3<float>> StageThree::GeneratePathForPart(
 		}
 	}
 
-	const float lowerValContour = m_radius * 0.99f;
+	const float lowerValContour = m_radius;
 	long lastIdx = G.vertices3[path.back()].segEnd.contourIdx;
 	gmod::vector3<float> last = contour[lastIdx].pos;
 	last = gmod::vector3<float>(last.x(), last.y() - lowerValContour, last.z());
@@ -454,11 +452,11 @@ void StageThree::Combine(std::vector<InterPoint>& finalContour, const std::vecto
 }
 
 SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const std::vector<InterPoint>& contour, const Intersection::InterParams& cuttingParams,
-	const Intersection::IDIG& part, float epsilon, bool cutVertical, int startFrom, SegmentEnd3& startingPoint) const {
+	const Intersection::IDIG& part, float epsilon, float YRotation, int cuttingDir, SegmentEnd3& startingPoint) const {
 
 	// find starting point
 	// create vertical plane
-	// moving by sep value (use epsilon) from starting point (either vertically or horizontally, use cutVertical) find intersections with the part
+	// moving by sep value (use epsilon) from starting point (according to YRotation) find intersections with the part
 	// find which parts of that intersection are inside the contour and create segments from them
 	// you should aquire a list of segment ends (ordered by index on contour) and a list of inner segements
 	// create list of contour segments and use both to create a graph
@@ -467,6 +465,15 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 
 	// == starting point and move vector ==
 	constexpr float FLOAT_MAX = std::numeric_limits<float>::max();
+
+	float radY = gmod::deg2rad(YRotation);
+	if (cuttingDir == 1) {
+		radY += DirectX::XM_PIDIV2;
+	} else {
+		radY -= DirectX::XM_PIDIV2;
+	}
+	gmod::vector3<double> moveDir(std::cos(radY), 0, -std::sin(radY));  // flip Z
+	moveDir.normalize();
 
 	float minX = FLOAT_MAX;
 	long minXidx = 0;
@@ -499,80 +506,133 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 	const float midX = (minX + maxX) / 2;
 	const float midZ = (minZ + maxZ) / 2;
 
+	float minProj = FLOAT_MAX;
+	float maxProj = -FLOAT_MAX;
+	long startIdx = 0;
+
+	for (long i = 0; i < contour.size(); i++) {
+		const auto& p = contour[i];
+		float proj = p.pos.x() * moveDir.x() + p.pos.z() * moveDir.z();
+
+		if (proj < minProj) {
+			minProj = proj;
+			startIdx = i;
+		}
+		if (proj > maxProj) {
+			maxProj = proj;
+		}
+	}
+
 	int ID = 0;
 	startingPoint = SegmentEnd3{ .id = ID };
 	ID++;
 
-	float startVal = 0.f, endVal = 0.f, step = 0.f;
-	switch (startFrom) {
-		case 1: { // top->bottom
-			startVal = minZ;
-			endVal = maxZ;
-			step = separation;
-			startingPoint.contourIdx = minZidx;
-			break;
-		} case 2: { // right->left
-			startVal = maxX;
-			endVal = minX;
-			step = -separation;
-			startingPoint.contourIdx = maxXidx;
-			break;
-		} case 3: { // bottom->top
-			startVal = maxZ;
-			endVal = minZ;
-			step = -separation;
-			startingPoint.contourIdx = maxZidx;
-			break;
-		} case 4: { // left->right
-			startVal = minX;
-			endVal = maxX;
-			step = separation;
-			startingPoint.contourIdx = minXidx;
-			break;
-		}
-	}
+	//float startVal = 0.f, endVal = 0.f, step = 0.f;
+	//switch (cuttingDir) {
+	//	case 1: { // top->bottom
+	//		startVal = minZ;
+	//		endVal = maxZ;
+	//		step = separation;
+	//		startingPoint.contourIdx = minZidx;
+	//		break;
+	//	} case 2: { // right->left
+	//		startVal = maxX;
+	//		endVal = minX;
+	//		step = -separation;
+	//		startingPoint.contourIdx = maxXidx;
+	//		break;
+	//	} case 3: { // bottom->top
+	//		startVal = maxZ;
+	//		endVal = minZ;
+	//		step = -separation;
+	//		startingPoint.contourIdx = maxZidx;
+	//		break;
+	//	} case 4: { // left->right
+	//		startVal = minX;
+	//		endVal = maxX;
+	//		step = separation;
+	//		startingPoint.contourIdx = minXidx;
+	//		break;
+	//	}
+	//}
+
+	float startVal = minProj, endVal = maxProj, step = separation;
+	startingPoint.contourIdx = startIdx;
 	// =====
 
 	float knifeWidth = std::max(width, length);
 	float knifeHeight = totalHeight - m_offsetBaseY + m_radius; // add radius to a little below
 	float knifeY = (totalHeight + m_offsetBaseY) / 2.f;
 
-	BSurface::Plane knife;
-	if (cutVertical) { // parallel to YZ
-		knife = BSurface::MakePlane(centre, knifeHeight, knifeWidth, gmod::vector3<double>(0, 0, 90), -420);
-	} else { // parallel to XY
-		knife = BSurface::MakePlane(centre, knifeWidth, knifeHeight, gmod::vector3<double>(90, 0, 0), -420);
-	}
+	BSurface::Plane knife = BSurface::MakePlane(centre, knifeWidth, knifeHeight, gmod::vector3<double>(90, YRotation, 0), -420);
 
 	std::vector<Segment3> innerSegements;
 	std::vector<SegmentEnd3> contourIntersections;
 
+	const float midProj = moveDir.x() * midX + moveDir.z() * midZ;
 	float currVal = startVal + step;
-	int dirSign = step > 0 ? 1 : -1;
-	while (dirSign * currVal < dirSign * endVal) {
-		float valX, valZ;
-		if (cutVertical) {
-			valX = currVal;
-			valZ = midZ;
-		} else {
+	//int dirSign = step > 0 ? 1 : -1;
+	while (currVal < endVal) {
+		/*float valX, valZ;
+		if (YRotation == 0.f) {
 			valX = midX;
 			valZ = currVal;
+		} else {
+			valX = currVal;
+			valZ = midZ;
+		}*/
+		float thisCurrVal;
+
+		thisCurrVal = currVal;
+		for (int t = 0; t <= 3; t++) {
+			const float delta = thisCurrVal - midProj;
+			const float valX = midX + moveDir.x() * delta;
+			const float valZ = midZ + moveDir.z() * delta;
+
+			knife.surface->SetTranslation(valX, knifeY, valZ);
+
+			Intersection::IDIG knifeIDIG = { knife.surface->id, dynamic_cast<IGeometrical*>(knife.surface.get()) };
+
+			intersection.SetIntersectionParameters(cuttingParams);
+			unsigned int res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+
+			if (res == 1) { // fallback - try to use middle of knife as a hint
+				intersection.cursorPosition = gmod::vector3<double>(valX, m_offsetBaseY, valZ);
+				intersection.useCursorAsStart = true;
+				res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+				intersection.useCursorAsStart = false;
+			}
+			if (res != 0) {
+				thisCurrVal -= step * (t * 0.25f);
+				continue;
+			}
+			break;
 		}
-		knife.surface->SetTranslation(valX, knifeY, valZ);
 
-		Intersection::IDIG knifeIDIG = { knife.surface->id, dynamic_cast<IGeometrical*>(knife.surface.get()) };
+		thisCurrVal = currVal;
+		for (int t = 0; t <= 3; t++) {
+			const float delta = thisCurrVal - midProj;
+			const float valX = midX + moveDir.x() * delta;
+			const float valZ = midZ + moveDir.z() * delta;
 
-		intersection.SetIntersectionParameters(cuttingParams);
-		unsigned int res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+			knife.surface->SetTranslation(valX, knifeY, valZ);
 
-		if (res == 1) { // fallback - try to use middle of knife as a hint
-			intersection.cursorPosition = gmod::vector3<double>(valX, m_offsetBaseY, valZ);
-			intersection.useCursorAsStart = true;
-			res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
-			intersection.useCursorAsStart = false;
-		}
-		if (res != 0) {
-			throw std::runtime_error("Should have found intersection, but didn't. Evaluate params.");
+			Intersection::IDIG knifeIDIG = { knife.surface->id, dynamic_cast<IGeometrical*>(knife.surface.get()) };
+
+			intersection.SetIntersectionParameters(cuttingParams);
+			unsigned int res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+
+			if (res == 1) { // fallback - try to use middle of knife as a hint
+				intersection.cursorPosition = gmod::vector3<double>(valX, m_offsetBaseY, valZ);
+				intersection.useCursorAsStart = true;
+				res = intersection.FindIntersection(std::make_pair(part, knifeIDIG));
+				intersection.useCursorAsStart = false;
+			}
+			if (res != 0) {
+				thisCurrVal += step * (t * 0.25f);
+				continue;
+			}
+			break;
 		}
 
 		auto& pointsOfIntersection = intersection.GetPointsOfIntersection();
@@ -618,6 +678,21 @@ SegmentGraph StageThree::CutSurfaceIntoGraph(Intersection& intersection, const s
 		if (!endOfLine.empty()) {
 			intersectionLine.insert(intersectionLine.end(), endOfLine.begin(), endOfLine.end());
 		}
+
+		// == filter excess points ==
+		std::vector<InterPoint> filtered;
+		filtered.push_back(intersectionLine.front());
+		for (size_t k = 1; k < intersectionLine.size() - 1; k++) {
+			auto& prev = filtered.back();
+			auto& curr = intersectionLine[k];
+			auto& next = intersectionLine[k + 1];
+
+			if (!AreSimilar(prev, curr, next)) {
+				filtered.push_back(curr);
+			}
+		}
+		intersectionLine = filtered;
+		// =====
 
 		GetInnerSegments(contour, intersectionLine, innerSegements, contourIntersections, ID, part);
 		currVal += step;
@@ -855,4 +930,11 @@ bool StageThree::IsInside(const PartUVs& point, const std::vector<StageThree::In
 		}
 	}
 	return winding != 0;
+}
+
+bool StageThree::AreSimilar(const InterPoint& a, const InterPoint& b, const InterPoint& c) const {
+	gmod::vector3<float> ab = b.pos - a.pos;
+	gmod::vector3<float> ac = c.pos - a.pos;
+	float area = 0.5f * gmod::cross(ab, ac).length();
+	return area < 1e-4f;
 }

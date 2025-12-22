@@ -39,12 +39,6 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 	auto offsetContour = CreateOffsetContour(sceneObjects, intersection);
 
 	// == filter excess points ==
-	auto areSimilar = [&](const InterPoint& a, const InterPoint& b, const InterPoint& c) -> bool {
-		double area = std::abs(
-			(b.pos.x() - a.pos.x()) * (c.pos.z() - a.pos.z()) -
-			(c.pos.x() - a.pos.x()) * (b.pos.z() - a.pos.z()));
-		return area < 1e-4f;
-	};
 	std::vector<InterPoint> filtered;
 	filtered.push_back(offsetContour.front());
 	for (size_t k = 1; k < offsetContour.size() - 1; k++) {
@@ -52,7 +46,7 @@ std::vector<gmod::vector3<float>> StageTwo::GeneratePath(const std::vector<std::
 		auto& curr = offsetContour[k];
 		auto& next = offsetContour[k + 1];
 
-		if (!areSimilar(prev, curr, next)) {
+		if (!AreSimilarXZ(prev, curr, next)) {
 			filtered.push_back(curr);
 		}
 	}
@@ -240,6 +234,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 
 		// TODO : think how to smoothen the offset contour - maybe add some intermidiate points?
 		// it is a little bit jaggy now, but acceptable
+		float offset = 1.3f * m_radius;
 		for (size_t i = start; i < n; i++) {
 			size_t prevI = i - 1;
 			size_t nextI = i + 1;
@@ -265,7 +260,7 @@ std::vector<StageTwo::InterPoint> StageTwo::CreateOffsetContour(const std::vecto
 			normalNext.normalize();
 			gmod::vector3<double> normal(dir * (normalPrev.x() + normalNext.x()) / 2, 0, dir * (normalPrev.z() + normalNext.z()) / 2);
 			normal.normalize();
-			gmod::vector3<double> offsetPos = currP.pos + normal * m_radius;
+			gmod::vector3<double> offsetPos = currP.pos + normal * offset;
 
 			offsetPoi.pos = gmod::vector3<float>(offsetPos.x(), baseY, offsetPos.z());
 			offsetPoi.norm = gmod::vector3<float>(normal.x(), 0, normal.z());
@@ -590,6 +585,13 @@ bool StageTwo::DoSegementsCross(gmod::vector3<float> A, gmod::vector3<float> B,
 		return true;
 	}
 	return false;
+}
+
+bool StageTwo::AreSimilarXZ(const InterPoint& a, const InterPoint& b, const InterPoint& c) const {
+	double area = std::abs(
+		(b.pos.x() - a.pos.x()) * (c.pos.z() - a.pos.z()) -
+		(c.pos.x() - a.pos.x()) * (b.pos.z() - a.pos.z()));
+	return area < 1e-4f;
 }
 
 // old, universal idea:
