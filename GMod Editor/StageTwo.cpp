@@ -591,7 +591,7 @@ bool StageTwo::AreSimilarXZ(const InterPoint& a, const InterPoint& b, const Inte
 	double area = std::abs(
 		(b.pos.x() - a.pos.x()) * (c.pos.z() - a.pos.z()) -
 		(c.pos.x() - a.pos.x()) * (b.pos.z() - a.pos.z()));
-	return area < 1e-4f;
+	return area < 5 * 1e-5f;
 }
 
 // old, universal idea:

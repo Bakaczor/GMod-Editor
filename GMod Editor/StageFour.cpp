@@ -96,12 +96,16 @@ gmod::vector3<float> StageFour::Pixel2Pos(int x, int z) const {
     return gmod::vector3<float>(x * stepX + topLeftCorner.z(), baseY, z * stepZ + topLeftCorner.z());
 }
 
-std::vector<gmod::vector3<float>> StageFour::GeneratePath() const {
-    auto areSimilar = [&](const gmod::vector3<float>& a, const gmod::vector3<float>& b, const gmod::vector3<float>& c) -> bool {
-        double area = std::abs((b.x() - a.x()) * (c.z() - a.z()) - (c.x() - a.x()) * (b.z() - a.z()));
-        return area < 1e-4f;
-    };
+bool StageFour::AreSimilarXZ(const gmod::vector3<float>& a, const gmod::vector3<float>& b, const gmod::vector3<float>& c) const {
+    double area = std::abs((b.x() - a.x()) * (c.z() - a.z()) - (c.x() - a.x()) * (b.z() - a.z()));
+    return area < 0.02f;
+}
 
+bool StageFour::AreVeryClose(const gmod::vector3<float>& a, const gmod::vector3<float>& b) const {
+    return (a - b).length() < 0.2f;
+}
+
+std::vector<gmod::vector3<float>> StageFour::GeneratePath() const {
     std::vector<gmod::vector3<float>> path;
     path.push_back(gmod::vector3<float>(0, totalHeight, 0));
 
@@ -136,7 +140,7 @@ std::vector<gmod::vector3<float>> StageFour::GeneratePath() const {
                 auto& curr = rawPath[k];
                 auto& next = rawPath[k + 1];
 
-                if (!areSimilar(prev, curr, next)) {
+                if (!AreSimilarXZ(prev, curr, next) && !AreVeryClose(prev, curr)) {
                     filtered.push_back(curr);
                 }
             }

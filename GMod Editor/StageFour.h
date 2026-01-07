@@ -35,5 +35,8 @@ namespace app {
 		};
 		std::vector<Pixel> PixelPath(std::vector<std::vector<bool>>& visited, int xStart, int zStart) const;
 		gmod::vector3<float> Pixel2Pos(int x, int z) const;
+
+		bool AreSimilarXZ(const gmod::vector3<float>& a, const gmod::vector3<float>& b, const gmod::vector3<float>& c) const;
+		bool AreVeryClose(const gmod::vector3<float>& a, const gmod::vector3<float>& b) const;
 	};
 }

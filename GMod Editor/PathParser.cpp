@@ -18,12 +18,83 @@ void PathParser::Save(const std::vector<gmod::vector3<float>>& path, const std::
     std::stringstream ss;
 
     int cmdNum = 3;
-    for (const auto& point : path) {
+    std::string prevValueX = "", prevValueY = "", prevValueZ = "";
+
+    enum HASVALUE { HAS_NONE = 0, HAS_X = 1, HAS_Y = 2, HAS_Z = 4 };
+    unsigned short prevMask = 0, prevNumOfValues = 0;
+
+    for (int k = 0; k < path.size(); k++) {
+        const auto& point = path[k];
+
         std::string prefix = "N" + std::to_string(cmdNum) + "G01";
         std::string valueX = "X" + Float2String(point.z());
         std::string valueY = "Y" + Float2String(point.x());
         std::string valueZ = "Z" + Float2String(point.y());
-        ss << prefix << valueX << valueY << valueZ << std::endl;
+
+        unsigned short mask = 0;
+        unsigned short numberOfValues = 0;
+
+        bool sameX = prevValueX == valueX;
+        if (!sameX) {
+            mask |= HAS_X;
+            numberOfValues++;
+        }
+     
+        bool sameY = prevValueY == valueY;
+        if (!sameY) {
+            mask |= HAS_Y;
+            numberOfValues++;
+        }
+
+        bool sameZ = prevValueZ == valueZ;
+        if (!sameZ) {
+            mask |= HAS_Z;
+            numberOfValues++;
+        }
+
+        if (mask == HAS_NONE) {
+            // skip repeating lines
+            continue; 
+        }
+
+        if (numberOfValues == 1 &&
+            numberOfValues == prevNumOfValues &&
+            mask == prevMask &&
+            k != 0 && k != path.size() - 1) {
+
+            const auto& nextPoint = path[k + 1];
+            std::string nextValueX = "X" + Float2String(nextPoint.z());
+            std::string nextValueY = "Y" + Float2String(nextPoint.x());
+            std::string nextValueZ = "Z" + Float2String(nextPoint.y());
+
+            unsigned short nextMask = 0;
+            if (nextValueX != valueX) { nextMask |= HAS_X; }
+            if (nextValueY != valueY) { nextMask |= HAS_Y; }
+            if (nextValueZ != valueZ) { nextMask |= HAS_Z; }
+
+            if (mask == nextMask) {
+                // skip unnecessary intermediate points
+                continue;
+            }
+        }
+
+        prevMask = mask;
+        prevNumOfValues = numberOfValues;
+
+        ss << prefix;
+        if (!sameX) {
+            prevValueX = valueX;
+            ss << valueX;
+        }
+        if (!sameY) {
+            prevValueY = valueY;
+            ss << valueY;
+        }
+        if (!sameZ) {
+            prevValueZ = valueZ;
+            ss << valueZ;
+        }
+        ss << std::endl;
         cmdNum++;
     }
 
